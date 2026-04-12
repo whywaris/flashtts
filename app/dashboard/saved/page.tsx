@@ -10,15 +10,13 @@ import { Play, Square, Trash2, ArrowRight, Bookmark, Mic2 } from 'lucide-react';
 interface SavedVoice {
   id: string;
   voice_id: string;
-  voice_name: string;
+  voice_name: string;       // normalized from name or voice_name
   language?: string | null;
   gender?: string | null;
   r2_url?: string | null;
-  audio_url?: string | null;
+  sample_url?: string | null; // from voices table fallback
   source?: string | null;
   created_at?: string | null;
-  // Joined from voices table for library voices
-  sample_url?: string | null;
 }
 
 const GRADIENTS = [
@@ -28,7 +26,16 @@ const GRADIENTS = [
   'linear-gradient(135deg, #f472b6 0%, #f5c518 100%)',
   'linear-gradient(135deg, #a855f7 0%, #22d3a5 100%)',
 ];
-const grad = (name: string) => GRADIENTS[name.charCodeAt(0) % GRADIENTS.length];
+const grad = (name: string) => GRADIENTS[(name?.charCodeAt(0) || 0) % GRADIENTS.length];
+
+// ─── Plan Limits ──────────────────────────────────────────────────────────────
+const PLAN_VOICE_LIMITS: Record<string, number> = {
+  free: 1,
+  starter: 3,
+  creator: 5,
+  pro: 10,
+  studio: 20,
+};
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function SavedVoicesPage() {
@@ -36,80 +43,110 @@ export default function SavedVoicesPage() {
   const [voices, setVoices] = useState<SavedVoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [removingId, setRemovingId] = useState<string | null>(null);
+  const [userPlan, setUserPlan] = useState<string>('free');
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     const supabase = createClient();
+
     async function init() {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) { router.push('/login'); return; }
+      const { data: { user }, error: authErr } = await supabase.auth.getUser();
+      if (authErr || !user) { router.push('/login'); return; }
 
-      // Fetch saved voices with specific fields
-      const { data: savedRaw } = await supabase
+
+      // Fetch user plan
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('plan')
+        .eq('id', user.id)
+        .single();
+      if (profile?.plan) setUserPlan(profile.plan);
+
+      // ✅ FIX: Only fetch columns that actually exist in saved_voices table
+      const { data: savedRaw, error: fetchErr } = await supabase
         .from('saved_voices')
-        .select(`
-          id,
-          user_id,
-          voice_id,
-          voice_name,
-          language,
-          gender,
-          sample_url,
-          source,
-          created_at
-        `)
+        .select('id, voice_id, name, voice_name, language, gender, r2_url, source, created_at')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
+        .order('created_at', { ascending: false });
 
-      let savedVoices = savedRaw || []
+      if (fetchErr) console.error('Fetch error:', fetchErr.message);
 
-      // If voice_name is null or empty, do a fallback join:
-      const idsWithNoName = savedVoices.filter(v => !v.voice_name).map(v => v.voice_id)
-      if (idsWithNoName.length > 0) {
+      // ✅ FIX: Normalize — table has both 'name' & 'voice_name' columns
+      let savedVoices: SavedVoice[] = (savedRaw || []).map((v: any) => ({
+        ...v,
+        voice_name: v.voice_name || v.name || 'Unnamed Voice',
+        sample_url: null, // will be filled from voices table if needed
+      }));
+
+      // ✅ FIX: For library voices without r2_url, fetch sample_url from voices table
+      const idsNeedingAudio = savedVoices
+        .filter(v => !v.r2_url && v.source !== 'cloned')
+        .map(v => v.voice_id)
+        .filter(Boolean);
+
+      if (idsNeedingAudio.length > 0) {
         const { data: voiceDetails } = await supabase
           .from('voices')
           .select('id, name, language, gender, sample_url')
-          .in('id', idsWithNoName)
-        
-        const voiceMap = Object.fromEntries((voiceDetails || []).map(v => [v.id, v]))
-        
-        savedVoices.forEach(sv => {
-          if (!sv.voice_name && voiceMap[sv.voice_id]) {
-            sv.voice_name = voiceMap[sv.voice_id].name
-            sv.language = sv.language || voiceMap[sv.voice_id].language
-            sv.gender = sv.gender || voiceMap[sv.voice_id].gender
-            sv.sample_url = sv.sample_url || voiceMap[sv.voice_id].sample_url
-          }
-        })
+          .in('id', idsNeedingAudio);
+
+        const voiceMap: Record<string, any> = Object.fromEntries(
+          (voiceDetails || []).map(v => [v.id, v])
+        );
+
+        savedVoices = savedVoices.map(sv => {
+          const detail = voiceMap[sv.voice_id];
+          if (!detail) return sv;
+          return {
+            ...sv,
+            voice_name: sv.voice_name || detail.name || 'Unnamed Voice',
+            language: sv.language || detail.language || null,
+            gender: sv.gender || detail.gender || null,
+            sample_url: detail.sample_url || null,
+          };
+        });
       }
 
-      setVoices(savedVoices as any);
+      setVoices(savedVoices);
       setLoading(false);
     }
+
     init();
   }, [router]);
 
+  // ── Plan limit derived values ──────────────────────────────────────────────
+  const voiceLimit = PLAN_VOICE_LIMITS[userPlan] ?? 1;
+  const isAtLimit = voices.length >= voiceLimit;
+  const usagePct = Math.min(100, Math.round((voices.length / voiceLimit) * 100));
+
+  // ── Get playable URL ───────────────────────────────────────────────────────
+  // ✅ FIX: r2_url is the primary audio, sample_url is fallback from voices table
+  const getPlayUrl = (v: SavedVoice): string | null =>
+    v.r2_url || v.sample_url || null;
+
   // ── Play / Stop ────────────────────────────────────────────────────────────
-  const handlePlay = useCallback((id: string, url?: string | null) => {
+  const handlePlay = useCallback((id: string, url: string | null) => {
     if (!url) return;
 
-    // Stop current audio
+    // Stop any current audio
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
+      audioRef.current = null;
     }
 
-    // Toggle off same voice
+    // Toggle off if same voice
     if (playingId === id) {
       setPlayingId(null);
-      audioRef.current = null;
       return;
     }
 
+    // ✅ FIX: Create fresh Audio element each time
     const audio = new Audio(url);
     audioRef.current = audio;
-    audio.play().catch(console.error);
+    audio.play().catch(err => console.error('Play error:', err));
     audio.onended = () => {
       setPlayingId(null);
       audioRef.current = null;
@@ -118,24 +155,39 @@ export default function SavedVoicesPage() {
   }, [playingId]);
 
   // ── Remove ─────────────────────────────────────────────────────────────────
+  // ✅ FIX: Always delete from saved_voices table (single source of truth)
   const handleRemove = async (voice: SavedVoice) => {
-    const supabase = createClient();
-    if (voice.source === 'cloned') {
-      await supabase.from('cloned_voices').delete().eq('id', voice.id);
-    } else {
-      await supabase.from('saved_voices').delete().eq('id', voice.id);
-    }
-    setVoices(v => v.filter(x => x.id !== voice.id));
-  };
+    if (removingId) return; // prevent double-click
+    setRemovingId(voice.id);
 
-  // ── Get playable URL ───────────────────────────────────────────────────────
-  const getPlayUrl = (v: SavedVoice) =>
-    v.sample_url || v.r2_url || v.audio_url || null;
+    const supabase = createClient();
+
+    // Stop audio if this voice is playing
+    if (playingId === voice.id) {
+      audioRef.current?.pause();
+      audioRef.current = null;
+      setPlayingId(null);
+    }
+
+    const { error } = await supabase
+      .from('saved_voices')
+      .delete()
+      .eq('id', voice.id);
+
+    if (error) {
+      console.error('Delete error:', error.message);
+      setRemovingId(null);
+      return;
+    }
+
+    setVoices(prev => prev.filter(x => x.id !== voice.id));
+    setRemovingId(null);
+  };
 
   // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
-      <div style={{ width: '36px', height: '36px', border: '3px solid rgba(245,197,24,0.2)', borderTop: '3px solid #f5c518', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+      <div style={{ width: '32px', height: '32px', border: '3px solid rgba(245,197,24,0.2)', borderTop: '3px solid #f5c518', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
@@ -151,6 +203,23 @@ export default function SavedVoicesPage() {
         <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>
           Your personal voice collection — {voices.length} {voices.length === 1 ? 'voice' : 'voices'}
         </p>
+      </div>
+
+      {/* Plan Usage Bar */}
+      <div style={{ marginBottom: "20px", padding: "14px 16px", background: isAtLimit ? "rgba(240,91,91,0.06)" : "var(--card-bg)", border: `1px solid ${isAtLimit ? "rgba(240,91,91,0.2)" : "var(--border)"}`, borderRadius: "14px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+          <span style={{ fontSize: "12px", color: "var(--muted)", fontWeight: 600 }}>Voice Slots — <span style={{ textTransform: "capitalize", color: "#f5c518" }}>{userPlan}</span> Plan</span>
+          <span style={{ fontSize: "12px", fontWeight: 700, color: isAtLimit ? "#f05b5b" : "var(--text)" }}>{voices.length} / {voiceLimit}</span>
+        </div>
+        <div style={{ height: "4px", background: "var(--border)", borderRadius: "99px", overflow: "hidden", marginBottom: "8px" }}>
+          <div style={{ height: "100%", width: `${usagePct}%`, background: isAtLimit ? "#f05b5b" : usagePct >= 80 ? "#f5c518" : "#22d3a5", borderRadius: "99px", transition: "width 0.4s" }} />
+        </div>
+        {isAtLimit && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
+            <span style={{ fontSize: "12px", color: "#f05b5b" }}>⚠️ Limit reached — delete a voice or upgrade</span>
+            <a href="/dashboard/billing" style={{ fontSize: "12px", fontWeight: 700, color: "#f5c518", textDecoration: "none" }}>Upgrade →</a>
+          </div>
+        )}
       </div>
 
       {/* Empty state */}
@@ -179,6 +248,8 @@ export default function SavedVoicesPage() {
             const isCloned = v.source === 'cloned';
             const isPlaying = playingId === v.id;
             const hasAudio = !!playUrl;
+            const isRemoving = removingId === v.id;
+            const displayName = v.voice_name || 'Unnamed Voice';
 
             return (
               <div
@@ -193,25 +264,29 @@ export default function SavedVoicesPage() {
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '14px',
+                  opacity: isRemoving ? 0.5 : 1,
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
+                  {/* Avatar */}
                   <div style={{
                     width: '44px', height: '44px', borderRadius: '50%',
-                    background: grad(v.voice_name),
+                    background: grad(displayName),
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '17px',
                     color: '#080810', flexShrink: 0,
                   }}>
-                    {v.voice_name[0]?.toUpperCase()}
+                    {displayName[0]?.toUpperCase() || '?'}
                   </div>
+
+                  {/* Info */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{
                       fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '14px',
                       color: 'var(--text)', margin: '0 0 5px',
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}>
-                      {v.voice_name}
+                      {displayName}
                     </p>
                     <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
                       {isCloned && (
@@ -221,7 +296,7 @@ export default function SavedVoicesPage() {
                       )}
                       {v.language && (
                         <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 6px', borderRadius: '5px', background: 'rgba(91,142,240,0.12)', border: '1px solid rgba(91,142,240,0.2)', color: '#5b8ef0' }}>
-                          {v.language}
+                          {v.language.toUpperCase()}
                         </span>
                       )}
                       {v.gender && (
@@ -237,33 +312,36 @@ export default function SavedVoicesPage() {
                     </div>
                   </div>
 
+                  {/* Play button */}
                   <button
                     onClick={() => handlePlay(v.id, playUrl)}
-                    disabled={!hasAudio}
+                    disabled={!hasAudio || isRemoving}
                     title={hasAudio ? (isPlaying ? 'Stop preview' : 'Play preview') : 'No preview available'}
                     style={{
                       width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
                       background: isPlaying ? 'rgba(245,197,24,0.20)' : 'rgba(255,255,255,0.06)',
                       border: isPlaying ? '1.5px solid rgba(245,197,24,0.4)' : '1px solid var(--border)',
-                      cursor: hasAudio ? 'pointer' : 'not-allowed',
+                      cursor: hasAudio && !isRemoving ? 'pointer' : 'not-allowed',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '13px', color: isPlaying ? '#f5c518' : hasAudio ? 'var(--text)' : 'var(--muted)',
+                      color: isPlaying ? '#f5c518' : hasAudio ? 'var(--text)' : 'var(--muted)',
                       opacity: hasAudio ? 1 : 0.35,
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    {isPlaying ? <Square size={12} fill="currentColor" /> : <Play size={12} fill="currentColor" style={{ marginLeft: '1px' }} />}
+                    {isPlaying
+                      ? <Square size={12} fill="currentColor" />
+                      : <Play size={12} fill="currentColor" style={{ marginLeft: '1px' }} />}
                   </button>
                 </div>
 
-                {/* No preview note for cloned voices without audio */}
-                {isCloned && !hasAudio && (
+                {/* No preview note */}
+                {!hasAudio && (
                   <p style={{ fontSize: '11px', color: 'var(--muted)', opacity: 0.6, margin: 0 }}>
                     No preview available
                   </p>
                 )}
 
-                {/* Action buttons row */}
+                {/* Action buttons */}
                 <div style={{ display: 'flex', gap: '7px', marginTop: 'auto' }}>
                   <Link
                     href={`/dashboard/tts?voice=${v.voice_id}`}
@@ -279,12 +357,15 @@ export default function SavedVoicesPage() {
                   </Link>
                   <button
                     onClick={() => handleRemove(v)}
+                    disabled={isRemoving}
                     style={{
                       padding: '9px 11px', borderRadius: '9px',
                       background: 'rgba(255,80,80,0.06)',
                       border: '1px solid rgba(255,80,80,0.15)',
-                      color: 'rgba(255,100,100,0.6)', cursor: 'pointer',
+                      color: 'rgba(255,100,100,0.6)',
+                      cursor: isRemoving ? 'not-allowed' : 'pointer',
                       display: 'flex', alignItems: 'center',
+                      opacity: isRemoving ? 0.5 : 1,
                     }}
                   >
                     <Trash2 size={12} />
@@ -303,6 +384,7 @@ export default function SavedVoicesPage() {
           transform: translateY(-2px);
           box-shadow: 0 8px 28px rgba(0,0,0,0.1);
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );

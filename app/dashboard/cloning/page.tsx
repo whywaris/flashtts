@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import {
   Mic,
@@ -12,91 +11,35 @@ import {
   RotateCcw,
   Upload,
   Check,
-  ChevronRight,
   Zap,
+  Volume2,
+  Waveform,
 } from 'lucide-react';
 
-// ─── Types & Helpers ──────────────────────────────────────────────────────────
-type Step = 1 | 2 | 3;
-
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtTime(secs: number): string {
   const m = Math.floor(secs / 60);
   const s = secs % 60;
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-// ─── Step Indicator ───────────────────────────────────────────────────────────
-function StepIndicator({ current }: { current: Step }) {
-  const steps = [
-    { n: 1, label: 'Name' },
-    { n: 2, label: 'Record' },
-    { n: 3, label: 'Clone' },
-  ];
+function WaveformBars({ active, color = '#f5c518' }: { active: boolean; color?: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '32px' }}>
-      {steps.map((s, i) => {
-        const done = current > s.n;
-        const active = current === s.n;
-        return (
-          <div key={s.n} style={{ display: 'flex', alignItems: 'center', flex: i < 2 ? 1 : 'unset' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontFamily: 'Syne, sans-serif',
-                  fontWeight: 700,
-                  fontSize: '13px',
-                  flexShrink: 0,
-                  transition: 'all 0.25s ease',
-                  background: done
-                    ? 'rgba(34,211,165,0.15)'
-                    : active
-                    ? 'var(--accent)'
-                    : 'var(--glass)',
-                  border: done
-                    ? '1.5px solid rgba(34,211,165,0.4)'
-                    : active
-                    ? 'none'
-                    : '1.5px solid var(--border)',
-                  color: done ? '#22d3a5' : active ? 'var(--bg)' : 'var(--muted)',
-                  boxShadow: active ? '0 0 16px rgba(245,197,24,0.35)' : 'none',
-                }}
-              >
-                {done ? <Check size={14} strokeWidth={3} /> : s.n}
-              </div>
-              <span
-                style={{
-                  fontSize: '12.5px',
-                  fontWeight: active ? 700 : 500,
-                  color: active ? 'var(--accent)' : done ? '#22d3a5' : 'var(--muted)',
-                  fontFamily: 'DM Sans, sans-serif',
-                  transition: 'color 0.2s ease',
-                }}
-              >
-                {s.label}
-              </span>
-            </div>
-            {i < 2 && (
-              <div
-                style={{
-                  flex: 1,
-                  height: '1px',
-                  margin: '0 12px',
-                  background: done
-                    ? 'rgba(34,211,165,0.3)'
-                    : 'var(--border)',
-                  transition: 'background 0.3s ease',
-                }}
-              />
-            )}
-          </div>
-        );
-      })}
+    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', height: '32px' }}>
+      {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+        <div
+          key={i}
+          style={{
+            width: '3px',
+            borderRadius: '2px',
+            background: color,
+            height: active ? `${20 + Math.random() * 12}px` : '6px',
+            transition: 'height 0.15s ease',
+            animation: active ? `wave-bar ${0.4 + i * 0.07}s ease-in-out infinite alternate` : 'none',
+            opacity: active ? 1 : 0.3,
+          }}
+        />
+      ))}
     </div>
   );
 }
@@ -106,14 +49,11 @@ export default function VoiceCloningPage() {
   const router = useRouter();
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Step state
-  const [step, setStep] = useState<Step>(1);
-
-  // Step 1
+  // Form state
   const [voiceName, setVoiceName] = useState('');
   const [nameError, setNameError] = useState('');
 
-  // Step 2 — recording
+  // Recording state
   const [recording, setRecording] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null);
@@ -121,29 +61,46 @@ export default function VoiceCloningPage() {
   const [previewPlaying, setPreviewPlaying] = useState(false);
   const [uploadedName, setUploadedName] = useState<string | null>(null);
 
+  // Clone state
+  const [cloning, setCloning] = useState(false);
+  const [cloneSuccess, setCloneSuccess] = useState(false);
+  const [cloneError, setCloneError] = useState('');
+
+  // Plan limit state
+  const [userPlan, setUserPlan] = useState<string>('free');
+  const [savedCount, setSavedCount] = useState<number>(0);
+  const PLAN_VOICE_LIMITS: Record<string, number> = {
+    free: 1, starter: 3, creator: 5, pro: 10, studio: 20,
+  };
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Step 3
-  const [cloning, setCloning] = useState(false);
-  const [cloneSuccess, setCloneSuccess] = useState(false);
-
   useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user }, error }) => {
+    async function init() {
+      const supabase = createClient();
+      const { data: { user }, error } = await supabase.auth.getUser();
       if (error || !user) { router.push('/login'); return; }
       setUserId(user.id);
-    });
+
+      // Fetch plan + saved count for limit check
+      const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single();
+      if (profile?.plan) setUserPlan(profile.plan);
+
+      const { data: saved } = await supabase.from('saved_voices').select('id').eq('user_id', user.id);
+      setSavedCount((saved || []).length);
+    }
+    init();
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
       previewAudioRef.current?.pause();
     };
   }, [router]);
 
-  // ── Recording ──
+  // ── Recording ──────────────────────────────────────────────────────────────
   const startRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -154,9 +111,12 @@ export default function VoiceCloningPage() {
       mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
       mr.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
-        setRecordedBlob(blob);
         const url = URL.createObjectURL(blob);
+        setRecordedBlob(blob);
         setRecordedUrl(url);
+        // ✅ BUG FIX: Create audio element immediately after recording stops
+        previewAudioRef.current = new Audio(url);
+        previewAudioRef.current.onended = () => setPreviewPlaying(false);
         stream.getTracks().forEach((t) => t.stop());
       };
 
@@ -164,8 +124,7 @@ export default function VoiceCloningPage() {
       setRecording(true);
       setRecSeconds(0);
       timerRef.current = setInterval(() => setRecSeconds((s) => s + 1), 1000);
-    } catch (err) {
-      console.error('Mic error:', err);
+    } catch {
       alert('Could not access microphone. Please check permissions.');
     }
   }, []);
@@ -178,6 +137,7 @@ export default function VoiceCloningPage() {
 
   const reRecord = useCallback(() => {
     previewAudioRef.current?.pause();
+    previewAudioRef.current = null;
     setPreviewPlaying(false);
     setRecordedBlob(null);
     setRecordedUrl(null);
@@ -185,17 +145,25 @@ export default function VoiceCloningPage() {
     setRecSeconds(0);
   }, []);
 
+  // ✅ BUG FIX: togglePreview properly creates + plays audio
   const togglePreview = useCallback(() => {
     if (!recordedUrl) return;
+
     if (!previewAudioRef.current) {
       previewAudioRef.current = new Audio(recordedUrl);
       previewAudioRef.current.onended = () => setPreviewPlaying(false);
     }
+
     if (previewPlaying) {
       previewAudioRef.current.pause();
       setPreviewPlaying(false);
     } else {
-      previewAudioRef.current.play().catch(console.error);
+      previewAudioRef.current.play().catch(() => {
+        // If audio element is stale, recreate it
+        previewAudioRef.current = new Audio(recordedUrl);
+        previewAudioRef.current.onended = () => setPreviewPlaying(false);
+        previewAudioRef.current.play();
+      });
       setPreviewPlaying(true);
     }
   }, [recordedUrl, previewPlaying]);
@@ -207,33 +175,41 @@ export default function VoiceCloningPage() {
     setRecordedBlob(file);
     setRecordedUrl(url);
     setUploadedName(file.name);
+    // ✅ BUG FIX: Always create fresh audio element on file upload
     previewAudioRef.current = new Audio(url);
     previewAudioRef.current.onended = () => setPreviewPlaying(false);
   };
 
   const handleClone = async () => {
-    if (!userId || !recordedBlob) return;
+    if (!voiceName.trim()) { setNameError('Please enter a name for your voice.'); return; }
+    if (!recordedBlob) { setCloneError('Please record or upload audio first.'); return; }
+    // ✅ Plan limit check
+    const voiceLimit = PLAN_VOICE_LIMITS[userPlan] ?? 1;
+    if (savedCount >= voiceLimit) {
+      setCloneError(`Voice limit reached! Your ${userPlan} plan allows ${voiceLimit} saved voice${voiceLimit > 1 ? "s" : ""}. Delete a voice or upgrade to clone more.`);
+      return;
+    }
+    if (!userId) return;
+
     setCloning(true);
+    setCloneError('');
+
     try {
       const supabase = createClient();
 
-      // Insert into cloned_voices
-      const { data: clonedData } = await supabase
+      const { data: clonedData, error: cloneErr } = await supabase
         .from('cloned_voices')
-        .insert({
-          user_id: userId,
-          name: voiceName,
-          audio_url: '',
-          status: 'ready',
-        })
+        .insert({ user_id: userId, name: voiceName, sample_url: null, status: 'ready' })
         .select('id')
         .single();
 
-      // Also insert into saved_voices so it shows on /dashboard/saved
+      if (cloneErr) throw cloneErr;
+
       await supabase.from('saved_voices').upsert({
         user_id: userId,
         voice_id: clonedData?.id || crypto.randomUUID(),
         name: voiceName,
+        voice_name: voiceName,
         language: null,
         gender: null,
         source: 'cloned',
@@ -241,573 +217,441 @@ export default function VoiceCloningPage() {
       });
 
       setCloneSuccess(true);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      setCloneError(err?.message || 'Something went wrong. Please try again.');
     } finally {
       setCloning(false);
     }
   };
 
-  // ── Recording stats for right panel ──
-  const recStatus = recording ? 'Recording' : recordedBlob ? 'Complete' : 'Ready';
-  const recQuality = recSeconds >= 30 ? 'Excellent' : recSeconds >= 10 ? 'Good' : '—';
+  // ── Quality scoring ────────────────────────────────────────────────────────
+  const quality = recSeconds >= 30 ? 'Excellent' : recSeconds >= 10 ? 'Good' : recSeconds > 0 ? 'Too Short' : '—';
+  const qualityColor = quality === 'Excellent' ? '#22d3a5' : quality === 'Good' ? '#f5c518' : quality === 'Too Short' ? '#ef4444' : 'var(--muted)';
+  const qualityPct = Math.min(100, (recSeconds / 60) * 100);
 
-  const qualityColor =
-    recQuality === 'Excellent' ? '#22d3a5' : recQuality === 'Good' ? 'var(--accent)' : 'var(--muted)';
+  const voiceLimit = PLAN_VOICE_LIMITS[userPlan] ?? 1;
+  const isAtLimit = savedCount >= voiceLimit;
+  const canClone = !!recordedBlob && !!voiceName.trim() && !isAtLimit;
 
+  // ── Success screen ─────────────────────────────────────────────────────────
+  if (cloneSuccess) {
+    return (
+      <div style={{ fontFamily: 'DM Sans, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+        <div style={{ textAlign: 'center', maxWidth: '420px', padding: '0 20px' }}>
+          {/* Animated checkmark */}
+          <div style={{
+            width: '80px', height: '80px', borderRadius: '50%',
+            background: 'rgba(34,211,165,0.1)', border: '2px solid rgba(34,211,165,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 24px', animation: 'pop-in 0.4s cubic-bezier(0.175,0.885,0.32,1.275)',
+          }}>
+            <Check size={36} color="#22d3a5" strokeWidth={2.5} />
+          </div>
+
+          <h2 style={{ fontFamily: 'Syne, sans-serif', fontSize: '26px', fontWeight: 800, color: 'var(--text)', margin: '0 0 10px', letterSpacing: '-0.02em' }}>
+            Voice Saved! 🎉
+          </h2>
+          <p style={{ fontSize: '14px', color: 'var(--muted)', margin: '0 0 8px', lineHeight: 1.6 }}>
+            <strong style={{ color: 'var(--text)' }}>"{voiceName}"</strong> has been added to your Saved Voices.
+          </p>
+          <p style={{ fontSize: '13px', color: 'var(--muted)', margin: '0 0 32px', opacity: 0.7 }}>
+            You can now use it in the TTS studio anytime.
+          </p>
+
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            <a
+              href="/dashboard/saved"
+              style={{
+                padding: '12px 24px', borderRadius: '12px',
+                background: '#f5c518', color: '#000',
+                fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '14px',
+                textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px',
+                boxShadow: '0 8px 24px rgba(245,197,24,0.25)',
+              }}
+            >
+              View Saved Voices →
+            </a>
+            <button
+              onClick={() => { setCloneSuccess(false); setVoiceName(''); setRecordedBlob(null); setRecordedUrl(null); setRecSeconds(0); setUploadedName(null); }}
+              style={{
+                padding: '12px 24px', borderRadius: '12px',
+                background: 'var(--glass)', border: '1px solid var(--border)',
+                color: 'var(--text)', fontFamily: 'DM Sans, sans-serif',
+                fontWeight: 600, fontSize: '14px', cursor: 'pointer',
+              }}
+            >
+              Clone Another
+            </button>
+          </div>
+        </div>
+        <style>{`@keyframes pop-in { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }`}</style>
+      </div>
+    );
+  }
+
+  // ── Main UI ────────────────────────────────────────────────────────────────
   return (
     <div style={{ fontFamily: 'DM Sans, sans-serif' }}>
 
       {/* ── Page Header ── */}
-      <div style={{ marginBottom: '28px' }}>
-        <h1
-          style={{
-            fontFamily: 'Syne, sans-serif',
-            fontSize: '28px',
-            fontWeight: 700,
-            color: 'var(--text)',
-            margin: '0 0 6px',
-            letterSpacing: '-0.02em',
-          }}
-        >
-          Voice Cloning
-        </h1>
-        <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>
-          Create a perfect digital replica of any voice
+      <div style={{ marginBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+          <div style={{
+            width: '30px', height: '30px', borderRadius: '8px',
+            background: 'rgba(245,197,24,0.12)', border: '1px solid rgba(245,197,24,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Mic size={15} color="#f5c518" />
+          </div>
+          <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: '22px', fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-0.02em' }}>
+            Voice Cloning
+          </h1>
+        </div>
+        <p style={{ fontSize: '12px', color: 'var(--muted)', margin: 0, paddingLeft: '38px' }}>
+          Record or upload your voice — save it forever to your library
         </p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 items-start">
+      {/* ── Two Column Layout ── */}
+      <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
 
-        {/* ── LEFT COLUMN ── */}
-        <div
-          style={{
-            flex: 1,
-            minWidth: 0,
-            background: 'var(--card-bg)',
-            border: '1px solid var(--border)',
-            borderRadius: '20px',
-            padding: '28px',
-          }}
-        >
-          <StepIndicator current={step} />
+        {/* ── LEFT — Main Panel ── */}
+        <div style={{ flex: 1, minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-          {/* ──────── STEP 1 ──────── */}
-          {step === 1 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              <div>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: 'var(--muted)',
-                    marginBottom: '10px',
-                  }}
-                >
-                  Voice Name
-                </label>
-                <input
-                  value={voiceName}
-                  onChange={(e) => { setVoiceName(e.target.value); setNameError(''); }}
-                  placeholder="e.g. My Podcast Voice"
-                  style={{
-                    width: '100%',
-                    background: 'var(--glass)',
-                    border: `1px solid ${nameError ? 'rgba(255,80,80,0.5)' : 'var(--border)'}`,
-                    borderRadius: '14px',
-                    padding: '13px 16px',
-                    color: 'var(--text)',
-                    fontSize: '15px',
-                    fontFamily: 'DM Sans, sans-serif',
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    caretColor: '#f5c518',
-                    transition: 'border-color 0.2s ease',
-                  }}
-                  onFocus={(e) => (e.target.style.borderColor = 'var(--accent)')}
-                  onBlur={(e) => (e.target.style.borderColor = nameError ? 'rgba(255,80,80,0.5)' : 'var(--border)')}
-                />
-                {nameError && (
-                  <p style={{ fontSize: '12px', color: 'rgba(255,80,80,0.8)', margin: '6px 0 0' }}>{nameError}</p>
-                )}
-                <p style={{ fontSize: '12px', color: 'var(--muted)', margin: '8px 0 0', opacity: 0.7 }}>
-                  This name will appear in your Saved Voices.
-                </p>
-              </div>
 
-              <button
-                onClick={() => {
-                  if (!voiceName.trim()) { setNameError('Please enter a name for your voice.'); return; }
-                  setStep(2);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  borderRadius: '14px',
-                  background: 'var(--accent)',
-                  border: 'none',
-                  color: '#000',
-                  fontFamily: 'Syne, sans-serif',
-                  fontSize: '15px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  boxShadow: '0 0 24px rgba(245,197,24,0.25)',
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                Continue
-                <ChevronRight size={16} strokeWidth={2.5} />
-              </button>
+          {/* ── Plan Limit Banner ── */}
+          {isAtLimit && (
+            <div style={{ padding: "12px 16px", background: "rgba(240,91,91,0.06)", border: "1px solid rgba(240,91,91,0.2)", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "13px", color: "#f05b5b" }}>⚠️ Voice limit reached ({savedCount}/{voiceLimit}) — delete a voice or upgrade</span>
+              <a href="/dashboard/billing" style={{ fontSize: "12px", fontWeight: 700, color: "#f5c518", textDecoration: "none" }}>Upgrade →</a>
             </div>
           )}
 
-          {/* ──────── STEP 2 ──────── */}
-          {step === 2 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* ── Section 1: Voice Name ── */}
+          <div style={{
+            background: 'var(--card-bg)', border: '1px solid var(--border)',
+            borderRadius: '16px', padding: '16px',
+          }}>
+            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '10px' }}>
+              01 — Voice Name
+            </div>
+            <input
+              value={voiceName}
+              onChange={(e) => { setVoiceName(e.target.value); setNameError(''); }}
+              placeholder="e.g. My Podcast Voice"
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                background: 'var(--glass)',
+                border: `1.5px solid ${nameError ? 'rgba(239,68,68,0.5)' : voiceName ? 'rgba(245,197,24,0.3)' : 'var(--border)'}`,
+                borderRadius: '10px', padding: '10px 14px',
+                color: 'var(--text)', fontSize: '14px',
+                fontFamily: 'DM Sans, sans-serif', outline: 'none',
+                transition: 'border-color 0.2s',
+              }}
+              onFocus={(e) => (e.target.style.borderColor = 'rgba(245,197,24,0.5)')}
+              onBlur={(e) => (e.target.style.borderColor = nameError ? 'rgba(239,68,68,0.5)' : voiceName ? 'rgba(245,197,24,0.3)' : 'var(--border)')}
+            />
+            {nameError && <p style={{ fontSize: '12px', color: '#ef4444', margin: '6px 0 0' }}>{nameError}</p>}
+          </div>
 
-              {/* Record area */}
-              {!recordedBlob ? (
-                <div
-                  style={{
-                  border: `2px dashed ${recording ? 'rgba(239,68,68,0.5)' : 'var(--border)'}`,
-                  borderRadius: '20px',
-                    padding: '48px 24px',
-                    textAlign: 'center',
-                    transition: 'border-color 0.3s ease',
-                    background: recording ? 'rgba(239,68,68,0.03)' : 'transparent',
-                  }}
-                >
+          {/* ── Section 2: Record ── */}
+          <div style={{
+            background: 'var(--card-bg)', border: '1px solid var(--border)',
+            borderRadius: '16px', padding: '16px',
+          }}>
+            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '14px' }}>
+              02 — Record Your Voice
+            </div>
+
+            {!recordedBlob ? (
+              /* ── Record UI ── */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+                {/* Big record button */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '20px 0' }}>
+
                   {/* Timer */}
-                  <p
-                    style={{
-                      fontFamily: 'monospace',
-                      fontSize: '42px',
-                      fontWeight: 700,
-                      color: recording ? '#ef4444' : 'var(--accent)',
-                      margin: '0 0 24px',
-                      letterSpacing: '0.04em',
-                      transition: 'color 0.3s ease',
-                    }}
-                  >
+                  <div style={{
+                    fontFamily: 'monospace', fontSize: '38px', fontWeight: 700,
+                    color: recording ? '#ef4444' : 'var(--text)',
+                    letterSpacing: '0.04em', transition: 'color 0.3s',
+                    lineHeight: 1,
+                  }}>
                     {fmtTime(recSeconds)}
-                  </p>
+                  </div>
 
-                  {/* Record button */}
+                  {/* Waveform animation */}
+                  <WaveformBars active={recording} color={recording ? '#ef4444' : '#f5c518'} />
+
+                  {/* Record / Stop Button */}
                   <button
                     onClick={recording ? stopRecording : startRecording}
                     style={{
-                      width: '72px',
-                      height: '72px',
-                      borderRadius: '50%',
-                      background: recording ? '#ef4444' : 'rgba(239,68,68,0.15)',
-                      border: `2px solid ${recording ? '#ef4444' : 'rgba(239,68,68,0.4)'}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      margin: '0 auto 16px',
-                      transition: 'all 0.2s ease',
-                      animation: recording ? 'pulse-red 1.2s ease-in-out infinite' : 'none',
-                      boxShadow: recording ? '0 0 28px rgba(239,68,68,0.4)' : 'none',
+                      width: '64px', height: '64px', borderRadius: '50%',
+                      background: recording ? '#ef4444' : 'rgba(239,68,68,0.1)',
+                      border: `2px solid ${recording ? '#ef4444' : 'rgba(239,68,68,0.35)'}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', transition: 'all 0.2s',
+                      animation: recording ? 'pulse-rec 1.4s ease-in-out infinite' : 'none',
+                      boxShadow: recording ? '0 0 24px rgba(239,68,68,0.35)' : 'none',
                     }}
                   >
                     {recording
-                      ? <Square size={26} color="#fff" fill="#fff" />
-                      : <Mic size={28} color="#ef4444" strokeWidth={2} />}
+                      ? <Square size={22} color="#fff" fill="#fff" />
+                      : <Mic size={24} color="#ef4444" strokeWidth={1.8} />}
                   </button>
 
-                  <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0, opacity: 0.8 }}>
-                    {recording ? 'Recording… click to stop' : 'Click to start recording'}
+                  <p style={{ fontSize: '12px', color: 'var(--muted)', margin: 0 }}>
+                    {recording ? 'Recording… tap to stop' : 'Tap to start recording'}
                   </p>
                 </div>
-              ) : (
-                /* Audio preview */
-                <div
+
+                {/* OR upload */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+                  <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600, opacity: 0.5 }}>OR</span>
+                  <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+                </div>
+
+                <button
+                  onClick={() => fileInputRef.current?.click()}
                   style={{
-                    background: 'rgba(34,211,165,0.06)',
-                    border: '1px solid rgba(34,211,165,0.2)',
-                    borderRadius: '18px',
-                    padding: '24px',
-                    textAlign: 'center',
+                    width: '100%', padding: '13px',
+                    borderRadius: '12px', background: 'var(--glass)',
+                    border: '1px dashed var(--border)', color: 'var(--muted)',
+                    fontFamily: 'DM Sans, sans-serif', fontSize: '14px',
+                    fontWeight: 600, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                    transition: 'all 0.2s',
                   }}
+                  onMouseEnter={(e) => { (e.target as HTMLButtonElement).style.borderColor = 'rgba(245,197,24,0.4)'; (e.target as HTMLButtonElement).style.color = '#f5c518'; }}
+                  onMouseLeave={(e) => { (e.target as HTMLButtonElement).style.borderColor = 'var(--border)'; (e.target as HTMLButtonElement).style.color = 'var(--muted)'; }}
                 >
-                  <div
+                  <Upload size={15} />
+                  Upload Audio File
+                </button>
+                <input ref={fileInputRef} type="file" accept=".mp3,.wav,.m4a,.ogg,audio/*" style={{ display: 'none' }} onChange={handleFileUpload} />
+              </div>
+            ) : (
+              /* ── Recorded / Uploaded Preview ── */
+              <div style={{
+                background: 'rgba(34,211,165,0.05)', border: '1px solid rgba(34,211,165,0.2)',
+                borderRadius: '12px', padding: '14px',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                  <div>
+                    <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '13px', color: '#22d3a5', margin: '0 0 2px' }}>
+                      {uploadedName ? `📁 ${uploadedName.length > 25 ? uploadedName.slice(0, 25) + '…' : uploadedName}` : '🎙 Recording Ready'}
+                    </p>
+                    {!uploadedName && (
+                      <p style={{ fontSize: '11px', color: 'var(--muted)', margin: 0 }}>
+                        Duration: {fmtTime(recSeconds)} · Quality: <span style={{ color: qualityColor, fontWeight: 700 }}>{quality}</span>
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={reRecord}
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: '16px',
+                      display: 'flex', alignItems: 'center', gap: '4px',
+                      padding: '5px 10px', borderRadius: '8px',
+                      background: 'var(--glass)', border: '1px solid var(--border)',
+                      color: 'var(--muted)', fontSize: '11px', fontWeight: 600,
+                      cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
                     }}
                   >
-                    <div>
-                      <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '14px', color: '#22d3a5', margin: 0 }}>
-                        {uploadedName ? '📁 ' + uploadedName : '🎙 Recording complete'}
-                      </p>
-                      {!uploadedName && (
-                        <p style={{ fontSize: '12px', color: 'var(--muted)', margin: '4px 0 0' }}>
-                          Duration: {fmtTime(recSeconds)}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      onClick={reRecord}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        padding: '7px 12px',
-                        borderRadius: '9px',
-                        background: 'var(--glass)',
-                        border: '1px solid var(--border)',
-                        color: 'var(--muted)',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        fontFamily: 'DM Sans, sans-serif',
-                      }}
-                    >
-                      <RotateCcw size={12} />
-                      Re-record
-                    </button>
-                  </div>
+                    <RotateCcw size={11} /> Re-record
+                  </button>
+                </div>
 
-                  {/* Play/pause */}
+                {/* Play button */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <button
                     onClick={togglePreview}
                     style={{
-                      width: '52px',
-                      height: '52px',
-                      borderRadius: '50%',
-                      background: 'var(--accent)',
-                      border: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      margin: '0 auto',
-                      boxShadow: '0 0 20px rgba(245,197,24,0.3)',
+                      width: '40px', height: '40px', borderRadius: '50%',
+                      background: previewPlaying ? 'rgba(245,197,24,0.15)' : '#f5c518',
+                      border: previewPlaying ? '2px solid rgba(245,197,24,0.4)' : 'none',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: 'pointer', flexShrink: 0,
+                      boxShadow: previewPlaying ? 'none' : '0 4px 12px rgba(245,197,24,0.25)',
+                      transition: 'all 0.2s',
                     }}
                   >
                     {previewPlaying
-                      ? <Pause size={20} color="var(--bg)" fill="var(--bg)" />
-                      : <Play size={20} color="var(--bg)" fill="var(--bg)" style={{ marginLeft: '2px' }} />}
+                      ? <Pause size={15} color="#f5c518" fill="#f5c518" />
+                      : <Play size={15} color="#000" fill="#000" style={{ marginLeft: '2px' }} />}
                   </button>
-                </div>
-              )}
-
-              {/* OR divider */}
-              {!recordedBlob && (
-                <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
-                    <span style={{ fontSize: '11px', color: 'var(--muted)', fontWeight: 600, letterSpacing: '0.08em', opacity: 0.5 }}>OR</span>
-                    <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+                  <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <WaveformBars active={previewPlaying} color="#22d3a5" />
+                    <span style={{ fontSize: '11px', color: 'var(--muted)', marginLeft: '4px' }}>
+                      {previewPlaying ? 'Playing…' : 'Tap to listen'}
+                    </span>
                   </div>
-
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    style={{
-                      width: '100%',
-                      padding: '13px',
-                      borderRadius: '14px',
-                      background: 'var(--card-bg)',
-                      border: '1px solid var(--border)',
-                      color: 'var(--text)',
-                      fontFamily: 'DM Sans, sans-serif',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                    }}
-                  >
-                    <Upload size={15} />
-                    Upload Audio Instead
-                  </button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".mp3,.wav,.m4a,.ogg,audio/*"
-                    style={{ display: 'none' }}
-                    onChange={handleFileUpload}
-                  />
-                </>
-              )}
-
-              {/* Continue */}
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={() => setStep(1)}
-                  style={{
-                    padding: '13px 20px',
-                    borderRadius: '14px',
-                    background: 'var(--glass)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--muted)',
-                    fontFamily: 'DM Sans, sans-serif',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Back
-                </button>
-                <button
-                  onClick={() => { if (recordedBlob) setStep(3); }}
-                  disabled={!recordedBlob}
-                  style={{
-                    flex: 1,
-                    padding: '13px',
-                    borderRadius: '14px',
-                    background: recordedBlob ? 'var(--accent)' : 'var(--glass)',
-                    border: 'none',
-                    color: '#000',
-                    fontFamily: 'Syne, sans-serif',
-                    fontSize: '15px',
-                    fontWeight: 700,
-                    cursor: recordedBlob ? 'pointer' : 'not-allowed',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    letterSpacing: '-0.01em',
-                    boxShadow: recordedBlob ? '0 0 24px rgba(245,197,24,0.25)' : 'none',
-                  }}
-                >
-                  Continue
-                  <ChevronRight size={16} strokeWidth={2.5} />
-                </button>
+                </div>
               </div>
+            )}
+          </div>
+
+          {/* ── Error ── */}
+          {cloneError && (
+            <div style={{
+              padding: '12px 16px', borderRadius: '12px',
+              background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+              color: '#ef4444', fontSize: '13px',
+            }}>
+              ⚠️ {cloneError}
             </div>
           )}
 
-          {/* ──────── STEP 3 ──────── */}
-          {step === 3 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {cloneSuccess ? (
-                /* Success state */
-                <div style={{ textAlign: 'center', padding: '24px 0' }}>
-                  <div
-                    style={{
-                      width: '64px',
-                      height: '64px',
-                      borderRadius: '50%',
-                      background: 'rgba(34,211,165,0.12)',
-                      border: '2px solid rgba(34,211,165,0.35)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto 16px',
-                    }}
-                  >
-                    <Check size={28} color="#22d3a5" strokeWidth={2.5} />
-                  </div>
-                  <h3 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '20px', color: 'var(--text)', margin: '0 0 8px' }}>
-                    Voice cloned successfully!
-                  </h3>
-                  <p style={{ fontSize: '13px', color: 'var(--muted)', margin: '0 0 24px' }}>
-                    "{voiceName}" has been saved to your library.
-                  </p>
-                  <Link
-                    href="/dashboard/saved"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '7px',
-                      padding: '12px 24px',
-                      borderRadius: '12px',
-                      background: 'var(--accent)',
-                      color: '#000',
-                      fontFamily: 'Syne, sans-serif',
-                      fontWeight: 700,
-                      fontSize: '14px',
-                      textDecoration: 'none',
-                      boxShadow: '0 0 20px rgba(245,197,24,0.3)',
-                    }}
-                  >
-                    Go to Saved Voices
-                    <ChevronRight size={15} strokeWidth={2.5} />
-                  </Link>
-                </div>
-              ) : (
-                /* Clone form */
-                <>
-                  {/* Summary */}
-                  <div
-                    style={{
-                      background: 'var(--glass)',
-                      border: '1px solid var(--border)',
-                      borderRadius: '14px',
-                      padding: '16px 18px',
-                    }}
-                  >
-                    <p style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', margin: '0 0 10px' }}>Summary</p>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <div>
-                        <p style={{ fontSize: '13px', color: 'var(--muted)', margin: '0 0 3px' }}>Voice Name</p>
-                        <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '16px', color: 'var(--text)', margin: 0 }}>{voiceName}</p>
-                      </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <p style={{ fontSize: '13px', color: 'var(--muted)', margin: '0 0 3px' }}>Duration</p>
-                        <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '16px', color: 'var(--accent)', margin: 0 }}>
-                          {uploadedName ? '—' : fmtTime(recSeconds)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+          {/* ── Clone Button ── */}
+          <button
+            onClick={handleClone}
+            disabled={cloning || !canClone}
+            style={{
+              width: '100%', padding: '13px',
+              borderRadius: '12px',
+              background: cloning || !canClone ? 'var(--glass)' : '#f5c518',
+              border: cloning || !canClone ? '1px solid var(--border)' : 'none',
+              color: cloning || !canClone ? 'var(--muted)' : '#000',
+              fontFamily: 'Syne, sans-serif', fontSize: '14px', fontWeight: 800,
+              cursor: cloning || !canClone ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+              boxShadow: cloning || !canClone ? 'none' : '0 8px 24px rgba(245,197,24,0.2)',
+              transition: 'all 0.2s', letterSpacing: '-0.01em',
+            }}
+          >
+            {cloning ? (
+              <>
+                <div style={{
+                  width: '18px', height: '18px',
+                  border: '2.5px solid rgba(0,0,0,0.15)', borderTop: '2.5px solid #000',
+                  borderRadius: '50%', animation: 'spin 0.7s linear infinite',
+                }} />
+                Saving Voice…
+              </>
+            ) : (
+              <>
+                <Zap size={18} fill="currentColor" />
+                Save Voice to Library
+              </>
+            )}
+          </button>
 
-                  {/* Back + Clone */}
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button
-                      onClick={() => setStep(2)}
-                      style={{
-                        padding: '13px 20px',
-                        borderRadius: '14px',
-                        background: 'var(--glass)',
-                        border: '1px solid var(--border)',
-                        color: 'var(--muted)',
-                        fontFamily: 'DM Sans, sans-serif',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Back
-                    </button>
-                    <button
-                      onClick={handleClone}
-                      disabled={cloning}
-                      style={{
-                        flex: 1,
-                        padding: '14px',
-                        borderRadius: '14px',
-                        background: cloning ? 'var(--glass)' : 'var(--accent)',
-                        border: 'none',
-                        color: '#000',
-                        fontFamily: 'Syne, sans-serif',
-                        fontSize: '15px',
-                        fontWeight: 700,
-                        cursor: cloning ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        boxShadow: cloning ? 'none' : '0 0 24px rgba(245,197,24,0.3)',
-                        letterSpacing: '-0.01em',
-                      }}
-                    >
-                      {cloning ? (
-                        <>
-                          <div
-                            style={{
-                              width: '16px',
-                              height: '16px',
-                              border: '2px solid rgba(8,8,16,0.3)',
-                              borderTop: '2px solid var(--bg)',
-                              borderRadius: '50%',
-                              animation: 'spin 0.7s linear infinite',
-                            }}
-                          />
-                          Cloning your voice…
-                        </>
-                      ) : (
-                        <>
-                          🧬 Clone &amp; Save Voice
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+          {!canClone && (
+            <p style={{ fontSize: '12px', color: 'var(--muted)', textAlign: 'center', margin: '-8px 0 0', opacity: 0.6 }}>
+              {!voiceName.trim() && !recordedBlob ? 'Enter a name and record audio to continue' :
+                !voiceName.trim() ? 'Enter a voice name to continue' :
+                  'Record or upload audio to continue'}
+            </p>
           )}
         </div>
 
-        {/* ── RIGHT COLUMN ── */}
-        <div className="w-full lg:w-[300px] flex-shrink-0 flex flex-col gap-4">
+        {/* ── RIGHT — Stats & Tips ── */}
+        <div style={{ width: '240px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
           {/* Recording Stats */}
-          <div
-            style={{
-              background: 'var(--card-bg)',
-              border: '1px solid var(--border)',
-              borderRadius: '18px',
-              padding: '20px',
-            }}
-          >
-            <p style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', margin: '0 0 16px' }}>
+          <div style={{
+            background: 'var(--card-bg)', border: '1px solid var(--border)',
+            borderRadius: '16px', padding: '16px',
+          }}>
+            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '12px' }}>
               Recording Stats
-            </p>
+            </div>
+
             {[
               {
                 label: 'Status',
-                value: recStatus,
-                color: recStatus === 'Recording' ? '#ef4444' : recStatus === 'Complete' ? '#22d3a5' : 'var(--muted)',
+                value: recording ? 'Recording' : recordedBlob ? 'Ready ✓' : 'Idle',
+                color: recording ? '#ef4444' : recordedBlob ? '#22d3a5' : 'var(--muted)',
               },
-              { label: 'Duration', value: fmtTime(recSeconds), color: 'var(--accent)' },
-              { label: 'Quality', value: recQuality, color: qualityColor },
+              { label: 'Duration', value: fmtTime(recSeconds), color: recSeconds > 0 ? '#f5c518' : 'var(--muted)' },
+              { label: 'Quality', value: quality, color: qualityColor },
             ].map((row) => (
-              <div
-                key={row.label}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '10px 0',
-                  borderBottom: '1px solid var(--border)',
-                }}
-              >
-                <span style={{ fontSize: '12.5px', color: 'var(--muted)' }}>{row.label}</span>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: row.color, fontFamily: 'Syne, sans-serif' }}>
-                  {row.value}
-                </span>
+              <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                <span style={{ fontSize: '12px', color: 'var(--muted)' }}>{row.label}</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: row.color, fontFamily: 'Syne, sans-serif' }}>{row.value}</span>
               </div>
             ))}
+
+            {/* Quality bar */}
+            {recSeconds > 0 && (
+              <div style={{ marginTop: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                  <span style={{ fontSize: '10px', color: 'var(--muted)' }}>Quality Score</span>
+                  <span style={{ fontSize: '10px', color: qualityColor, fontWeight: 700 }}>{Math.round(qualityPct)}%</span>
+                </div>
+                <div style={{ height: '3px', background: 'var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%', borderRadius: '4px',
+                    background: qualityColor,
+                    width: `${qualityPct}%`,
+                    transition: 'width 0.5s ease, background 0.3s ease',
+                  }} />
+                </div>
+                <p style={{ fontSize: '10px', color: 'var(--muted)', margin: '5px 0 0', opacity: 0.6 }}>
+                  {recSeconds < 10 ? 'Record at least 10s' : recSeconds < 30 ? '30s for best results' : 'Great quality!'}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Tips */}
-          <div
-            style={{
-              background: 'rgba(245,197,24,0.06)',
-              border: '1px solid rgba(245,197,24,0.15)',
-              borderRadius: '18px',
-              padding: '20px',
-            }}
-          >
-            <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '14px', color: 'var(--accent)', margin: '0 0 14px' }}>
-              💡 Recording Tips
+          <div style={{
+            background: 'rgba(245,197,24,0.04)', border: '1px solid rgba(245,197,24,0.12)',
+            borderRadius: '16px', padding: '16px',
+          }}>
+            <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '13px', color: '#f5c518', margin: '0 0 10px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <Volume2 size={13} /> Recording Tips
             </p>
-            <ul style={{ margin: 0, paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '9px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {[
-                'Record in a quiet room',
-                'Speak naturally for 30–60 seconds',
-                'Any text works — try reading an article',
-                'Avoid background noise',
-                'Keep mic 6–8 inches from mouth',
-              ].map((tip) => (
-                <li key={tip} style={{ fontSize: '12.5px', color: 'var(--muted)', lineHeight: 1.4 }}>
-                  {tip}
-                </li>
+                ['🎙', 'Quiet room, no echo'],
+                ['⏱', 'Speak for 30–60 seconds'],
+                ['📖', 'Read naturally'],
+                ['🔇', 'Avoid background noise'],
+                ['📏', 'Mic 6–8 inches away'],
+              ].map(([icon, tip]) => (
+                <div key={tip} style={{ display: 'flex', gap: '7px', alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '12px', flexShrink: 0 }}>{icon}</span>
+                  <span style={{ fontSize: '12px', color: 'var(--muted)', lineHeight: 1.4 }}>{tip}</span>
+                </div>
               ))}
-            </ul>
+            </div>
+          </div>
+
+          {/* Supported formats */}
+          <div style={{
+            background: 'var(--glass)', border: '1px solid var(--border)',
+            borderRadius: '14px', padding: '14px',
+          }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--muted)', margin: '0 0 8px' }}>
+              Supported Formats
+            </p>
+            <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+              {['MP3', 'WAV', 'M4A', 'OGG'].map((fmt) => (
+                <span key={fmt} style={{
+                  padding: '2px 8px', borderRadius: '5px',
+                  background: 'var(--card-bg)', border: '1px solid var(--border)',
+                  fontSize: '10px', fontWeight: 700, color: 'var(--muted)',
+                  fontFamily: 'monospace',
+                }}>
+                  {fmt}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes pulse-red {
+        @keyframes pulse-rec {
           0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
-          50% { box-shadow: 0 0 0 14px rgba(239,68,68,0); }
+          50% { box-shadow: 0 0 0 16px rgba(239,68,68,0); }
+        }
+        @keyframes wave-bar {
+          from { transform: scaleY(0.4); }
+          to { transform: scaleY(1); }
         }
         input::placeholder { color: var(--muted); opacity: 0.5; }
       `}</style>

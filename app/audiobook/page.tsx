@@ -9,10 +9,10 @@ export default function AudiobookPage() {
   return (
     <div style={{ background: '#faf8f3', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar />
-      
+
       <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '100px 24px' }}>
         <div style={{ maxWidth: '800px', width: '100%', textAlign: 'center' }}>
-          <div style={{ 
+          <div style={{
             display: 'inline-block',
             padding: '6px 16px',
             borderRadius: '100px',
@@ -26,8 +26,8 @@ export default function AudiobookPage() {
           }}>
             Coming Very Soon
           </div>
-          
-          <h1 style={{ 
+
+          <h1 style={{
             fontFamily: 'Instrument Serif, serif',
             fontSize: 'clamp(3rem, 8vw, 5rem)',
             lineHeight: 1,
@@ -37,20 +37,20 @@ export default function AudiobookPage() {
             AI Audiobooks <br />
             <em style={{ color: '#a855f7', fontStyle: 'italic' }}>New Era of Publishing.</em>
           </h1>
-          
-          <p style={{ 
+
+          <p style={{
             fontSize: '1.25rem',
             lineHeight: 1.6,
             color: '#6b6878',
             maxWidth: '600px',
             margin: '0 auto 48px'
           }}>
-            Convert entire manuscripts into high-quality audiobooks in minutes. 
+            Convert entire manuscripts into high-quality audiobooks in minutes.
             Multi-chapter support, automated narration, and studio-grade output.
           </p>
-          
+
           <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/" style={{ 
+            <Link href="/" style={{
               padding: '14px 32px',
               background: '#0a0a0f',
               color: '#fff',
@@ -61,7 +61,7 @@ export default function AudiobookPage() {
             }}>
               Back to Home
             </Link>
-            <Link href="/signup" style={{ 
+            <Link href="/signup" style={{
               padding: '14px 32px',
               background: 'transparent',
               color: '#0a0a0f',
