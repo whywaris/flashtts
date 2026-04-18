@@ -4,7 +4,10 @@
       "Bash(git -C /c/Users/LENOVO/Desktop/FlashTTS log --oneline -5)",
       "Bash(git -C /c/Users/LENOVO/Desktop/FlashTTS status --short)",
       "Bash(npx tsc *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }

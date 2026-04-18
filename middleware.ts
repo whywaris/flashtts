@@ -1,101 +1,89 @@
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
-    const hostname = request.headers.get('host') || ''
-    const isAdminSubdomain = 
-        hostname === 'admin.flashtts.com' ||
-        hostname === 'admin.localhost:3000'
+export async function middleware(req: NextRequest) {
+  const res = NextResponse.next()
+  const hostname = req.headers.get('host') || ''
+  const pathname = req.nextUrl.pathname
 
-    let supabaseResponse = NextResponse.next({ request })
+  // ── Supabase client ──
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            res.cookies.set(name, value, options)
+          })
+        },
+      },
+    }
+  )
 
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                getAll() {
-                    return request.cookies.getAll()
-                },
-                setAll(cookiesToSet) {
-                    cookiesToSet.forEach(({ name, value }) =>
-                        request.cookies.set(name, value)
-                    )
-                    supabaseResponse = NextResponse.next({ request })
-                    cookiesToSet.forEach(({ name, value, options }) =>
-                        supabaseResponse.cookies.set(name, value, options)
-                    )
-                },
-            },
-        }
-    )
+  const { data: { user } } = await supabase.auth.getUser()
 
-    const { data: { user } } = await supabase.auth.getUser()
+  // ── Admin Subdomain Routing ──
+  const isAdminSubdomain = 
+    hostname === 'admin.flashtts.com' ||
+    hostname.startsWith('admin.')
 
-    // Handle Admin Subdomain Routing
-    if (isAdminSubdomain) {
-        // Not logged in -> redirect to login
-        if (!user) {
-            return NextResponse.redirect(new URL('/login', request.url))
-        }
-
-        // Check admin role
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single()
-
-        // Not admin -> redirect to main dashboard
-        if (profile?.role !== 'admin') {
-            return NextResponse.redirect(new URL('https://flashtts.com/dashboard', request.url))
-        }
-
-        // Is admin -> rewrite root to /admin
-        const url = request.nextUrl.clone()
-        if (url.pathname === '/') {
-            url.pathname = '/admin'
-            return NextResponse.rewrite(url)
-        }
-        
-        return supabaseResponse
+  if (isAdminSubdomain) {
+    // Not logged in → login page
+    if (!user) {
+      return NextResponse.redirect(
+        new URL('https://flashtts.com/login?redirect=admin', req.url)
+      )
     }
 
-    // --- Normal flashtts.com routing below ---
+    // Check admin role in DB
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
 
-    // Require authentication for dashboard and admin routes
-    if (!user && (
-        request.nextUrl.pathname.startsWith('/dashboard') ||
-        request.nextUrl.pathname.startsWith('/admin')
-    )) {
-        return NextResponse.redirect(new URL('/login', request.url))
+    // Not admin → back to dashboard
+    if (profile?.role !== 'admin') {
+      return NextResponse.redirect(
+        new URL('https://flashtts.com/dashboard', req.url)
+      )
     }
 
-    // Require admin role for /admin routes on main domain
-    if (user && request.nextUrl.pathname.startsWith('/admin')) {
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single()
-        if (profile?.role !== 'admin') {
-            return NextResponse.redirect(new URL('/dashboard', request.url))
-        }
+    // Is admin → rewrite to /admin routes
+    const url = req.nextUrl.clone()
+    
+    // Root → /admin
+    if (pathname === '/') {
+      url.pathname = '/admin'
+      return NextResponse.rewrite(url)
     }
 
-    // Redirect already-logged-in users away from auth pages
-    if (user && (
-        request.nextUrl.pathname === '/login' ||
-        request.nextUrl.pathname === '/signup'
-    )) {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
+    // /dashboard → /admin/dashboard etc
+    if (!pathname.startsWith('/admin')) {
+      url.pathname = `/admin${pathname}`
+      return NextResponse.rewrite(url)
     }
 
-    return supabaseResponse
+    return res
+  }
+
+  // ── Main Site Auth ──
+  const isProtectedRoute = pathname.startsWith('/dashboard')
+
+  if (isProtectedRoute && !user) {
+    return NextResponse.redirect(new URL('/login', req.url))
+  }
+
+  return res
 }
 
 export const config = {
-    matcher: [
-        '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-    ],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)' 
+  ],
 }
