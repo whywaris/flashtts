@@ -21,7 +21,7 @@ interface UserProfile {
   banned_reason?: string
 }
 
-const PLANS = ['All', 'Free', 'Starter', 'Creator', 'Star', 'Pro', 'Agency']
+const PLANS = ['All', 'free', 'starter', 'creator', 'pro', 'studio']
 const STATUSES = ['All', 'Active', 'Banned']
 
 export default function UsersManager() {

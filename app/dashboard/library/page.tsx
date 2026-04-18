@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+import { getAvatarPath, getAvatarBackdrop } from '@/utils/avatar'
 
 const LANGUAGES = [
   { code: 'all', label: 'All', flag: '🌍' },
@@ -39,13 +41,7 @@ const PLAN_VOICE_LIMITS: Record<string, number> = {
   studio: 20,
 }
 
-const AVATAR_COLORS = [
-  '#f5c518', '#5b8ef0', '#22d3a5', '#a78bfa',
-  '#f05b5b', '#f59e0b', '#10b981', '#8b5cf6',
-]
-function getAvatarColor(name: string) {
-  return AVATAR_COLORS[(name?.charCodeAt(0) || 0) % AVATAR_COLORS.length]
-}
+
 
 export default function VoiceLibraryPage() {
   const supabase = createClient()
@@ -70,6 +66,7 @@ export default function VoiceLibraryPage() {
   const [isLangOpen, setIsLangOpen] = useState(false)
   const [langSearch, setLangSearch] = useState('')
   const langRef = useRef<HTMLDivElement>(null)
+  const loaderRef = useRef<HTMLDivElement>(null)
   const PER_PAGE = 24
 
   // Close dropdown on outside click
@@ -137,7 +134,28 @@ export default function VoiceLibraryPage() {
   })
   const paginated = filtered.slice(0, page * PER_PAGE)
   const hasMore = paginated.length < filtered.length
+  
   useEffect(() => { setPage(1) }, [selectedLang, selectedGender, search])
+
+  // ── Infinite Scroll ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!hasMore || loading) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setPage((prev) => prev + 1)
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current)
+    }
+
+    return () => observer.disconnect()
+  }, [hasMore, loading, filtered.length])
 
   // ── Play ────────────────────────────────────────────────────────────────────
   function playVoice(voice: any) {
@@ -225,7 +243,7 @@ export default function VoiceLibraryPage() {
 
   // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <div style={{ maxWidth: '1100px' }}>
+    <div style={{ width: '100%' }}>
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
@@ -233,9 +251,7 @@ export default function VoiceLibraryPage() {
           <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: '26px', fontWeight: 800, color: 'var(--foreground)', marginBottom: '4px' }}>
             Voice Library
           </h1>
-          <p style={{ fontSize: '13px', color: 'var(--muted-foreground)' }}>
-            {loading ? 'Loading...' : `${filtered.length.toLocaleString()} voices · 22 languages`}
-          </p>
+
         </div>
 
         {/* Saved count + limit indicator */}
@@ -332,9 +348,7 @@ export default function VoiceLibraryPage() {
           ))}
         </div>
 
-        <span style={{ fontSize: '12px', color: 'var(--muted-foreground)', whiteSpace: 'nowrap', marginLeft: 'auto' }}>
-          {filtered.length} results
-        </span>
+
       </div>
 
       {/* Loading */}
@@ -357,7 +371,8 @@ export default function VoiceLibraryPage() {
               const isSaved = savedIds.has(voice.id)
               const isPlaying = playingId === voice.id
               const isSaving = savingId === voice.id
-              const ac = getAvatarColor(voice.name || 'V')
+              const vColor = getAvatarBackdrop(voice.name || 'V')
+              const vPath = getAvatarPath(voice.name || 'V', voice.gender)
               const langData = LANGUAGES.find(l => l.code === voice.language)
               // Disable save button if at limit and not already saved
               const saveDisabled = isSaving || (isAtLimit && !isSaved)
@@ -367,8 +382,8 @@ export default function VoiceLibraryPage() {
 
                   {/* Avatar + Info */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: `${ac}22`, border: `1.5px solid ${ac}44`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 800, color: ac, flexShrink: 0, fontFamily: 'Syne, sans-serif' }}>
-                      {(voice.name || 'V')[0].toUpperCase()}
+                    <div style={{ position: 'relative', width: '42px', height: '42px', borderRadius: '50%', background: vColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.05)' }}>
+                      <Image src={vPath} alt={voice.name || 'Avatar'} fill style={{ objectFit: 'cover' }} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--foreground)', fontFamily: 'Syne, sans-serif', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -424,12 +439,13 @@ export default function VoiceLibraryPage() {
             })}
           </div>
 
-          {/* Load More */}
+          {/* Sentinel for Infinite Scroll */}
           {hasMore && (
-            <div style={{ textAlign: 'center', paddingBottom: '32px' }}>
-              <button onClick={() => setPage(p => p + 1)} style={{ padding: '11px 32px', background: 'var(--secondary)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--foreground)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
-                Load More ({filtered.length - paginated.length} remaining)
-              </button>
+            <div ref={loaderRef} style={{ textAlign: 'center', padding: '40px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: '24px', height: '24px', border: '2px solid rgba(245,197,24,0.1)', borderTop: '2px solid #f5c518', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>
+                Loading more voices... ({filtered.length - paginated.length} left)
+              </p>
             </div>
           )}
         </>

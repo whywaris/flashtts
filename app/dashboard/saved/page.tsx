@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
+import { getAvatarPath, getAvatarBackdrop } from '@/utils/avatar';
+import Image from 'next/image';
 import { Play, Square, Trash2, ArrowRight, Bookmark, Mic2 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -19,14 +21,7 @@ interface SavedVoice {
   created_at?: string | null;
 }
 
-const GRADIENTS = [
-  'linear-gradient(135deg, #f5c518 0%, #ff6b35 100%)',
-  'linear-gradient(135deg, #5b8ef0 0%, #a855f7 100%)',
-  'linear-gradient(135deg, #22d3a5 0%, #5b8ef0 100%)',
-  'linear-gradient(135deg, #f472b6 0%, #f5c518 100%)',
-  'linear-gradient(135deg, #a855f7 0%, #22d3a5 100%)',
-];
-const grad = (name: string) => GRADIENTS[(name?.charCodeAt(0) || 0) % GRADIENTS.length];
+
 
 // ─── Plan Limits ──────────────────────────────────────────────────────────────
 const PLAN_VOICE_LIMITS: Record<string, number> = {
@@ -193,7 +188,7 @@ export default function SavedVoicesPage() {
   );
 
   return (
-    <div style={{ fontFamily: 'DM Sans, sans-serif' }}>
+    <div style={{ fontFamily: 'DM Sans, sans-serif', width: '100%' }}>
 
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
@@ -270,13 +265,13 @@ export default function SavedVoicesPage() {
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
                   {/* Avatar */}
                   <div style={{
+                    position: 'relative',
                     width: '44px', height: '44px', borderRadius: '50%',
-                    background: grad(displayName),
+                    background: getAvatarBackdrop(displayName),
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '17px',
-                    color: '#080810', flexShrink: 0,
+                    flexShrink: 0, overflow: 'hidden', border: '1px solid rgba(0,0,0,0.05)'
                   }}>
-                    {displayName[0]?.toUpperCase() || '?'}
+                    <Image src={getAvatarPath(displayName, v.gender)} alt={displayName} fill style={{ objectFit: 'cover' }} />
                   </div>
 
                   {/* Info */}

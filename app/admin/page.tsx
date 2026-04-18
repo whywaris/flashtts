@@ -27,11 +27,20 @@ export default function AdminOverview() {
       const { count: paidCount } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).neq('plan', 'Free')
       const { data: recent } = await supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(5)
       
+      // Calculate real MRR from actual plan prices
+      const PLAN_MRR: Record<string, number> = { starter: 9, creator: 19, pro: 39, studio: 79 }
+      const { data: paidProfiles } = await supabase.from('profiles').select('plan').neq('plan', 'free').neq('plan', 'Free')
+      const realMrr = (paidProfiles || []).reduce((sum, p) => sum + (PLAN_MRR[(p.plan || '').toLowerCase()] || 0), 0)
+
+      // Real total chars generated
+      const { data: charData } = await supabase.from('profiles').select('credits_used')
+      const totalChars = (charData || []).reduce((s, p) => s + (p.credits_used || 0), 0)
+
       setStats({
         totalUsers: usersCount || 0,
         paidUsers: paidCount || 0,
-        mrr: (paidCount || 0) * 29, // Approximation
-        totalChars: 1245800, // Mock for now
+        mrr: realMrr,
+        totalChars,
         recentUsers: recent || []
       })
       setLoading(false)
@@ -42,35 +51,35 @@ export default function AdminOverview() {
   if (loading) return <div className="text-gray-400 font-medium">Crunching numbers...</div>
 
   const cards = [
-    { 
-      label: 'Total Users', 
-      value: stats.totalUsers.toLocaleString(), 
-      icon: Users, 
-      trend: '+12%', 
+    {
+      label: 'Total Users',
+      value: stats.totalUsers.toLocaleString(),
+      icon: Users,
+      trend: '',
       color: '#22c55e',
       isDark: true
     },
-    { 
-      label: 'Paid Users', 
-      value: stats.paidUsers.toLocaleString(), 
-      icon: StarIcon, 
-      trend: '+5%', 
+    {
+      label: 'Paid Users',
+      value: stats.paidUsers.toLocaleString(),
+      icon: StarIcon,
+      trend: '',
       color: '#f5c518',
       isDark: false
     },
-    { 
-      label: 'Monthly Revenue', 
-      value: `$${stats.mrr.toLocaleString()}`, 
-      icon: DollarSign, 
-      trend: '+18%', 
+    {
+      label: 'Est. Monthly Revenue',
+      value: `$${stats.mrr.toLocaleString()}`,
+      icon: DollarSign,
+      trend: '',
       color: '#1a1a2e',
       isDark: false
     },
-    { 
-      label: 'Chars Generated', 
-      value: '1.2M', 
-      icon: Zap, 
-      trend: '+24%', 
+    {
+      label: 'Chars Generated',
+      value: stats.totalChars > 1_000_000 ? `${(stats.totalChars / 1_000_000).toFixed(1)}M` : stats.totalChars > 1000 ? `${(stats.totalChars / 1000).toFixed(0)}K` : stats.totalChars.toString(),
+      icon: Zap,
+      trend: '',
       color: '#a855f7',
       isDark: false
     }
@@ -183,14 +192,14 @@ export default function AdminOverview() {
                  <div className="w-2.5 h-2.5 rounded-full bg-[#f5c518]" />
                  <span className="text-[10px] font-black text-[#6b7280] uppercase tracking-widest">PRO USERS</span>
                </div>
-               <div className="text-xl font-black font-['Instrument_Serif'] text-[#111827] group-hover:scale-110 transition-transform">1,240</div>
+               <div className="text-xl font-black font-['Instrument_Serif'] text-[#111827] group-hover:scale-110 transition-transform">{stats.paidUsers.toLocaleString()}</div>
             </div>
             <div className="text-center group">
                <div className="flex items-center justify-center gap-2 mb-1">
                  <div className="w-2.5 h-2.5 rounded-full bg-[#f1f3f5] border border-[#e9ecef]" />
                  <span className="text-[10px] font-black text-[#6b7280] uppercase tracking-widest">FREE USERS</span>
                </div>
-               <div className="text-xl font-black font-['Instrument_Serif'] text-[#111827] group-hover:scale-110 transition-transform">2,810</div>
+               <div className="text-xl font-black font-['Instrument_Serif'] text-[#111827] group-hover:scale-110 transition-transform">{Math.max(0, stats.totalUsers - stats.paidUsers).toLocaleString()}</div>
             </div>
           </div>
         </div>

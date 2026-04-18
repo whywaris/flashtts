@@ -66,7 +66,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
         { label: 'Users',               href: '/admin/users',   icon: Users },
         { label: 'Revenue',             href: '/admin/revenue', icon: DollarSign },
         { label: 'Write & Manage Blog', href: '/admin/blog',    icon: FileText },
-        { label: 'add & Manage Vocies', href: '/admin/voices',  icon: Music },
+        { label: 'Add & Manage Voices', href: '/admin/voices',  icon: Music },
         { label: 'Usage',               href: '/admin/usage',   icon: BarChart2 },
       ]
     },

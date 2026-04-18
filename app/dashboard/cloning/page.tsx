@@ -13,7 +13,6 @@ import {
   Check,
   Zap,
   Volume2,
-  Waveform,
 } from 'lucide-react';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -33,7 +32,7 @@ function WaveformBars({ active, color = '#f5c518' }: { active: boolean; color?: 
             width: '3px',
             borderRadius: '2px',
             background: color,
-            height: active ? `${20 + Math.random() * 12}px` : '6px',
+            height: active ? '20px' : '6px',
             transition: 'height 0.15s ease',
             animation: active ? `wave-bar ${0.4 + i * 0.07}s ease-in-out infinite alternate` : 'none',
             opacity: active ? 1 : 0.3,
@@ -195,11 +194,21 @@ export default function VoiceCloningPage() {
     setCloneError('');
 
     try {
+      // Upload audio to R2 first
+      const formData = new FormData();
+      formData.append('audio', recordedBlob);
+      const uploadRes = await fetch('/api/upload-voice', { method: 'POST', body: formData });
+      if (!uploadRes.ok) {
+        const err = await uploadRes.json().catch(() => ({}));
+        throw new Error(err.error || 'Audio upload failed');
+      }
+      const { url: r2Url } = await uploadRes.json();
+
       const supabase = createClient();
 
       const { data: clonedData, error: cloneErr } = await supabase
         .from('cloned_voices')
-        .insert({ user_id: userId, name: voiceName, sample_url: null, status: 'ready' })
+        .insert({ user_id: userId, name: voiceName, sample_url: r2Url, status: 'ready' })
         .select('id')
         .single();
 
@@ -213,8 +222,8 @@ export default function VoiceCloningPage() {
         language: null,
         gender: null,
         source: 'cloned',
-        r2_url: null,
-      });
+        r2_url: r2Url,
+      }, { onConflict: 'user_id,voice_id' });
 
       setCloneSuccess(true);
     } catch (err: any) {
@@ -236,8 +245,8 @@ export default function VoiceCloningPage() {
   // ── Success screen ─────────────────────────────────────────────────────────
   if (cloneSuccess) {
     return (
-      <div style={{ fontFamily: 'DM Sans, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
-        <div style={{ textAlign: 'center', maxWidth: '420px', padding: '0 20px' }}>
+      <div style={{ fontFamily: 'DM Sans, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', width: '100%' }}>
+        <div style={{ textAlign: 'center', width: '100%', maxWidth: '420px', padding: '0 20px' }}>
           {/* Animated checkmark */}
           <div style={{
             width: '80px', height: '80px', borderRadius: '50%',
@@ -291,7 +300,7 @@ export default function VoiceCloningPage() {
 
   // ── Main UI ────────────────────────────────────────────────────────────────
   return (
-    <div style={{ fontFamily: 'DM Sans, sans-serif' }}>
+    <div style={{ fontFamily: 'DM Sans, sans-serif', width: '100%' }}>
 
       {/* ── Page Header ── */}
       <div style={{ marginBottom: '20px' }}>
@@ -313,10 +322,10 @@ export default function VoiceCloningPage() {
       </div>
 
       {/* ── Two Column Layout ── */}
-      <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <div className="flex flex-col lg:flex-row gap-5 items-start">
 
         {/* ── LEFT — Main Panel ── */}
-        <div style={{ flex: 1, minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="w-full lg:flex-1 min-w-0 flex flex-col gap-3">
 
 
           {/* ── Plan Limit Banner ── */}
@@ -547,7 +556,7 @@ export default function VoiceCloningPage() {
         </div>
 
         {/* ── RIGHT — Stats & Tips ── */}
-        <div style={{ width: '240px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="w-full lg:w-[240px] shrink-0 flex flex-col gap-3">
 
           {/* Recording Stats */}
           <div style={{

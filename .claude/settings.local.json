@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /c/Users/LENOVO/Desktop/FlashTTS log --oneline -5)",
+      "Bash(git -C /c/Users/LENOVO/Desktop/FlashTTS status --short)",
+      "Bash(npx tsc *)",
+      "Bash(npm install *)"
+    ]
+  }
+}

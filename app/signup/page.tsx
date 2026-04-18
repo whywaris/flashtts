@@ -32,8 +32,17 @@ export default function SignupPage() {
             setError(error.message)
             setLoading(false)
         } else {
-            router.push('/dashboard')
-            router.refresh()
+            // If Supabase requires email confirmation the user has no session yet.
+            // Check for a session; if missing, show a confirmation prompt instead.
+            const { data: { session } } = await supabase.auth.getSession()
+            if (session) {
+                window.location.assign('/dashboard')
+            } else {
+                setError('')
+                setLoading(false)
+                // Show confirmation notice by storing state in URL
+                window.location.assign('/signup?confirm=1')
+            }
         }
     }
 
@@ -45,6 +54,21 @@ export default function SignupPage() {
             }
         })
         if (error) alert(error.message)
+    }
+
+    const isConfirmPage = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('confirm') === '1'
+
+    if (isConfirmPage) {
+        return (
+            <div className="min-h-screen bg-[#faf8f3] flex flex-col items-center justify-center p-6">
+                <div className="w-full max-w-md bg-white border border-[#e5e0d8] p-10 rounded-[32px] shadow-xl text-center">
+                    <div className="text-5xl mb-4">📬</div>
+                    <h1 className="text-2xl font-black font-['Instrument Serif'] text-[#0a0a0f] mb-3">Check your email</h1>
+                    <p className="text-[#6b6878] mb-6">We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.</p>
+                    <Link href="/login" className="text-[14px] font-bold text-[#ff4d1c] hover:underline">Back to Login</Link>
+                </div>
+            </div>
+        )
     }
 
     return (

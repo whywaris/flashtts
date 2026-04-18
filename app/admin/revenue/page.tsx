@@ -25,12 +25,13 @@ interface PlanStats {
 }
 
 const PLAN_PRICES: any = {
-  Starter: 15,
-  Creator: 29,
-  Star: 39,
-  Pro: 49,
-  Agency: 79,
-  Free: 0
+  starter: 9,
+  creator: 19,
+  pro: 39,
+  studio: 79,
+  free: 0,
+  // capitalised variants for DB inconsistency
+  Free: 0, Starter: 9, Creator: 19, Pro: 39, Studio: 79,
 }
 
 export default function RevenueDashboard() {
@@ -48,11 +49,11 @@ export default function RevenueDashboard() {
     const { data: profiles } = await supabase.from('profiles').select('plan')
     
     if (profiles) {
-      const counts: any = { Free: 0, Starter: 0, Creator: 0, Star: 0, Pro: 0, Agency: 0 }
+      const counts: any = { free: 0, starter: 0, creator: 0, pro: 0, studio: 0 }
       profiles.forEach(p => {
-        const plan = p.plan || 'Free'
+        const plan = (p.plan || 'free').toLowerCase()
         if (counts[plan] !== undefined) counts[plan]++
-        else counts.Free++
+        else counts.free++
       })
 
       const breakdown: PlanStats[] = Object.keys(counts).map(name => {

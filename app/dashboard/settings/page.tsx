@@ -1,93 +1,124 @@
 'use client';
 
-// Run in Supabase SQL: ALTER TABLE profiles ADD COLUMN IF NOT EXISTS username text;
-// IMPORTANT: Create 'avatars' bucket in Supabase Storage
-// Supabase → Storage → New bucket → name: avatars → Public: true
-
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { Check, Eye, EyeOff, Zap, AlertTriangle, Camera } from 'lucide-react';
+import { 
+  Check, 
+  Eye, 
+  EyeOff, 
+  Zap, 
+  AlertTriangle, 
+  Lock, 
+  User, 
+  ChevronDown, 
+  ChevronUp, 
+  ShieldCheck,
+  CreditCard,
+  Trash2,
+  Mail
+} from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
+import { getAvatarBackdrop } from '@/utils/avatar';
 
-interface Profile { 
-  id: string; 
-  full_name?: string | null; 
-  username?: string | null; 
-  plan?: string | null; 
-  avatar_url?: string | null; 
-  credits_limit?: number | null;
-}
-
-const PLAN_FEATURES = {
-  Free: ['5,000 chars/month', '19 languages', 'Basic voices', '1 cloned voice'],
-  Creator: ['100,000 chars/month', '19 languages', 'All voices', '10 cloned voices', 'Priority synthesis'],
+// ─── Plan Feature Mapping ───────────────────────────────────────────────────
+const PLAN_DATA: Record<string, { label: string; chars: string; clones: string; voices: string }> = {
+  free: { 
+    label: 'Free Plan', 
+    chars: '10,000 chars/mo', 
+    clones: '1 clone', 
+    voices: 'Basic voices' 
+  },
+  starter: { 
+    label: 'Starter Plan', 
+    chars: '200,000 chars/mo', 
+    clones: '2 clones', 
+    voices: '20-30 voices' 
+  },
+  creator: { 
+    label: 'Creator Plan', 
+    chars: '500,000 chars/mo', 
+    clones: '5 clones', 
+    voices: '50+ voices' 
+  },
+  pro: { 
+    label: 'Pro Plan', 
+    chars: '1,000,000 chars/mo', 
+    clones: '9 clones', 
+    voices: '100+ voices' 
+  },
+  studio: { 
+    label: 'Studio Plan', 
+    chars: '3,000,000 chars/mo', 
+    clones: '15 clones', 
+    voices: 'Full library' 
+  },
 };
 
-const inputStyle: React.CSSProperties = {
-  width: '100%', background: 'var(--glass)', border: '1px solid var(--border)',
-  borderRadius: '12px', padding: '11px 14px', color: 'var(--text)', fontSize: '13.5px',
-  fontFamily: 'DM Sans, sans-serif', outline: 'none', boxSizing: 'border-box', caretColor: 'var(--accent)',
-};
-const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em',
-  textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '8px', opacity: 0.8,
-};
-const sectionCard: React.CSSProperties = {
-  background: 'var(--card-bg)', border: '1px solid var(--border)',
-  borderRadius: '20px', padding: '24px', marginBottom: '16px',
-};
-
+// ─── Component ───────────────────────────────────────────────────────────────
 export default function SettingsPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-  const [email, setEmail] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
-  const [plan, setPlan] = useState('Free');
-  const [creditsLimit, setCreditsLimit] = useState(5000);
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const supabase = useMemo(() => createClient(), []);
 
+  // Profile State
+  const [profile, setProfile] = useState<any>(null);
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
+
+  // Password State
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPw, setShowPw] = useState(false);
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [updatingPassword, setUpdatingPassword] = useState(false);
-  const [passwordStatus, setPasswordStatus] = useState({ success: false, error: '' });
+
+  // UI State
+  const [dangerZoneExpanded, setDangerZoneExpanded] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function load() {
-      const supabase = createClient();
+    async function init() {
       const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) { router.push('/login'); return; }
-      
-      setUser(user);
-      setEmail(user.email || '');
+      if (error || !user) {
+        router.push('/login');
+        return;
+      }
 
-      const { data: profile } = await supabase
+      const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
-        
-      if (profile) {
-        setFullName(profile.full_name || '');
-        setUsername(profile.username || '');
-        setAvatarUrl(profile.avatar_url || '');
-        setPlan(profile.plan || 'Free');
-        setCreditsLimit(profile.credits_limit || 5000);
-      }
-    }
-    load();
-  }, [router]);
 
-  async function handleSaveProfile() {
-    if (!user) return;
-    setSaving(true);
+      if (profileData) {
+        setProfile(profileData);
+        setFullName(profileData.full_name || '');
+        setEmail(user.email || '');
+        setUsername(profileData.username || '');
+      }
+      setLoading(false);
+    }
+    init();
+  }, [router, supabase]);
+
+  const initials = useMemo(() => {
+    if (!fullName) return 'U';
+    const parts = fullName.trim().split(' ');
+    return parts.length >= 1 ? parts[0][0].toUpperCase() : 'U';
+  }, [fullName]);
+
+  const avatarBg = useMemo(() => getAvatarBackdrop(fullName || 'User'), [fullName]);
+
+  // Handle Profile Update
+  const handleSaveProfile = async () => {
+    if (!profile) return;
+    setSavingProfile(true);
     try {
-      const supabase = createClient();
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -95,250 +126,369 @@ export default function SettingsPage() {
           username: username,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', user.id);
-      
+        .eq('id', profile.id);
+
       if (error) throw error;
-      alert('Profile updated successfully!');
+      toast.success('Profile updated successfully!');
     } catch (err: any) {
-      alert('Error: ' + err.message);
+      toast.error('Error updating profile: ' + err.message);
     } finally {
-      setSaving(false);
+      setSavingProfile(false);
     }
-  }
+  };
 
-  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-
-    // Validate file
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      alert('Only JPG, PNG, WebP allowed');
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      alert('Max file size is 2MB');
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const supabase = createClient();
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${user.id}/avatar.${fileExt}`;
-
-      // Upload to Supabase Storage
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      // Update profile
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      setAvatarUrl(publicUrl);
-      alert('Photo updated!');
-    } catch (err: any) {
-      alert('Upload error: ' + err.message);
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  async function handleUpdatePassword() {
-    if (newPassword !== confirmPassword) {
-      alert('Passwords do not match');
-      return;
-    }
+  // Handle Password Update
+  const handleUpdatePassword = async () => {
     if (newPassword.length < 8) {
-      alert('Password must be at least 8 characters');
+      toast.error('New password must be at least 8 characters');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('Passwords do not match');
       return;
     }
 
     setUpdatingPassword(true);
-    setPasswordStatus({ success: false, error: '' });
     try {
-      const supabase = createClient();
+      // Re-authenticate
+      const { error: reAuthError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
+
+      if (reAuthError) throw new Error('Current password is incorrect');
+
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
+
       if (error) throw error;
-      alert('Password updated successfully!');
-      setPasswordStatus({ success: true, error: '' });
+      
+      toast.success('Password updated successfully!');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setTimeout(() => setPasswordStatus(s => ({ ...s, success: false })), 3000);
     } catch (err: any) {
-      alert('Error: ' + err.message);
-      setPasswordStatus({ success: false, error: err.message });
+      toast.error(err.message);
     } finally {
       setUpdatingPassword(false);
     }
-  }
+  };
+
+  const handleDeleteAudio = async () => {
+    if (window.confirm('Are you sure? This will delete all your generated audio files. This cannot be undone.')) {
+      try {
+        const { error } = await supabase
+          .from('tts_jobs')
+          .delete()
+          .eq('user_id', profile.id);
+        
+        if (error) throw error;
+        toast.success('All audio history deleted');
+      } catch (err: any) {
+        toast.error('Error deleting audio: ' + err.message);
+      }
+    }
+  };
 
   const handleDeleteAccount = async () => {
-    alert('Account deletion is not yet fully implemented for safety. Please contact support.');
+    if (deleteConfirmText !== 'DELETE') return;
+    toast.loading('Processing...');
+    
+    // Sign out user correctly
+    await supabase.auth.signOut();
+    toast.dismiss();
+    toast.error('Contact support to delete account for safety.', { duration: 5000 });
+    router.push('/login');
   };
 
-  const getInitials = () => {
-    if (fullName) {
-      const p = fullName.split(' ');
-      return p.length >= 2 ? (p[0][0] + p[p.length - 1][0]).toUpperCase() : fullName.slice(0, 2).toUpperCase();
-    }
-    return email.slice(0, 2).toUpperCase() || 'U';
-  };
+  if (loading) return null;
 
-  const pwInput = (val: string, onChange: (v: string) => void, placeholder: string) => (
-    <div style={{ position: 'relative' }}>
-      <input type={showPw ? 'text' : 'password'} value={val} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        style={{ ...inputStyle, paddingRight: '42px' }} />
-      <button onClick={() => setShowPw(s => !s)}
-        style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: 0, opacity: 0.6 }}>
-        {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-      </button>
-    </div>
-  );
+  const currentPlan = profile?.plan?.toLowerCase() || 'free';
+  const planInfo = PLAN_DATA[currentPlan] || PLAN_DATA.free;
+  const creditsUsed = profile?.credits_used || 0;
+  const creditsLimit = profile?.credits_limit || 10000;
+  const usagePercentage = (creditsUsed / creditsLimit) * 100;
+  
+  const progressBarColor = usagePercentage > 90 ? '#ef4444' : usagePercentage > 70 ? '#f5c518' : '#22d3a5';
 
   return (
-    <div style={{ fontFamily: 'DM Sans, sans-serif' }}>
-      <div style={{ marginBottom: '28px' }}>
-        <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: '28px', fontWeight: 700, color: 'var(--text)', margin: '0 0 6px', letterSpacing: '-0.02em' }}>Settings</h1>
-        <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>Manage your account preferences</p>
+    <div style={{ fontFamily: 'DM Sans, sans-serif', maxWidth: '1200px' }}>
+      <Toaster position="top-right" />
+      
+      {/* ── Page Header ── */}
+      <div style={{ marginBottom: '32px' }}>
+        <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: '32px', fontWeight: 800, color: 'var(--text)', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
+          Settings
+        </h1>
+        <p style={{ fontSize: '14px', color: 'var(--muted)', margin: 0 }}>
+          Manage your account and preferences
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* LEFT */}
-        <div>
-          {/* Profile */}
-          <div style={sectionCard}>
-            <p style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', margin: '0 0 18px', opacity: 0.7 }}>Profile</p>
-            {/* Avatar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px' }}>
-              {avatarUrl ? (
-                <img 
-                  src={avatarUrl} 
-                  alt="Avatar"
-                  style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover' }}
-                />
-              ) : (
-                <div style={{
-                  width: 64, height: 64, borderRadius: '50%',
-                  background: 'rgba(245,197,24,0.2)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 24, fontWeight: 700, color: '#f5c518', flexShrink: 0
-                }}>
-                  {getInitials()}
-                </div>
-              )}
-              
-              <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', borderRadius: '10px', background: 'var(--glass)', border: '1px solid var(--border)', color: 'var(--muted)', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
-                {uploading ? 'Uploading...' : <><Camera size={14} /> Change Photo</>}
+      <div className="flex flex-col lg:flex-row gap-8 items-start">
+        
+        {/* ── LEFT COLUMN: Profile & Password ── */}
+        <div className="flex-1 w-full space-y-6">
+          
+          {/* CARD: PROFILE */}
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '16px', padding: '24px' }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '24px' }}>
+              PROFILE
+            </p>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px' }}>
+              <div style={{ 
+                width: '64px', height: '64px', borderRadius: '50%', background: avatarBg,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '24px', fontWeight: 800, color: '#000', border: '2px solid rgba(0,0,0,0.05)'
+              }}>
+                {initials}
+              </div>
+              <button 
+                onClick={() => toast('Photo upload coming soon!', { icon: '📸' })}
+                style={{ 
+                  background: 'none', border: 'none', color: 'var(--muted)', 
+                  fontSize: '13px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline'
+                }}
+              >
+                Change Photo
               </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                style={{ display: 'none' }}
-                onChange={handlePhotoUpload}
-              />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div><label style={labelStyle}>Full Name</label>
-                <input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Your full name" style={inputStyle} /></div>
-              <div><label style={labelStyle}>Email</label>
-                <input value={email} readOnly style={{ ...inputStyle, opacity: 0.5, cursor: 'not-allowed' }} /></div>
-              <div><label style={labelStyle}>Username</label>
+            <div className="space-y-6">
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px', letterSpacing: '0.05em' }}>FULL NAME</label>
+                <input 
+                  value={fullName} 
+                  onChange={e => setFullName(e.target.value)}
+                  style={{ width: '100%', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px 16px', color: 'var(--text)', outline: 'none' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px', letterSpacing: '0.05em' }}>EMAIL</label>
                 <div style={{ position: 'relative' }}>
-                  <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', opacity: 0.5, fontSize: '14px' }}>@</span>
-                  <input value={username} onChange={e => setUsername(e.target.value)} placeholder="username" style={{ ...inputStyle, paddingLeft: '28px' }} />
+                  <input 
+                    value={email} 
+                    readOnly
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px 16px', color: 'var(--muted)', cursor: 'not-allowed', outline: 'none' }}
+                  />
+                  <Lock size={14} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }} />
+                </div>
+                <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '6px', opacity: 0.5 }}>Cannot be changed</p>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px', letterSpacing: '0.05em' }}>USERNAME</label>
+                <input 
+                  value={username} 
+                  onChange={e => setUsername(e.target.value)}
+                  placeholder="@username"
+                  style={{ width: '100%', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px 16px', color: 'var(--text)', outline: 'none' }}
+                />
+              </div>
+
+              <button 
+                onClick={handleSaveProfile}
+                disabled={savingProfile}
+                style={{ 
+                  width: '100%', padding: '14px', borderRadius: '12px', background: '#f5c518', 
+                  color: '#000', fontWeight: 800, fontSize: '14px', cursor: 'pointer', border: 'none',
+                  opacity: savingProfile ? 0.7 : 1, transition: 'transform 0.1s'
+                }}
+              >
+                {savingProfile ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+
+          {/* CARD: PASSWORD */}
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '16px', padding: '24px' }}>
+            <p style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '24px' }}>
+              PASSWORD
+            </p>
+
+            <div className="space-y-4">
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type={showCurrentPw ? 'text' : 'password'}
+                  placeholder="Current Password"
+                  value={currentPassword}
+                  onChange={e => setCurrentPassword(e.target.value)}
+                  style={{ width: '100%', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px 16px', paddingRight: '46px', color: 'var(--text)', outline: 'none' }}
+                />
+                <button onClick={() => setShowCurrentPw(!showCurrentPw)} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer' }}>
+                  {showCurrentPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type={showNewPw ? 'text' : 'password'}
+                  placeholder="New Password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  style={{ width: '100%', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px 16px', paddingRight: '46px', color: 'var(--text)', outline: 'none' }}
+                />
+                <button onClick={() => setShowNewPw(!showNewPw)} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer' }}>
+                  {showNewPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type={showConfirmPw ? 'text' : 'password'}
+                  placeholder="Confirm New Password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  style={{ width: '100%', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '10px', padding: '12px 16px', paddingRight: '46px', color: 'var(--text)', outline: 'none' }}
+                />
+                <button onClick={() => setShowConfirmPw(!showConfirmPw)} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer' }}>
+                  {showConfirmPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              <button 
+                onClick={handleUpdatePassword}
+                disabled={updatingPassword || !currentPassword || !newPassword || !confirmPassword}
+                style={{ 
+                  width: '100%', padding: '14px', borderRadius: '12px', background: '#f5c518', 
+                  color: '#000', fontWeight: 800, fontSize: '14px', cursor: 'pointer', border: 'none',
+                  opacity: (updatingPassword || !currentPassword || !newPassword || !confirmPassword) ? 0.5 : 1
+                }}
+              >
+                {updatingPassword ? 'Updating...' : 'Update Password'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ── RIGHT COLUMN: Plan & Danger Zone ── */}
+        <div style={{ width: '100%', maxWidth: '320px' }} className="space-y-6">
+          
+          {/* CARD: ACTIVE PLAN */}
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '16px', padding: '24px' }}>
+            <div style={{ marginBottom: '20px' }}>
+              <span style={{ background: 'rgba(34,211,165,0.1)', color: '#22d3a5', fontSize: '10px', fontWeight: 800, padding: '4px 10px', borderRadius: '6px', letterSpacing: '0.1em' }}>
+                ACTIVE PLAN
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
+              <Zap size={22} color="#f5c518" fill="#f5c518" />
+              <h3 style={{ fontFamily: 'Syne, sans-serif', fontSize: '24px', fontWeight: 800, color: 'var(--text)', margin: 0 }}>
+                {planInfo.label}
+              </h3>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
+              {[planInfo.chars, planInfo.clones, planInfo.voices].map((feature, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: 'var(--muted)' }}>
+                  <Check size={14} color="#22d3a5" strokeWidth={3} />
+                  {feature}
+                </div>
+              ))}
+            </div>
+
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '12px', color: 'var(--muted)', fontWeight: 600 }}>Credits Used This Month</span>
+              </div>
+              <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden', marginBottom: '8px' }}>
+                <div style={{ height: '100%', background: progressBarColor, width: `${usagePercentage}%`, transition: 'width 0.5s ease' }} />
+              </div>
+              <p style={{ fontSize: '11px', color: 'var(--muted)' }}>
+                {creditsUsed.toLocaleString()} / {creditsLimit.toLocaleString()} chars used
+              </p>
+            </div>
+
+            {currentPlan !== 'studio' && (
+              <a 
+                href="/dashboard/billing"
+                style={{ 
+                  display: 'flex', width: '100%', padding: '14px', borderRadius: '12px', 
+                  background: '#f5c518', color: '#000', fontWeight: 800, fontSize: '14px', 
+                  alignItems: 'center', justifyContent: 'center', textDecoration: 'none', gap: '8px'
+                }}
+              >
+                ⚡ Upgrade Plan
+              </a>
+            )}
+          </div>
+
+          {/* CARD: DANGER ZONE */}
+          <div style={{ 
+            background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.2)', 
+            borderRadius: '16px', padding: dangerZoneExpanded ? '24px' : '16px', overflow: 'hidden'
+          }}>
+            <button 
+              onClick={() => setDangerZoneExpanded(!dangerZoneExpanded)}
+              style={{ 
+                width: '100%', background: 'none', border: 'none', display: 'flex', 
+                alignItems: 'center', justifyContent: 'space-between', color: '#ef4444', 
+                fontWeight: 700, fontSize: '14px', cursor: 'pointer', padding: 0
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <AlertTriangle size={18} />
+                Danger Zone
+              </div>
+              {dangerZoneExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+            </button>
+
+            {dangerZoneExpanded && (
+              <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <button 
+                  onClick={handleDeleteAudio}
+                  style={{ 
+                    width: '100%', padding: '12px', borderRadius: '10px', background: 'none', 
+                    border: '1px solid rgba(239,68,68,0.4)', color: '#ef4444', 
+                    fontWeight: 600, fontSize: '13px', cursor: 'pointer'
+                  }}
+                >
+                  Delete All Generated Audio
+                </button>
+
+                <div style={{ borderTop: '1px solid rgba(239,68,68,0.1)', paddingTop: '16px', marginTop: '4px' }}>
+                  <p style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '12px' }}>
+                    Type <strong style={{ color: 'var(--text)' }}>DELETE</strong> to confirm account deletion
+                  </p>
+                  <input 
+                    value={deleteConfirmText}
+                    onChange={e => setDeleteConfirmText(e.target.value)}
+                    style={{ 
+                      width: '100%', background: 'rgba(239,68,68,0.05)', border: '1px solid rgba(239,68,68,0.2)', 
+                      borderRadius: '10px', padding: '10px 14px', color: 'var(--text)', outline: 'none',
+                      marginBottom: '12px'
+                    }}
+                  />
+                  <button 
+                    onClick={handleDeleteAccount}
+                    disabled={deleteConfirmText !== 'DELETE'}
+                    style={{ 
+                      width: '100%', padding: '12px', borderRadius: '10px', background: '#ef4444', 
+                      color: '#fff', fontWeight: 700, fontSize: '13px', cursor: 'pointer', border: 'none',
+                      opacity: deleteConfirmText !== 'DELETE' ? 0.5 : 1
+                    }}
+                  >
+                    Delete Account
+                  </button>
                 </div>
               </div>
-              <button onClick={handleSaveProfile} disabled={saving}
-                style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'var(--accent)', border: 'none', color: 'var(--bg)', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '14px', cursor: 'pointer', transition: 'all 0.2s ease' }}>
-                {saving ? 'Saving…' : 'Save Changes'}
-              </button>
-            </div>
-          </div>
-
-          {/* Password */}
-          <div style={sectionCard}>
-            <p style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--muted)', margin: '0 0 18px', opacity: 0.7 }}>Password</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {pwInput(currentPassword, setCurrentPassword, 'Current password')}
-              {pwInput(newPassword, setNewPassword, 'New password')}
-              {pwInput(confirmPassword, setConfirmPassword, 'Confirm new password')}
-              {passwordStatus.error && <p style={{ fontSize: '12px', color: 'rgba(255,100,100,0.8)', margin: 0 }}>{passwordStatus.error}</p>}
-              <button onClick={handleUpdatePassword} disabled={updatingPassword || !newPassword}
-                style={{ width: '100%', padding: '12px', borderRadius: '12px', background: passwordStatus.success ? 'rgba(34,211,165,0.12)' : (updatingPassword || !newPassword) ? 'rgba(245,197,24,0.3)' : 'var(--accent)', border: passwordStatus.success ? '1px solid rgba(34,211,165,0.3)' : 'none', color: passwordStatus.success ? '#22d3a5' : 'var(--bg)', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '14px', cursor: (updatingPassword || !newPassword) ? 'not-allowed' : 'pointer' }}>
-                {updatingPassword ? 'Updating…' : passwordStatus.success ? '✓ Updated' : 'Update Password'}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT */}
-        <div>
-          {/* Plan */}
-          <div style={sectionCard}>
-            <div style={{ display: 'inline-flex', padding: '3px 9px', borderRadius: '6px', background: 'rgba(245,197,24,0.1)', border: '1px solid rgba(245,197,24,0.2)', fontSize: '10px', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Active Plan</div>
-            <h3 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '20px', color: 'var(--text)', margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Zap size={18} color="var(--accent)" fill="var(--accent)" /> {plan[0].toUpperCase() + plan.slice(1)} Plan
-            </h3>
-            <ul style={{ margin: '0 0 18px', paddingLeft: '0', listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {(PLAN_FEATURES[plan as keyof typeof PLAN_FEATURES] || PLAN_FEATURES.Free).map(f => (
-                <li key={f} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--muted)', opacity: 0.9 }}>
-                  <Check size={13} color="#22d3a5" strokeWidth={3} /> {f.includes('chars/month') ? `${creditsLimit.toLocaleString()} chars/month` : f}
-                </li>
-              ))}
-            </ul>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '14px' }}>
-              {(['Free', 'Creator'] as const).map(p => (
-                <div key={p} style={{ padding: '12px', borderRadius: '12px', background: plan.toLowerCase() === p.toLowerCase() ? 'rgba(245,197,24,0.08)' : 'var(--glass)', border: plan.toLowerCase() === p.toLowerCase() ? '1.5px solid rgba(245,197,24,0.3)' : '1px solid var(--border)' }}>
-                  <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '13px', color: plan.toLowerCase() === p.toLowerCase() ? 'var(--accent)' : 'var(--text)', margin: '0 0 4px', opacity: plan.toLowerCase() === p.toLowerCase() ? 1 : 0.6 }}>{p}</p>
-                  <p style={{ fontSize: '11px', color: 'var(--muted)', margin: 0, opacity: 0.6 }}>{p === 'Free' ? '5K chars/mo' : '100K chars/mo'}</p>
-                </div>
-              ))}
-            </div>
-            <button style={{ width: '100%', padding: '12px', borderRadius: '12px', background: 'var(--accent)', border: 'none', color: 'var(--bg)', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '14px', cursor: 'pointer', letterSpacing: '-0.01em' }}>
-              ⚡ Upgrade to Creator
-            </button>
-          </div>
-
-          {/* Danger Zone */}
-          <div style={{ ...sectionCard, background: 'rgba(255,50,50,0.04)', border: '1px solid rgba(255,80,80,0.2)', marginBottom: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '10px' }}>
-              <AlertTriangle size={14} color="rgba(255,100,100,0.8)" />
-              <p style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '15px', color: 'rgba(255,100,100,0.85)', margin: 0 }}>Danger Zone</p>
-            </div>
-            <p style={{ fontSize: '12.5px', color: 'var(--muted)', margin: '0 0 16px', lineHeight: 1.5, opacity: 0.7 }}>These actions are irreversible. Please be certain before proceeding.</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <button style={{ width: '100%', padding: '11px', borderRadius: '11px', background: 'transparent', border: '1px solid rgba(255,80,80,0.4)', color: 'rgba(255,100,100,0.7)', fontFamily: 'DM Sans, sans-serif', fontWeight: 600, fontSize: '13px', cursor: 'pointer' }}>
-                Delete All Generated Audio
-              </button>
-              <button onClick={handleDeleteAccount}
-                style={{ width: '100%', padding: '11px', borderRadius: '11px', background: 'rgba(255,80,80,0.08)', border: '1px solid rgba(255,80,80,0.4)', color: 'rgba(255,100,100,0.7)', fontFamily: 'DM Sans, sans-serif', fontWeight: 700, fontSize: '13px', cursor: 'pointer' }}>
-                Delete Account
-              </button>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
-      <style>{`input::placeholder { color: var(--muted); opacity: 0.5; }`}</style>
+      <style>{`
+        input::placeholder { color: var(--muted); opacity: 0.3; }
+        .space-y-6 > * + * { margin-top: 24px; }
+        .space-y-4 > * + * { margin-top: 16px; }
+        @media (max-width: 1024px) {
+          #right-col { max-width: 100% !important; }
+        }
+      `}</style>
     </div>
   );
 }

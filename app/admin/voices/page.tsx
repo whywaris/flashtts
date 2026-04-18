@@ -43,14 +43,14 @@ export default function VoiceManager() {
 
   async function fetchVoices() {
     const supabase = createClient()
-    const { data } = await supabase.from('tts_voices').select('*').order('name')
+    const { data } = await supabase.from('voices').select('*').order('name')
     if (data) setVoices(data)
     setLoading(false)
   }
 
   async function handleToggleActive(id: string, current: boolean) {
     const supabase = createClient()
-    const { error } = await supabase.from('tts_voices').update({ is_active: !current }).eq('id', id)
+    const { error } = await supabase.from('voices').update({ is_active: !current }).eq('id', id)
     if (!error) {
       setVoices(voices.map(v => v.id === id ? { ...v, is_active: !current } : v))
     }
@@ -59,13 +59,13 @@ export default function VoiceManager() {
   async function handleDelete(id: string) {
     if (!confirm('Delete this voice?')) return
     const supabase = createClient()
-    const { error } = await supabase.from('tts_voices').delete().eq('id', id)
+    const { error } = await supabase.from('voices').delete().eq('id', id)
     if (!error) setVoices(voices.filter(v => v.id !== id))
   }
 
   async function handleAddVoice() {
     const supabase = createClient()
-    const { error } = await supabase.from('tts_voices').insert([newVoice])
+    const { error } = await supabase.from('voices').insert([newVoice])
     if (!error) {
       alert('Voice added!')
       setShowAddModal(false)

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import {
   BookOpen, Mic, Zap, Download, Play, Pause,
   Plus, Trash2, GripVertical, ChevronDown, ChevronUp,
-  RotateCcw, X, Search, Settings2, AlertCircle
+  RotateCcw, X, Search, Settings2, AlertCircle, Lock
 } from 'lucide-react'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -85,7 +85,7 @@ function parseChapters(raw: string): Chapter[] {
 // ─── Status pill colors ───────────────────────────────────────────────────────
 const statusColor: Record<string, string> = {
   pending: 'var(--muted)',
-  generating: '#f5c518',
+  generating: '#a855f7',
   done: '#22d3a5',
   error: '#f05b5b',
 }
@@ -158,6 +158,20 @@ export default function AudioBooksPage() {
     } catch { }
   }, [bookTitle, author, genre, language, rawText, speed, globalVoice, chapters])
 
+  // ── Logic Variables ────────────────────────────────────────────────────────
+  const isFree = profile?.plan === 'free' || !profile?.plan
+  const creditsLeft = profile?.credits ?? 0
+  const activeChapters = chapters.filter(c => c.text.trim())
+  const totalChars = activeChapters.reduce((acc, c) => acc + c.charCount, 0)
+  const totalWords = activeChapters.reduce((acc, c) => acc + c.wordCount, 0)
+  const doneCount = chapters.filter(c => c.status === 'done').length
+  const progress = activeChapters.length > 0 ? Math.round((doneCount / activeChapters.length) * 100) : 0
+
+  const filteredSV = savedVoices.filter(v => 
+    (v.name || v.voice_name || 'Voice').toLowerCase().includes(voiceSearch.toLowerCase()) ||
+    (v.language || '').toLowerCase().includes(voiceSearch.toLowerCase())
+  )
+
   // ── Chapter helpers ───────────────────────────────────────────────────────
   function setChapter(id: string, patch: Partial<Chapter>) {
     setChapters(prev => prev.map(c => {
@@ -209,19 +223,42 @@ export default function AudioBooksPage() {
     setShowVoicePicker(false)
   }
 
-  // ── Playback ──────────────────────────────────────────────────────────────
+  // ── Playback & Downloads ──────────────────────────────────────────────────
   function playChapter(ch: Chapter) {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
     if (playingId === ch.id) { setPlayingId(null); return }
-    if (!ch.audioBlob) return
-    const a = new Audio(URL.createObjectURL(ch.audioBlob))
+    if (!ch.audioBlob && !ch.audioUrl) return
+    const url = ch.audioUrl || (ch.audioBlob ? URL.createObjectURL(ch.audioBlob) : '')
+    if (!url) return
+    const a = new Audio(url)
     a.play(); a.onended = () => setPlayingId(null)
     audioRef.current = a; setPlayingId(ch.id)
+  }
+
+  function downloadChapter(ch: Chapter) {
+    if (!ch.audioUrl) return
+    const a = document.createElement('a')
+    a.href = ch.audioUrl
+    a.download = `${bookTitle || 'Book'} - ${ch.title}.mp3`
+    a.click()
+  }
+
+  async function downloadAll() {
+    const done = chapters.filter(c => c.status === 'done' && c.audioUrl)
+    if (!done.length) return
+    for (const ch of done) {
+      downloadChapter(ch)
+      await new Promise(r => setTimeout(r, 600)) // slight delay to open multiple prompts
+    }
   }
 
   // ── Generate single ───────────────────────────────────────────────────────
   async function genChapter(ch: Chapter): Promise<void> {
     if (!ch.text.trim()) return
+    if (ch.charCount > creditsLeft) {
+      setChapter(ch.id, { status: 'error', errorMsg: 'Not enough credits to generate this chapter.' })
+      return
+    }
     setChapter(ch.id, { status: 'generating', errorMsg: null })
     try {
       const voiceId = ch.voiceId || globalVoice?.id || null
@@ -248,6 +285,11 @@ export default function AudioBooksPage() {
         blobs.push(new Blob([await res.blob()], { type: 'audio/mpeg' }))
       }
       const merged = new Blob(blobs, { type: 'audio/mpeg' })
+      setChapters(prev => {
+        const old = prev.find(c => c.id === ch.id)
+        if (old?.audioUrl) URL.revokeObjectURL(old.audioUrl)
+        return prev
+      })
       setChapter(ch.id, { status: 'done', audioBlob: merged, audioUrl: URL.createObjectURL(merged) })
     } catch (e: any) {
       setChapter(ch.id, e.message === 'Cancelled' ? { status: 'pending' } : { status: 'error', errorMsg: e.message })
@@ -260,8 +302,9 @@ export default function AudioBooksPage() {
     if (!toGen.length) { setGenError('No chapters with content'); return }
     if (totalChars > creditsLeft) { setGenError('Not enough credits'); return }
     setIsGenerating(true); setGenError(''); cancelledRef.current = false
-    setChapters(p => p.map(c => ({ ...c, status: c.text.trim() ? 'pending' : c.status, audioBlob: null, audioUrl: null })))
+    setChapters(p => p.map(c => ({ ...c, status: c.text.trim() && c.status !== 'done' ? 'pending' : c.status })))
     for (const ch of toGen) {
+      if (ch.status === 'done') continue
       if (cancelledRef.current) break
       await genChapter(ch)
       await new Promise(r => setTimeout(r, 300))
@@ -269,141 +312,170 @@ export default function AudioBooksPage() {
     setIsGenerating(false)
   }
 
-  // ── Download ──────────────────────────────────────────────────────────────
-  function downloadChapter(ch: Chapter) {
-    if (!ch.audioBlob) return
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(ch.audioBlob)
-    a.download = `${(bookTitle || 'book').replace(/[^a-z0-9]/gi, '-').slice(0, 30)}-${ch.title.replace(/[^a-z0-9]/gi, '-').slice(0, 30)}.mp3`
-    document.body.appendChild(a); a.click(); document.body.removeChild(a)
-  }
-
-  function downloadAll() {
-    chapters.filter(c => c.audioBlob).forEach((c, i) => setTimeout(() => downloadChapter(c), i * 600))
-  }
-
-  // ── Derived ───────────────────────────────────────────────────────────────
-  const totalWords = chapters.reduce((s, c) => s + c.wordCount, 0)
-  const totalChars = chapters.reduce((s, c) => s + c.charCount, 0)
-  const doneCount = chapters.filter(c => c.status === 'done').length
-  const activeChapters = chapters.filter(c => c.text.trim())
-  const progress = activeChapters.length > 0 ? Math.round((doneCount / activeChapters.length) * 100) : 0
-  const creditsLeft = Math.max(0, (profile?.credits_limit || 10000) - (profile?.credits_used || 0))
-  const filteredSV = savedVoices.filter(v => !voiceSearch || (v.voice_name || v.name || '').toLowerCase().includes(voiceSearch.toLowerCase()))
+  // ─── Render Helpers ───
+  const UpgradeBanner = () => (
+    <div style={{
+      padding: '16px',
+      background: 'rgba(245,197,24,0.06)',
+      border: '1px solid rgba(245,197,24,0.2)',
+      borderRadius: '14px',
+      textAlign: 'center',
+      marginBottom: '12px',
+      animation: 'fade-in 0.3s ease'
+    }}>
+      <div style={{ fontSize: '24px', marginBottom: '8px' }}>
+        📚
+      </div>
+      <p style={{ 
+        fontFamily: 'Syne, sans-serif', fontWeight: 800,
+        fontSize: '15px', color: 'var(--text)',
+        margin: '0 0 6px'
+      }}>
+        Audiobooks is a paid feature
+      </p>
+      <p style={{
+        fontSize: '13px', color: 'var(--muted)',
+        margin: '0 0 14px', lineHeight: 1.6
+      }}>
+        Upgrade to Starter or higher to generate audiobook chapters. Free plan includes preview only.
+      </p>
+      <button
+        onClick={() => router.push('/dashboard/billing')}
+        style={{
+          padding: '10px 24px',
+          background: '#f5c518', color: '#000',
+          border: 'none', borderRadius: '10px',
+          fontFamily: 'Syne, sans-serif', fontWeight: 800,
+          fontSize: '13px', cursor: 'pointer'
+        }}
+      >
+        ⚡ Upgrade to Generate
+      </button>
+    </div>
+  )
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div style={{ fontFamily: 'DM Sans, sans-serif', maxWidth: '1080px' }}>
+    <div style={{ fontFamily: 'DM Sans, sans-serif', width: '100%', animation: 'fade-in 0.3s ease' }}>
+      <title>eBook to AudioBook Studio</title>
 
       {/* ── Page Header ── */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '28px', gap: '12px', flexWrap: 'wrap' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(245,197,24,0.12)', border: '1px solid rgba(245,197,24,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <BookOpen size={16} color="#f5c518" />
-            </div>
-            <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: '22px', fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-0.02em' }}>
-              Audiobook Studio
-            </h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px', gap: '16px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
+            📚
           </div>
-          <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0, paddingLeft: '42px' }}>
-            Paste your book · auto-split chapters · generate MP3s
-          </p>
+          <div>
+            <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: '24px', fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-0.02em' }}>
+              eBook to AudioBook
+            </h1>
+            <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>
+              Paste · Split · Generate MP3s
+            </p>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <div style={{ background: 'rgba(245,197,24,0.08)', border: '1px solid rgba(245,197,24,0.15)', padding: '6px 14px', borderRadius: '99px', color: '#f5c518', fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
+            ⚡ {creditsLeft.toLocaleString()} available
+          </div>
+          <button onClick={() => setShowSettings(s => !s)} style={{ width: '38px', height: '38px', borderRadius: '12px', background: showSettings ? 'rgba(168,85,247,0.1)' : 'var(--card-bg)', border: `1px solid ${showSettings ? 'rgba(168,85,247,0.3)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: showSettings ? '#a855f7' : 'var(--muted)', transition: 'all 0.2s' }}>
+            <Settings2 size={18} />
+          </button>
           {doneCount > 0 && (
-            <button onClick={downloadAll} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: '#f5c518', border: 'none', borderRadius: '10px', color: '#000', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}>
-              <Download size={14} /> Download All ({doneCount})
+            <button onClick={downloadAll} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', background: '#f5c518', border: 'none', borderRadius: '12px', color: '#000', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif', boxShadow: '0 8px 16px rgba(245,197,24,0.15)' }}>
+              <Download size={14} /> Download All
             </button>
           )}
-          <button onClick={() => setShowSettings(s => !s)} style={{ width: '36px', height: '36px', borderRadius: '10px', background: showSettings ? 'rgba(245,197,24,0.1)' : 'var(--card-bg)', border: `1px solid ${showSettings ? 'rgba(245,197,24,0.3)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: showSettings ? '#f5c518' : 'var(--muted)' }}>
-            <Settings2 size={16} />
-          </button>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
 
         {/* ── LEFT COLUMN ── */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-          {/* ── Section 1: Book Info ── */}
-          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '16px', padding: '18px' }}>
-            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '14px' }}>
+          {/* SECTION 01: BOOK INFO */}
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '20px', padding: '20px' }}>
+            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid var(--border)' }}>
               01 — Book Info
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <input
-                value={bookTitle}
-                onChange={e => setBookTitle(e.target.value)}
-                placeholder="Book title *"
-                style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', background: 'var(--glass)', border: `1.5px solid ${bookTitle ? 'rgba(245,197,24,0.3)' : 'var(--border)'}`, borderRadius: '10px', color: 'var(--text)', fontSize: '14px', fontFamily: 'DM Sans, sans-serif', outline: 'none' }}
-              />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                <input value={author} onChange={e => setAuthor(e.target.value)} placeholder="Author" style={{ padding: '9px 12px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none' }} />
-                <select value={genre} onChange={e => setGenre(e.target.value)} style={{ padding: '9px 12px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none', cursor: 'pointer' }}>
-                  {GENRES.map(g => <option key={g}>{g}</option>)}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '18px' }}>📖</span>
+                <input
+                  value={bookTitle}
+                  onChange={e => setBookTitle(e.target.value)}
+                  placeholder="Book Title..."
+                  className="book-title-input focus-purple"
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px 12px 42px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--text)', fontSize: '15px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif', outline: 'none', transition: 'all 0.2s' }}
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input value={author} onChange={e => setAuthor(e.target.value)} placeholder="Author" className="focus-purple" style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none', transition: 'all 0.2s' }} />
+                <select value={genre} onChange={e => setGenre(e.target.value)} className="focus-purple" style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
+                  {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
                 </select>
-                <select value={language} onChange={e => setLanguage(e.target.value)} style={{ padding: '9px 12px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none', cursor: 'pointer' }}>
+                <select value={language} onChange={e => setLanguage(e.target.value)} className="focus-purple" style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
                   {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.flag} {l.label}</option>)}
                 </select>
               </div>
             </div>
           </div>
 
-          {/* ── Section 2: Paste Text ── */}
-          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '16px', padding: '18px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--muted)' }}>
+          {/* SECTION 02: PAASTE YOUR BOOK */}
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '20px', padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)' }}>
                 02 — Paste Your Book
               </div>
-              <span style={{ fontSize: '11px', color: 'var(--muted)' }}>
+              <div style={{ fontSize: '11px', background: 'var(--glass)', padding: '2px 10px', borderRadius: '8px', color: 'var(--muted)' }}>
                 {wc(rawText).toLocaleString()} words
-              </span>
+              </div>
             </div>
 
             <textarea
               value={rawText}
               onChange={e => setRawText(e.target.value)}
-              placeholder={'Paste your entire book here.\n\nTip: Chapter headings like "Chapter 1:" will be auto-detected.\nNo headings? Auto-splits every ~2,000 words.'}
-              style={{ width: '100%', minHeight: '200px', background: 'transparent', border: 'none', outline: 'none', resize: 'vertical', color: 'var(--text)', fontSize: '14px', lineHeight: '1.7', fontFamily: 'DM Sans, sans-serif', textAlign: 'left', direction: 'ltr', boxSizing: 'border-box' }}
+              placeholder={'Paste the entire book content here...\n\nWe will detect chapters and sections for you.'}
+              className="book-textarea focus-purple"
+              style={{ width: '100%', minHeight: '220px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', outline: 'none', resize: 'vertical', color: 'var(--text)', fontSize: '14px', lineHeight: '1.8', fontFamily: 'DM Sans, sans-serif', boxSizing: 'border-box', transition: 'all 0.2s' }}
             />
 
-            <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
               <button
                 onClick={handleParse}
                 disabled={!rawText.trim()}
-                style={{ flex: 1, minWidth: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px', background: rawText.trim() ? '#f5c518' : 'var(--glass)', border: rawText.trim() ? 'none' : '1px solid var(--border)', borderRadius: '10px', color: rawText.trim() ? '#000' : 'var(--muted)', fontSize: '13px', fontWeight: 700, cursor: rawText.trim() ? 'pointer' : 'not-allowed', fontFamily: 'Syne, sans-serif' }}
+                style={{ flex: 1, height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '0 20px', background: rawText.trim() ? '#a855f7' : 'var(--glass)', border: rawText.trim() ? 'none' : '1px solid var(--border)', borderRadius: '12px', color: rawText.trim() ? '#fff' : 'var(--muted)', fontSize: '13px', fontWeight: 700, cursor: rawText.trim() ? 'pointer' : 'not-allowed', fontFamily: 'Syne, sans-serif', transition: 'all 0.2s' }}
               >
                 <Zap size={14} fill={rawText.trim() ? 'currentColor' : 'none'} />
-                Auto-Detect Chapters
+                Auto-Detect
               </button>
               <button
                 onClick={addChapter}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--muted)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}
+                style={{ display: 'flex', height: '44px', alignItems: 'center', gap: '8px', padding: '0 20px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--muted)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}
               >
                 <Plus size={14} /> Add Manually
               </button>
             </div>
           </div>
 
-          {/* ── Section 3: Chapters List ── */}
+          {/* SECTION 03: CHAPTERS LIST */}
           {chapters.length > 0 && (
-            <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '16px', padding: '18px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--muted)' }}>
-                  03 — Chapters ({chapters.length})
+            <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '20px', padding: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)' }}>
+                  03 — Chapters
                 </div>
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--muted)' }}>{totalWords.toLocaleString()} words · {durLabel(totalWords, speed)}</span>
-                  <button onClick={addChapter} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '5px 10px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--muted)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                    <Plus size={12} /> Add
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--muted)' }}>{chapters.length} items</span>
+                  <button onClick={addChapter} style={{ width: '24px', height: '24px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--muted)' }}>
+                    <Plus size={12} />
                   </button>
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {chapters.map((ch, idx) => {
                   const isExpanded = expandedId === ch.id
                   const isEditing = editingId === ch.id
@@ -419,109 +491,98 @@ export default function AudioBooksPage() {
                       onDragOver={e => e.preventDefault()}
                       onDrop={() => onDrop(idx)}
                       onDragEnd={() => { setDragOverId(null); dragIdx.current = null }}
-                      style={{ border: `1px solid ${isDragOver ? '#f5c518' : 'var(--border)'}`, borderRadius: '12px', overflow: 'hidden', transition: 'border-color 0.15s', opacity: isDragOver ? 0.6 : 1 }}
+                      className="chapter-row"
+                      style={{ 
+                        background: 'var(--bg)', border: `1px solid ${isDragOver ? '#a855f7' : 'var(--border)'}`, 
+                        borderRadius: '14px', overflow: 'hidden', transition: 'all 0.2s', 
+                        opacity: isDragOver ? 0.6 : 1 
+                      }}
                     >
-                      {/* Chapter header row */}
+                      {/* Header row */}
                       <div
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', background: 'var(--bg)', cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', cursor: 'pointer' }}
                         onClick={() => setExpandedId(isExpanded ? null : ch.id)}
                       >
-                        {/* Drag handle */}
-                        <div style={{ color: 'var(--muted)', cursor: 'grab', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                          <GripVertical size={14} />
-                        </div>
-
-                        {/* Index */}
-                        <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: ch.status === 'done' ? 'rgba(34,211,165,0.15)' : 'var(--glass)', border: `1px solid ${ch.status === 'done' ? 'rgba(34,211,165,0.3)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: ch.status === 'done' ? '#22d3a5' : 'var(--muted)', flexShrink: 0 }}>
-                          {ch.status === 'done' ? '✓' : idx + 1}
-                        </div>
-
-                        {/* Title */}
-                        {isEditing ? (
-                          <input
-                            value={ch.title}
-                            onChange={e => setChapter(ch.id, { title: e.target.value })}
-                            onClick={e => e.stopPropagation()}
-                            autoFocus
-                            style={{ flex: 1, padding: '3px 8px', background: 'var(--glass)', border: '1px solid rgba(245,197,24,0.3)', borderRadius: '6px', color: 'var(--text)', fontSize: '13px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif', outline: 'none' }}
-                          />
-                        ) : (
-                          <span style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {ch.title}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                          <span style={{ color: 'var(--muted)', cursor: 'grab', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                            <GripVertical size={14} />
                           </span>
-                        )}
-
-                        {/* Meta */}
-                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                          <span style={{ fontSize: '11px', color: 'var(--muted)' }}>{ch.wordCount.toLocaleString()}w</span>
-
-                          {/* Status dot */}
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', fontWeight: 700, color: sc }}>
-                            {ch.status === 'generating' && (
-                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: sc, display: 'inline-block', animation: 'ab-blink 1s infinite' }} />
-                            )}
-                            {ch.status !== 'pending' && ch.status}
-                          </span>
-
-                          {/* Actions */}
-                          <div style={{ display: 'flex', gap: '3px' }}>
-                            {ch.audioBlob && (
-                              <button onClick={() => playChapter(ch)} style={{ width: '26px', height: '26px', borderRadius: '6px', background: playingId === ch.id ? 'rgba(245,197,24,0.15)' : 'var(--glass)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: playingId === ch.id ? '#f5c518' : 'var(--muted)' }}>
-                                {playingId === ch.id ? <Pause size={11} /> : <Play size={11} />}
-                              </button>
-                            )}
-                            {ch.audioBlob && (
-                              <button onClick={() => downloadChapter(ch)} style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--glass)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--muted)' }}>
-                                <Download size={11} />
-                              </button>
-                            )}
-                            {ch.status !== 'generating' && (
-                              <button onClick={() => genChapter(ch)} disabled={!ch.text.trim()} title="Generate" style={{ width: '26px', height: '26px', borderRadius: '6px', background: ch.status === 'done' ? 'rgba(34,211,165,0.1)' : 'rgba(245,197,24,0.1)', border: `1px solid ${ch.status === 'done' ? 'rgba(34,211,165,0.2)' : 'rgba(245,197,24,0.2)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: ch.text.trim() ? 'pointer' : 'not-allowed', color: ch.status === 'done' ? '#22d3a5' : '#f5c518', opacity: !ch.text.trim() ? 0.4 : 1 }}>
-                                {ch.status === 'done' ? <RotateCcw size={11} /> : <Zap size={11} />}
-                              </button>
-                            )}
-                            <button onClick={() => openPicker(ch.id)} title="Voice" style={{ width: '26px', height: '26px', borderRadius: '6px', background: ch.voiceName ? 'rgba(91,142,240,0.1)' : 'var(--glass)', border: `1px solid ${ch.voiceName ? 'rgba(91,142,240,0.25)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: ch.voiceName ? '#5b8ef0' : 'var(--muted)' }}>
-                              <Mic size={11} />
-                            </button>
-                            <button onClick={() => { setEditingId(isEditing ? null : ch.id); setExpandedId(ch.id) }} style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--glass)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: isEditing ? '#f5c518' : 'var(--muted)', fontSize: '11px' }}>
-                              ✏
-                            </button>
-                            <button onClick={() => deleteChapter(ch.id)} style={{ width: '26px', height: '26px', borderRadius: '6px', background: 'var(--glass)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#f05b5b' }}>
-                              <Trash2 size={11} />
-                            </button>
+                          
+                          <div style={{ minWidth: '24px', height: '24px', borderRadius: '50%', background: ch.status === 'done' ? 'rgba(34,211,165,0.1)' : 'rgba(255,255,255,0.05)', border: `1px solid ${ch.status === 'done' ? 'rgba(34,211,165,0.2)' : 'rgba(255,255,255,0.1)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 800, color: ch.status === 'done' ? '#22d3a5' : 'var(--muted)' }}>
+                             {ch.status === 'done' ? '✓' : idx + 1}
                           </div>
 
-                          {/* Expand chevron */}
-                          <div style={{ color: 'var(--muted)', marginLeft: '2px' }}>
-                            {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                          {isEditing ? (
+                            <input
+                              value={ch.title}
+                              onChange={e => setChapter(ch.id, { title: e.target.value })}
+                              onClick={e => e.stopPropagation()}
+                              autoFocus
+                              style={{ flex: 1, padding: '4px 8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(168,85,247,0.3)', borderRadius: '6px', color: 'var(--text)', fontSize: '13px', fontWeight: 700, outline: 'none' }}
+                            />
+                          ) : (
+                            <span style={{ flex: 1, fontSize: '14px', fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {ch.title}
+                            </span>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }} onClick={e => e.stopPropagation()}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: '45px' }} className="hidden sm:flex">
+                             <span style={{ fontSize: '10px', color: 'var(--muted)' }}>{ch.wordCount}w</span>
+                             <span style={{ fontSize: '9px', fontWeight: 800, color: sc, textTransform: 'uppercase' }}>{ch.status !== 'pending' ? ch.status : ''}</span>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            {ch.audioUrl && (
+                              <button onClick={() => playChapter(ch)} style={{ width: '28px', height: '28px', borderRadius: '8px', background: playingId === ch.id ? 'rgba(168,85,247,0.1)' : 'var(--glass)', border: '1px solid var(--border)', color: playingId === ch.id ? '#a855f7' : 'var(--muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {playingId === ch.id ? <Pause size={12} /> : <Play size={12} />}
+                              </button>
+                            )}
+                            
+                            {isFree ? (
+                               <button onClick={() => router.push('/dashboard/billing')} title="Upgrade to generate" style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'rgba(245,197,24,0.08)', border: '1px solid rgba(245,197,24,0.2)', color: '#f5c518', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <Lock size={12} />
+                               </button>
+                            ) : (
+                              <button onClick={() => genChapter(ch)} disabled={!ch.text.trim()} style={{ width: '28px', height: '28px', borderRadius: '8px', background: ch.status === 'done' ? 'rgba(34,211,165,0.1)' : 'rgba(168,85,247,0.1)', border: `1px solid ${ch.status === 'done' ? 'rgba(34,211,165,0.2)' : 'rgba(168,85,247,0.2)'}`, color: ch.status === 'done' ? '#22d3a5' : '#a855f7', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: !ch.text.trim() ? 0.3 : 1 }}>
+                                {ch.status === 'done' ? <RotateCcw size={12} /> : <Zap size={12} fill="currentColor" />}
+                              </button>
+                            )}
+
+                            <button onClick={() => openPicker(ch.id)} style={{ width: '28px', height: '28px', borderRadius: '8px', background: ch.voiceName ? 'rgba(168,85,247,0.1)' : 'var(--glass)', border: '1px solid var(--border)', color: ch.voiceName ? '#a855f7' : 'var(--muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Mic size={12} />
+                            </button>
+                            <button onClick={() => setEditingId(isEditing ? null : ch.id)} style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'var(--glass)', border: '1px solid var(--border)', color: isEditing ? '#a855f7' : 'var(--muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              ✏
+                            </button>
+                            <button onClick={() => deleteChapter(ch.id)} style={{ width: '28px', height: '28px', borderRadius: '8px', background: 'transparent', border: 'none', color: '#f05b5b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <Trash2 size={12} />
+                            </button>
                           </div>
                         </div>
                       </div>
 
-                      {/* Expanded body */}
+                      {/* Content Area */}
                       {isExpanded && (
-                        <div style={{ padding: '0 12px 12px', background: 'var(--bg)' }} onClick={e => e.stopPropagation()}>
-                          <textarea
-                            value={ch.text}
-                            onChange={e => setChapter(ch.id, { text: e.target.value })}
-                            placeholder="Chapter content..."
-                            style={{ width: '100%', minHeight: '140px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '10px', padding: '10px 12px', color: 'var(--text)', fontSize: '13px', lineHeight: '1.7', outline: 'none', resize: 'vertical', fontFamily: 'DM Sans, sans-serif', textAlign: 'left', direction: 'ltr', boxSizing: 'border-box' }}
-                          />
-                          <div style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '4px' }}>
-                            {ch.wordCount.toLocaleString()} words · {ch.charCount.toLocaleString()} chars
-                          </div>
-                          {ch.status === 'error' && ch.errorMsg && (
-                            <div style={{ marginTop: '8px', padding: '8px 12px', background: 'rgba(240,91,91,0.08)', border: '1px solid rgba(240,91,91,0.2)', borderRadius: '8px', fontSize: '12px', color: '#f05b5b', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <AlertCircle size={13} /> {ch.errorMsg}
-                            </div>
-                          )}
-                        </div>
+                         <div style={{ padding: '0 16px 16px', animation: 'fade-in 0.2s ease' }}>
+                            <textarea
+                              value={ch.text}
+                              onChange={e => setChapter(ch.id, { text: e.target.value })}
+                              style={{ width: '100%', minHeight: '160px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'var(--text)', fontSize: '13px', lineHeight: '1.7', outline: 'none', resize: 'vertical' }}
+                            />
+                            {ch.status === 'error' && (
+                              <div style={{ marginTop: '8px', color: '#f05b5b', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <AlertCircle size={12} /> {ch.errorMsg}
+                              </div>
+                            )}
+                         </div>
                       )}
 
-                      {/* Generating bar */}
+                      {/* Generating Progress */}
                       {ch.status === 'generating' && (
-                        <div style={{ height: '2px', background: 'var(--border)' }}>
-                          <div style={{ height: '100%', width: '60%', background: '#f5c518', animation: 'ab-slide 1.5s ease-in-out infinite' }} />
+                        <div style={{ height: '3px', background: 'rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden' }}>
+                           <div className="generating-purple-bar" style={{ position: 'absolute', height: '100%', width: '40%', background: '#a855f7', borderRadius: '99px' }} />
                         </div>
                       )}
                     </div>
@@ -531,156 +592,133 @@ export default function AudioBooksPage() {
             </div>
           )}
 
-          {/* ── Section 4: Generate ── */}
-          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '16px', padding: '18px' }}>
-            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '14px' }}>
+          {/* SECTION 04: GENERATE CONTROLS */}
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '20px', padding: '20px' }}>
+            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid var(--border)' }}>
               04 — Generate
             </div>
 
-            {/* Stats row */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '14px' }}>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
               {[
                 { label: 'Chapters', value: activeChapters.length },
                 { label: 'Duration', value: durLabel(totalWords, speed) },
                 { label: 'Credits', value: totalChars.toLocaleString() },
-                { label: 'Available', value: creditsLeft.toLocaleString(), warn: totalChars > creditsLeft },
+                { label: 'Available', value: creditsLeft.toLocaleString() },
               ].map((s, i) => (
-                <div key={i} style={{ padding: '10px', background: 'var(--bg)', borderRadius: '10px', border: s.warn ? '1px solid rgba(240,91,91,0.3)' : '1px solid var(--border)' }}>
-                  <div style={{ fontSize: '10px', color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '3px' }}>{s.label}</div>
-                  <div style={{ fontSize: '16px', fontWeight: 800, fontFamily: 'Syne, sans-serif', color: s.warn ? '#f05b5b' : 'var(--text)' }}>{s.value}</div>
+                <div key={i} style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px 16px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', marginBottom: '4px' }}>{s.label}</div>
+                  <div style={{ fontFamily: 'Syne, sans-serif', fontSize: '20px', fontWeight: 800, color: 'var(--text)' }}>{s.value}</div>
                 </div>
               ))}
             </div>
 
-            {/* Progress bar */}
-            {(isGenerating || doneCount > 0) && (
-              <div style={{ marginBottom: '14px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '12px', color: 'var(--muted)' }}>
-                    {isGenerating ? 'Generating…' : doneCount === activeChapters.length ? '✅ Complete!' : `${doneCount} / ${activeChapters.length} chapters`}
-                  </span>
-                  <span style={{ fontSize: '12px', fontWeight: 700, color: '#f5c518' }}>{progress}%</span>
+            {isGenerating && (
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                   <span style={{ fontSize: '12px', color: 'var(--muted)' }}>Generating: {doneCount} / {activeChapters.length} chapters</span>
+                   <span style={{ fontSize: '12px', fontWeight: 800, color: '#a855f7' }}>{progress}%</span>
                 </div>
-                <div style={{ height: '4px', background: 'var(--border)', borderRadius: '99px', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, #f5c518, #f59e0b)', borderRadius: '99px', transition: 'width 0.4s' }} />
+                <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
+                   <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, #a855f7, #7c3aed)', borderRadius: '99px', transition: 'width 0.4s ease' }} />
                 </div>
               </div>
             )}
 
-            {/* Errors */}
-            {(genError || chapters.length === 0 || totalChars > creditsLeft) && (
-              <div style={{ padding: '10px 14px', background: 'rgba(240,91,91,0.06)', border: '1px solid rgba(240,91,91,0.2)', borderRadius: '10px', fontSize: '12px', color: '#f05b5b', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <AlertCircle size={13} />
-                {genError || (chapters.length === 0 ? 'Add chapters first' : 'Not enough credits — upgrade your plan')}
-                {totalChars > creditsLeft && <button onClick={() => router.push('/dashboard/billing')} style={{ background: 'none', border: 'none', color: '#f5c518', cursor: 'pointer', fontWeight: 700, fontSize: '12px', padding: 0 }}>Upgrade →</button>}
-              </div>
-            )}
-
-            {/* Generate / Cancel */}
-            {!isGenerating ? (
-              <button
-                onClick={handleGenerateAll}
-                disabled={!activeChapters.length || totalChars > creditsLeft}
-                style={{ width: '100%', padding: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: !activeChapters.length || totalChars > creditsLeft ? 'var(--glass)' : '#f5c518', border: !activeChapters.length || totalChars > creditsLeft ? '1px solid var(--border)' : 'none', borderRadius: '12px', color: !activeChapters.length || totalChars > creditsLeft ? 'var(--muted)' : '#000', fontSize: '14px', fontWeight: 800, cursor: !activeChapters.length || totalChars > creditsLeft ? 'not-allowed' : 'pointer', fontFamily: 'Syne, sans-serif', boxShadow: !activeChapters.length || totalChars > creditsLeft ? 'none' : '0 8px 24px rgba(245,197,24,0.2)' }}
-              >
-                <Zap size={16} fill={!activeChapters.length || totalChars > creditsLeft ? 'none' : 'currentColor'} />
-                Generate All {activeChapters.length} Chapters
-              </button>
+            {isFree ? (
+              <UpgradeBanner />
             ) : (
-              <button
-                onClick={() => { cancelledRef.current = true; setIsGenerating(false) }}
-                style={{ width: '100%', padding: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', background: 'rgba(240,91,91,0.08)', border: '1px solid rgba(240,91,91,0.25)', borderRadius: '12px', color: '#f05b5b', fontSize: '14px', fontWeight: 700, cursor: 'pointer', fontFamily: 'Syne, sans-serif' }}
-              >
-                <X size={16} /> Stop Generating
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={handleGenerateAll}
+                  disabled={isGenerating || !activeChapters.length || totalChars > creditsLeft}
+                  className="generate-all-btn"
+                  style={{ flex: 3, height: '52px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: '#a855f7', border: 'none', borderRadius: '14px', color: '#fff', fontSize: '14px', fontWeight: 800, fontFamily: 'Syne, sans-serif', cursor: 'pointer', transition: 'all 0.2s' }}
+                >
+                  <Zap size={18} fill="currentColor" />
+                  {isGenerating ? `Generating (${doneCount}/${activeChapters.length})...` : `Generate All Chapters`}
+                </button>
+                {isGenerating && (
+                  <button onClick={() => { cancelledRef.current = true; setIsGenerating(false) }} style={{ flex: 1, padding: '0 20px', background: 'rgba(240,91,91,0.1)', border: '1px solid rgba(240,91,91,0.2)', borderRadius: '14px', color: '#f05b5b', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
+                    Cancel
+                  </button>
+                )}
+              </div>
+            )}
+            {genError && !isGenerating && (
+              <div style={{ marginTop: '12px', color: '#f05b5b', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <AlertCircle size={14} /> {genError}
+              </div>
             )}
           </div>
         </div>
 
-        {/* ── RIGHT PANEL ── */}
-        <div style={{ width: '240px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-
-          {/* Book card */}
-          <div style={{ background: 'linear-gradient(135deg, rgba(245,197,24,0.1), rgba(91,142,240,0.08))', border: '1px solid rgba(245,197,24,0.15)', borderRadius: '16px', padding: '18px', textAlign: 'center' }}>
-            <div style={{ fontSize: '32px', marginBottom: '8px' }}>📚</div>
-            <div style={{ fontFamily: 'Syne, sans-serif', fontSize: '14px', fontWeight: 800, color: 'var(--text)', marginBottom: '3px', wordBreak: 'break-word' }}>
-              {bookTitle || 'Your Book'}
-            </div>
-            {author && <div style={{ fontSize: '11px', color: 'var(--muted)', marginBottom: '8px' }}>by {author}</div>}
-            <div style={{ display: 'flex', gap: '5px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '10px', background: 'rgba(245,197,24,0.12)', color: '#f5c518', padding: '2px 8px', borderRadius: '99px' }}>{genre}</span>
-              <span style={{ fontSize: '10px', background: 'var(--glass)', color: 'var(--muted)', padding: '2px 8px', borderRadius: '99px' }}>{LANGUAGES.find(l => l.code === language)?.flag} {language.toUpperCase()}</span>
+        {/* ── RIGHT COLUMN ── */}
+        <div className="w-full lg:w-[280px] shrink-0 flex flex-col gap-4">
+          
+          {/* BOOK CARD */}
+          <div style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.12), rgba(91,142,240,0.08))', border: '1px solid rgba(168,85,247,0.2)', borderRadius: '20px', padding: '20px', textAlign: 'center' }}>
+            <div style={{ fontSize: '40px', marginBottom: '16px' }}>📚</div>
+            <h3 style={{ fontFamily: 'Syne, sans-serif', fontSize: '15px', fontWeight: 800, color: 'var(--text)', margin: '0 0 4px', lineBreak: 'anywhere' }}>{bookTitle || 'Untitled Book'}</h3>
+            <p style={{ fontSize: '12px', color: 'var(--muted)', margin: '0 0 16px' }}>by {author || 'Unknown Author'}</p>
+            <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
+               <span style={{ fontSize: '10px', fontWeight: 700, background: 'rgba(168,85,247,0.15)', color: '#a855f7', padding: '4px 10px', borderRadius: '8px' }}>{genre}</span>
+               <span style={{ fontSize: '10px', fontWeight: 700, background: 'rgba(255,255,255,0.05)', color: 'var(--muted)', padding: '4px 10px', borderRadius: '8px' }}>{language.toUpperCase()}</span>
             </div>
           </div>
 
-          {/* Global voice */}
-          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '16px', padding: '16px' }}>
-            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '10px' }}>Voice</div>
+          {/* VOICE SELECTION */}
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '20px', padding: '20px' }}>
+            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '16px' }}>Primary Voice</div>
             {globalVoice ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: 'rgba(245,197,24,0.06)', border: '1px solid rgba(245,197,24,0.15)', borderRadius: '10px', marginBottom: '8px' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(245,197,24,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: '#f5c518', flexShrink: 0 }}>
-                  {globalVoice.name[0].toUpperCase()}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#f5c518', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{globalVoice.name}</div>
-                  <div style={{ fontSize: '10px', color: 'var(--muted)' }}>{globalVoice.language?.toUpperCase()}</div>
-                </div>
-                <button onClick={() => setGlobalVoice(null)} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer', padding: 0 }}>
-                  <X size={14} />
-                </button>
-              </div>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'rgba(168,85,247,0.05)', borderRadius: '12px', marginBottom: '12px', border: '1px solid rgba(168,85,247,0.15)' }}>
+                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#a855f7', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '14px' }}>
+                    {globalVoice.name[0]}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{globalVoice.name}</div>
+                    <div style={{ fontSize: '10px', color: 'var(--muted)' }}>{globalVoice.language?.toUpperCase()}</div>
+                  </div>
+               </div>
             ) : (
-              <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '8px', opacity: 0.7 }}>No voice — AI default</div>
+              <div style={{ fontSize: '13px', color: 'var(--muted)', marginBottom: '12px', opacity: 0.6 }}>No voice selected</div>
             )}
-            <button onClick={() => openPicker('global')} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '8px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '9px', color: 'var(--muted)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-              <Mic size={13} /> {globalVoice ? 'Change Voice' : 'Select Voice'}
+            <button
+              onClick={() => openPicker('global')}
+              style={{ width: '100%', height: '40px', background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.2)', color: '#a855f7', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', transition: 'all 0.2s' }}
+            >
+              <Mic size={14} /> {globalVoice ? 'Change Voice' : 'Choose Voice'}
             </button>
           </div>
 
-          {/* Settings panel */}
-          {showSettings && (
-            <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '16px', padding: '16px' }}>
-              <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '12px' }}>Settings</div>
-              <div style={{ marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
+          {/* ADDITIONAL SETTINGS */}
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '20px', padding: '20px' }}>
+             <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '16px' }}>Settings</div>
+             <div style={{ marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '12px', color: 'var(--muted)' }}>Speed</span>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#f5c518' }}>{speed}x</span>
-              </div>
-              <input type="range" min="0.5" max="2.0" step="0.1" value={speed} onChange={e => setSpeed(parseFloat(e.target.value))} style={{ width: '100%', accentColor: '#f5c518', marginBottom: '4px' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--muted)' }}>
-                <span>0.5x</span><span>1.0x</span><span>2.0x</span>
-              </div>
-            </div>
-          )}
-
-          {/* Stats */}
-          {chapters.length > 0 && (
-            <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '16px', padding: '16px' }}>
-              <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '10px' }}>Progress</div>
-              {[
-                { label: 'Chapters', value: `${chapters.length}` },
-                { label: 'Words', value: totalWords.toLocaleString() },
-                { label: 'Est. Time', value: durLabel(totalWords, speed) },
-                { label: 'Done', value: `${doneCount}/${activeChapters.length}` },
-              ].map((s, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', padding: '6px 0', borderBottom: i < 3 ? '1px solid var(--border)' : 'none' }}>
-                  <span style={{ color: 'var(--muted)' }}>{s.label}</span>
-                  <span style={{ color: 'var(--text)', fontWeight: 600, fontFamily: 'Syne, sans-serif' }}>{s.value}</span>
-                </div>
-              ))}
-
-              {/* Mini progress bar */}
-              {doneCount > 0 && (
-                <div style={{ marginTop: '10px' }}>
-                  <div style={{ height: '3px', background: 'var(--border)', borderRadius: '99px', overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${progress}%`, background: '#22d3a5', borderRadius: '99px', transition: 'width 0.4s' }} />
+                <span style={{ fontSize: '12px', fontWeight: 800, color: '#a855f7' }}>{speed}x</span>
+             </div>
+             <input type="range" min="0.5" max="2.0" step="0.1" value={speed} onChange={e => setSpeed(parseFloat(e.target.value))} style={{ width: '100%', accentColor: '#a855f7', marginBottom: '16px', cursor: 'pointer' }} />
+             
+             {chapters.length > 0 && (
+                <>
+                  <div style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '1px solid var(--border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '4px' }}>
+                       <span style={{ color: 'var(--muted)' }}>Progress</span>
+                       <span style={{ color: '#22d3a5', fontWeight: 700 }}>{progress}%</span>
+                    </div>
+                    <div style={{ height: '3px', background: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
+                       <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, #a855f7, #22d3a5)', borderRadius: '99px' }} />
+                    </div>
                   </div>
-                  <div style={{ fontSize: '10px', color: '#22d3a5', marginTop: '4px', fontWeight: 700 }}>{progress}% complete</div>
-                </div>
-              )}
-            </div>
-          )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--muted)' }}>
+                    <span>Total Words</span>
+                    <span style={{ color: 'var(--text)', fontWeight: 600 }}>{totalWords.toLocaleString()}</span>
+                  </div>
+                </>
+             )}
+          </div>
 
-          {/* Clear */}
+          {/* CLEAR ACTION */}
           <button
             onClick={() => {
               if (!confirm('Clear everything and start fresh?')) return
@@ -688,51 +726,83 @@ export default function AudioBooksPage() {
               setRawText(''); setChapters([]); setGlobalVoice(null); setSpeed(1.0)
               localStorage.removeItem('ab_draft_v3')
             }}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '9px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--muted)', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+            style={{ width: '100%', height: '42px', background: 'transparent', border: '1px solid var(--border)', color: 'var(--muted)', borderRadius: '12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
           >
-            <Trash2 size={13} /> Clear & Start New
+            Clear Project
           </button>
         </div>
       </div>
 
-      {/* ── Voice Picker Modal ── */}
+      {/* ─── VOICE PICKER MODAL (FULL REDESIGN) ─── */}
       {showVoicePicker && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setShowVoicePicker(false)}>
-          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '20px', padding: '20px', width: '100%', maxWidth: '420px', maxHeight: '65vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontSize: '15px', fontWeight: 700, color: 'var(--text)' }}>
-                {pickerTarget === 'global' ? 'Global Voice' : 'Chapter Voice'}
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={() => setShowVoicePicker(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)' }} />
+          
+          <div style={{ position: 'relative', width: 'min(560px, 92vw)', maxHeight: '80vh', background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '24px', boxShadow: '0 25px 60px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', overflow: 'hidden', animation: 'fade-in 0.2s ease-out' }}>
+            
+            {/* Modal Header */}
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <h2 style={{ fontFamily: 'Syne, sans-serif', fontSize: '18px', fontWeight: 800, color: '#fff', margin: '0 0 4px' }}>Choose a Voice</h2>
+                <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>{filteredSV.length} saved voices</p>
               </div>
-              <button onClick={() => setShowVoicePicker(false)} style={{ background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer' }}>
-                <X size={18} />
+              <button onClick={() => setShowVoicePicker(false)} style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                <X size={16} />
               </button>
             </div>
 
-            <div style={{ position: 'relative', marginBottom: '10px' }}>
-              <Search size={13} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }} />
-              <input value={voiceSearch} onChange={e => setVoiceSearch(e.target.value)} placeholder="Search voices…" autoFocus style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px 9px 32px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none' }} />
+            {/* Search Input */}
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ position: 'relative' }}>
+                <Search size={16} color="rgba(255,255,255,0.4)" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input
+                  type="text"
+                  placeholder="Search voices..."
+                  value={voiceSearch}
+                  onChange={e => setVoiceSearch(e.target.value)}
+                  className="voice-search-input"
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '12px 16px 12px 42px', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontSize: '14px', outline: 'none', transition: 'all 0.2s' }}
+                />
+              </div>
             </div>
 
-            <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            {/* Voice List */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
               {filteredSV.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '30px', color: 'var(--muted)', fontSize: '13px' }}>
-                  No voices found.{' '}
-                  <button onClick={() => { setShowVoicePicker(false); router.push('/dashboard/library') }} style={{ background: 'none', border: 'none', color: '#f5c518', cursor: 'pointer', fontWeight: 700 }}>Browse Library →</button>
-                </div>
-              ) : filteredSV.map(v => {
-                const name = v.voice_name || v.name || 'Voice'
-                return (
-                  <button key={v.id} onClick={() => pickVoice(v)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '10px', cursor: 'pointer', textAlign: 'left', width: '100%', transition: 'border-color 0.15s' }}>
-                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'rgba(245,197,24,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: '#f5c518', flexShrink: 0 }}>
-                      {name[0].toUpperCase()}
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>{name}</div>
-                      {v.language && <div style={{ fontSize: '10px', color: 'var(--muted)' }}>{v.language.toUpperCase()}</div>}
-                    </div>
+                <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', margin: '0 0 16px' }}>No saved voices yet.</p>
+                  <button onClick={() => { setShowVoicePicker(false); router.push('/dashboard/library') }} style={{ background: 'none', border: 'none', color: '#f5c518', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}>
+                    Browse Library →
                   </button>
-                )
-              })}
+                </div>
+              ) : (
+                filteredSV.map(v => {
+                  const name = v.voice_name || v.name || 'Voice'
+                  return (
+                    <div key={v.id} className="voice-list-item" onClick={() => pickVoice(v)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'all 0.2s' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(168,85,247,0.15)', color: '#a855f7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800 }}>
+                          {name[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <div style={{ fontFamily: 'Syne, sans-serif', fontSize: '14px', fontWeight: 700, color: '#fff' }}>{name}</div>
+                          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{(v.language || language).toUpperCase()}</div>
+                        </div>
+                      </div>
+                      <button className="voice-select-btn" style={{ background: '#a855f7', color: '#fff', padding: '6px 12px', borderRadius: '8px', border: 'none', fontSize: '12px', fontWeight: 700, cursor: 'pointer', pointerEvents: 'none' }}>
+                        Select →
+                      </button>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ padding: '14px 24px', background: '#1a1a2e', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'center' }}>
+              <button onClick={() => { setShowVoicePicker(false); router.push('/dashboard/library') }} style={{ background: 'none', border: 'none', color: '#f5c518', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
+                Browse Full Library →
+              </button>
             </div>
           </div>
         </div>
@@ -741,9 +811,33 @@ export default function AudioBooksPage() {
       <style>{`
         @keyframes ab-blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
         @keyframes ab-slide { 0%{transform:translateX(-200%)} 100%{transform:translateX(300%)} }
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
         textarea::placeholder { color: var(--muted); opacity: 0.5; }
         input::placeholder { color: var(--muted); opacity: 0.5; }
         select option { background: var(--bg); color: var(--text); }
+        
+        /* Interactive focus styles */
+        .focus-purple:focus { border-color: rgba(168,85,247,0.4) !important; }
+        .book-title-input:focus { border-color: #a855f7 !important; }
+        .voice-search-input:focus { border-color: rgba(168,85,247,0.5) !important; }
+
+        /* Generating bar animation */
+        .generating-purple-bar { animation: ab-slide 1.5s infinite linear; }
+
+        /* Generate all hover */
+        .generate-all-btn:not(:disabled):hover { background: #9333ea !important; }
+
+        /* Voice picker hover states */
+        .voice-list-item { background: transparent; }
+        .voice-list-item:hover { background: rgba(255,255,255,0.05); }
+        .voice-select-btn { opacity: 0; transform: translateX(-10px); transition: all 0.2s; }
+        .voice-list-item:hover .voice-select-btn { opacity: 1; transform: translateX(0); }
+        
+        /* Chapter row hover */
+        .chapter-row:hover { border-color: rgba(168,85,247,0.3) !important; }
       `}</style>
     </div>
   )

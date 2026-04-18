@@ -151,7 +151,8 @@ export default function BillingPage() {
     const fmt = (num: number) => num.toLocaleString();
 
     return (
-        <div style={{ maxWidth: '1080px', margin: '0 auto', paddingBottom: '40px' }}>
+        <div style={{ width: '100%', margin: '0 auto', paddingBottom: '40px' }}>
+            <title>Billing</title>
             <div style={{ marginBottom: '32px' }}>
                 <h1 style={{ 
                     fontFamily: 'Instrument Serif, serif', 
@@ -160,7 +161,7 @@ export default function BillingPage() {
                     color: 'var(--text)',
                     margin: '0 0 8px 0',
                     letterSpacing: '-0.02em'
-                }}>Billing & Subscription</h1>
+                }}>Billing</h1>
                 <p style={{ color: 'var(--muted)', fontSize: '15px', margin: 0 }}>
                     Manage your plan, usage, and billing details.
                 </p>
@@ -276,21 +277,26 @@ export default function BillingPage() {
                             </div>
                         </div>
                         
-                        <button style={{
-                            padding: '12px 24px',
-                            background: isFree ? '#f5c518' : 'var(--bg)',
-                            color: isFree ? '#080810' : 'var(--text)',
-                            border: isFree ? 'none' : '1px solid var(--border)',
-                            borderRadius: '12px',
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            transition: 'all 0.2s',
-                            boxShadow: isFree ? '0 4px 14px rgba(245, 197, 24, 0.3)' : 'none',
-                        }}>
+                        <button
+                            onClick={() => {
+                                const plansSection = document.getElementById('plans-section');
+                                plansSection?.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                            style={{
+                                padding: '12px 24px',
+                                background: isFree ? '#f5c518' : 'var(--bg)',
+                                color: isFree ? '#080810' : 'var(--text)',
+                                border: isFree ? 'none' : '1px solid var(--border)',
+                                borderRadius: '12px',
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                transition: 'all 0.2s',
+                                boxShadow: isFree ? '0 4px 14px rgba(245, 197, 24, 0.3)' : 'none',
+                            }}>
                             {isFree ? 'Upgrade Plan' : 'Manage Subscription'}
                         </button>
                     </div>
@@ -328,7 +334,7 @@ export default function BillingPage() {
             </div>
 
             {/* ── SECTION 3: Upgrade Plans Grid ── */}
-            <div style={{ marginBottom: '40px' }}>
+            <div id="plans-section" style={{ marginBottom: '40px' }}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text)', margin: 0 }}>Available Plans</h3>
                     <p style={{ fontSize: '14px', color: 'var(--muted)', fontWeight: 500, margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>

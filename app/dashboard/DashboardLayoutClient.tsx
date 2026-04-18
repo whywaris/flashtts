@@ -21,6 +21,7 @@ import {
     X,
     Clock,
     Library,
+    Flame,
 } from 'lucide-react';
 import { createClient } from '@/utils/supabase/client';
 import ThemeToggle from '@/components/ThemeToggle';
@@ -35,18 +36,19 @@ interface Profile {
 
 // ─── Nav config ──────────────────────────────────────────────────────────────
 const MAIN_NAV = [
-    { label: 'Overview', icon: LayoutDashboard, href: '/dashboard' },
+    { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
     { label: 'Text to Speech', icon: FileText, href: '/dashboard/tts' },
     { label: 'Voice Library', icon: Music, href: '/dashboard/library' },
     { label: 'Voice Cloning', icon: Mic, href: '/dashboard/cloning' },
-    { label: 'Audio Books', icon: Library, href: '/dashboard/audiobooks' },
+    { label: 'Ebook to AudioBook', icon: Library, href: '/dashboard/audiobooks' },
     { label: 'Saved Voices', icon: Bookmark, href: '/dashboard/saved' },
-    { label: 'History', icon: Clock, href: '/dashboard/history' },
+    { label: 'Voice History', icon: Clock, href: '/dashboard/history' },
 ];
 
 const ACCOUNT_NAV = [
     { label: 'Billing', icon: CreditCard, href: '/dashboard/billing' },
     { label: 'Settings', icon: Settings, href: '/dashboard/settings' },
+    { label: 'Roast Me', icon: Flame, href: '/dashboard/roast-me' },
 ];
 
 // ─── Utility ─────────────────────────────────────────────────────────────────
@@ -143,13 +145,13 @@ function Sidebar({
             )}
 
             <aside
-                className={`fixed left-0 top-0 h-full w-64 z-50 transform transition-transform duration-300 ease-in-out md:translate-x-0 ${
+                className={`fixed left-0 top-0 h-full w-64 z-50 transform transition-transform duration-300 ease-in-out md:translate-x-0 shadow-2xl md:shadow-none ${
                     open ? 'translate-x-0' : '-translate-x-full'
                 }`}
                 style={{
                     background: 'var(--sidebar-bg)',
-                    backdropFilter: 'blur(20px)',
-                    WebkitBackdropFilter: 'blur(20px)',
+                    backdropFilter: 'blur(25px)',
+                    WebkitBackdropFilter: 'blur(25px)',
                     borderRight: '1px solid var(--sidebar-border)',
                     display: 'flex',
                     flexDirection: 'column',
@@ -360,10 +362,7 @@ function Sidebar({
                 </div>
             </div>
 
-            {/* ── Theme Toggle ── */}
-            <div style={{ padding: '0 12px 12px', flexShrink: 0 }}>
-                <ThemeToggle />
-            </div>
+
         </aside>
         </>
     );
@@ -532,11 +531,10 @@ export default function DashboardLayoutClient({ children }: { children: React.Re
             />
 
             <main
-                className="transition-all duration-300 md:ml-64"
+                className="transition-all duration-300 md:ml-64 p-4 md:p-7"
                 style={{
                     minHeight: '100vh',
                     background: 'transparent',
-                    padding: '28px 24px',
                     position: 'relative',
                     zIndex: 1,
                 }}
