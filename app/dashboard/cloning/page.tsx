@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
+import toast, { Toaster } from 'react-hot-toast';
 import {
   Mic,
   Square,
@@ -124,7 +125,7 @@ export default function VoiceCloningPage() {
       setRecSeconds(0);
       timerRef.current = setInterval(() => setRecSeconds((s) => s + 1), 1000);
     } catch {
-      alert('Could not access microphone. Please check permissions.');
+      toast.error('Could not access microphone. Please check permissions.');
     }
   }, []);
 
@@ -139,7 +140,7 @@ export default function VoiceCloningPage() {
     previewAudioRef.current = null;
     setPreviewPlaying(false);
     setRecordedBlob(null);
-    setRecordedUrl(null);
+    setRecordedUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
     setUploadedName(null);
     setRecSeconds(0);
   }, []);
@@ -170,6 +171,8 @@ export default function VoiceCloningPage() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    // Revoke previous blob URL before creating a new one
+    setRecordedUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
     const url = URL.createObjectURL(file);
     setRecordedBlob(file);
     setRecordedUrl(url);
@@ -301,6 +304,7 @@ export default function VoiceCloningPage() {
   // ── Main UI ────────────────────────────────────────────────────────────────
   return (
     <div style={{ fontFamily: 'DM Sans, sans-serif', width: '100%' }}>
+      <Toaster position="top-right" />
 
       {/* ── Page Header ── */}
       <div style={{ marginBottom: '20px' }}>

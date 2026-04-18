@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import toast, { Toaster } from 'react-hot-toast'
 import { getAvatarPath, getAvatarBackdrop } from '@/utils/avatar'
 
 const LANGUAGES = [
@@ -171,7 +172,7 @@ export default function VoiceLibraryPage() {
 
   // ── Save ────────────────────────────────────────────────────────────────────
   async function toggleSave(voice: any) {
-    if (!user) { alert('Please login first'); return }
+    if (!user) { router.push('/login'); return }
     setSavingId(voice.id)
     setSaveError(null)
 
@@ -244,6 +245,7 @@ export default function VoiceLibraryPage() {
   // ─────────────────────────────────────────────────────────────────────────────
   return (
     <div style={{ width: '100%' }}>
+      <Toaster position="top-right" />
 
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback, Suspense } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -80,7 +80,7 @@ interface SelectedVoice {
 
 function TTSPageInner() {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const searchParams = useSearchParams();
 
   // ─── Data State ───
@@ -166,20 +166,6 @@ function TTSPageInner() {
     init();
   }, [router, searchParams, supabase]);
 
-  // ─── Keyboard Shortcut ───
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault();
-        if (!generating && text.trim() && selectedVoice) {
-          handleGenerate();
-        }
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [generating, text, selectedVoice]);
-
   // ─── Modal Data Loading ───
   useEffect(() => {
     if (voiceModalOpen && !modalLoaded) {
@@ -228,7 +214,7 @@ function TTSPageInner() {
     localStorage.setItem('recent_voices', JSON.stringify(updated));
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = useCallback(async () => {
     if (!text.trim()) { toast.error('Please enter some text first'); return; }
     if (!selectedVoice) { toast.error('Please select a voice first'); return; }
 
@@ -281,7 +267,21 @@ function TTSPageInner() {
     } finally {
       setGenerating(false);
     }
-  };
+  }, [text, selectedVoice, generating, speed, language, emotion, format, audioUrl, supabase]);
+
+  // ─── Keyboard Shortcut (after handleGenerate is declared) ───
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (!generating && text.trim() && selectedVoice) {
+          handleGenerate();
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [generating, text, selectedVoice, handleGenerate]);
 
   const charPercent = (text.length / perRequest) * 100;
   const progressColor = charPercent > 90 ? '#ef4444' : charPercent > 70 ? '#f5c518' : '#22c55e';
@@ -539,7 +539,6 @@ function TTSPageInner() {
                  <option value="it">🇮🇹 Italian</option>
                  <option value="nl">🇳🇱 Dutch</option>
                  <option value="pl">🇵🇱 Polish</option>
-                 <option value="tr">🇹🇷 Turkish</option>
                  <option value="ms">🇲🇾 Malay</option>
                  <option value="da">🇩🇰 Danish</option>
                  <option value="no">🇳🇴 Norwegian</option>

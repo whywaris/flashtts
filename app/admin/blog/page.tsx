@@ -2,13 +2,26 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { 
-  Plus, Edit3, Trash2, Globe, Eye, 
+import sanitizeHtml from 'sanitize-html'
+import toast, { Toaster } from 'react-hot-toast'
+import {
+  Plus, Edit3, Trash2, Globe, Eye,
   Calendar, Info, ArrowLeft, Image as ImageIcon,
   CheckCircle2, Clock, FileText, Layout, ChevronRight,
   MoreVertical, Search, Save, X, ExternalLink
 } from 'lucide-react'
 import Link from 'next/link'
+
+const ALLOWED_HTML_OPTIONS: sanitizeHtml.IOptions = {
+  allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'iframe']),
+  allowedAttributes: {
+    ...sanitizeHtml.defaults.allowedAttributes,
+    img: ['src', 'alt', 'width', 'height'],
+    iframe: ['src', 'width', 'height', 'frameborder', 'allowfullscreen'],
+    '*': ['class', 'id'],
+  },
+  allowedSchemes: ['https', 'http', 'mailto'],
+}
 
 interface BlogPost {
   id?: string
@@ -45,6 +58,7 @@ export default function BlogManager() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [showSEO, setShowSEO] = useState(false)
+  const [deleteModalId, setDeleteModalId] = useState<string | null>(null)
   
   // Individual field states for better persistence
   const [title, setTitle] = useState('')
@@ -133,19 +147,19 @@ export default function BlogManager() {
   }
 
   async function handleSave(newStatus: string) {
-    if (!title.trim()) { alert('Title is required'); return }
-    if (!slug.trim()) { alert('Slug is required'); return }
+    if (!title.trim()) { toast.error('Title is required'); return }
+    if (!slug.trim()) { toast.error('Slug is required'); return }
 
     setSaving(true)
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) { alert('Not logged in'); return }
+      if (!user) { toast.error('Not logged in'); return }
 
       const postData: any = {
         title: title,
         slug: slug,
-        content: content,
+        content: sanitizeHtml(content, ALLOWED_HTML_OPTIONS),
         excerpt: excerpt,
         cover_image: coverImage || null,
         meta_title: metaTitle || null,
@@ -194,7 +208,7 @@ export default function BlogManager() {
 
       if (result.error) {
         console.error('Save error:', result.error)
-        alert('Error saving: ' + result.error.message)
+        toast.error('Error saving: ' + result.error.message)
         return
       }
 
@@ -202,35 +216,54 @@ export default function BlogManager() {
         setEditingPost(result.data[0])
       }
 
-      alert(
-        newStatus === 'published' ? '✅ Published successfully!' :
-        newStatus === 'scheduled' ? '⏰ Scheduled!' :
-        '💾 Draft saved!'
+      toast.success(
+        newStatus === 'published' ? 'Published successfully!' :
+        newStatus === 'scheduled' ? 'Scheduled!' :
+        'Draft saved!'
       )
       await fetchPosts()
 
     } catch (err: any) {
       console.error(err)
-      alert('Unexpected error: ' + err.message)
+      toast.error('Unexpected error: ' + err.message)
     } finally {
       setSaving(false)
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Are you sure you want to delete this post?')) return
     const supabase = createClient()
     const { error } = await supabase.from('blog_posts').delete().eq('id', id)
     if (!error) {
       setPosts(posts.filter(p => p.id !== id))
       if (editingPost?.id === id) handleCreateNew()
+      toast.success('Post deleted')
+    } else {
+      toast.error('Failed to delete post')
     }
+    setDeleteModalId(null)
   }
 
   if (loading) return <div className="text-gray-400 font-medium">Fetching publications...</div>
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <Toaster position="top-right" />
+
+      {/* Delete Confirm Modal */}
+      {deleteModalId && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-white rounded-[20px] p-8 border border-[#e9ecef] shadow-2xl space-y-5">
+            <h2 className="text-lg font-black font-['Syne'] text-[#111827] m-0">Delete Post?</h2>
+            <p className="text-sm text-[#6b7280]">This will permanently delete the post. This action cannot be undone.</p>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setDeleteModalId(null)} className="flex-1 py-3 text-xs font-black uppercase text-[#6b7280] hover:bg-[#f8f9fa] rounded-xl transition-colors">Cancel</button>
+              <button onClick={() => handleDelete(deleteModalId)} className="flex-1 py-3 bg-rose-600 text-white rounded-xl font-black text-xs uppercase hover:bg-rose-700 transition-all">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pb-2">
         <div>
@@ -311,8 +344,8 @@ export default function BlogManager() {
                   </div>
                   <div className="flex items-center gap-4">
                      {editingPost?.id && (
-                       <button 
-                          onClick={() => handleDelete(editingPost.id!)}
+                       <button
+                          onClick={() => setDeleteModalId(editingPost.id!)}
                           className="w-10 h-10 border border-rose-100 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm"
                           title="Purge Document"
                        >

@@ -2,8 +2,9 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { 
-  Send, Mail, Users, Zap, AlertTriangle, 
+import toast, { Toaster } from 'react-hot-toast'
+import {
+  Send, Mail, Users, Zap, AlertTriangle,
   History, CheckCircle2, XCircle, Search,
   ChevronDown, Info, Trash2, MailOpen,
   ArrowRight, AtSign, Layout, Pencil,
@@ -49,7 +50,7 @@ function EmailsManagerContent() {
 
   async function handleSend() {
     if ((audience === 'Custom Email' && !to) || !subject || !message) {
-      alert('Please complete all required fields.')
+      toast.error('Please complete all required fields.')
       return
     }
 
@@ -61,17 +62,17 @@ function EmailsManagerContent() {
         body: JSON.stringify({ to, subject, message, template, audience })
       })
       const data = await res.json()
-      
+
       if (data.success) {
-        alert('Broadcast dispatched successfully!')
+        toast.success('Broadcast dispatched successfully!')
         setSubject('')
         setMessage('')
         fetchLogs()
       } else {
-        alert('Dispatch Error: ' + data.error)
+        toast.error('Dispatch Error: ' + data.error)
       }
     } catch (err: any) {
-      alert('Network failure during dispatch.')
+      toast.error('Network failure during dispatch.')
     } finally {
       setSending(false)
     }
@@ -79,6 +80,7 @@ function EmailsManagerContent() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <Toaster position="top-right" />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">
         <div>

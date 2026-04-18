@@ -53,10 +53,10 @@ export default function SignupPage() {
                 redirectTo: `${window.location.origin}/auth/callback`
             }
         })
-        if (error) alert(error.message)
+        if (error) setError(error.message)
     }
 
-    const isConfirmPage = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('confirm') === '1'
+    const isConfirmPage = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('confirm') === '1' : false
 
     if (isConfirmPage) {
         return (

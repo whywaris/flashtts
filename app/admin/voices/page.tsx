@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
-import { 
-  Plus, Search, Filter, Mic, Globe, 
+import toast, { Toaster } from 'react-hot-toast'
+import {
+  Plus, Search, Filter, Mic, Globe,
   Play, Trash2, Power, Headphones, User,
   Languages, CheckCircle2, ChevronDown, X
 } from 'lucide-react'
@@ -32,6 +33,7 @@ export default function VoiceManager() {
   const [filterGender, setFilterGender] = useState('All')
   
   const [showAddModal, setShowAddModal] = useState(false)
+  const [deleteModalId, setDeleteModalId] = useState<string | null>(null)
   const [newVoice, setNewVoice] = useState({
     name: '', language: 'English', gender: 'Male', 
     description: '', sample_url: '', is_active: true, is_premium: false
@@ -57,21 +59,26 @@ export default function VoiceManager() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Delete this voice?')) return
     const supabase = createClient()
     const { error } = await supabase.from('voices').delete().eq('id', id)
-    if (!error) setVoices(voices.filter(v => v.id !== id))
+    if (!error) {
+      setVoices(voices.filter(v => v.id !== id))
+      toast.success('Voice deleted')
+    } else {
+      toast.error('Failed to delete voice')
+    }
+    setDeleteModalId(null)
   }
 
   async function handleAddVoice() {
     const supabase = createClient()
     const { error } = await supabase.from('voices').insert([newVoice])
     if (!error) {
-      alert('Voice added!')
+      toast.success('Voice added!')
       setShowAddModal(false)
       fetchVoices()
     } else {
-      alert(error.message)
+      toast.error(error.message)
     }
   }
 
@@ -93,6 +100,21 @@ export default function VoiceManager() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <Toaster position="top-right" />
+
+      {deleteModalId && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-white rounded-[20px] p-8 border border-[#e9ecef] shadow-2xl space-y-5">
+            <h2 className="text-lg font-black font-['Syne'] text-[#111827] m-0">Delete Voice?</h2>
+            <p className="text-sm text-[#6b7280]">This will permanently remove the voice from the library.</p>
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setDeleteModalId(null)} className="flex-1 py-3 text-xs font-black uppercase text-[#6b7280] hover:bg-[#f8f9fa] rounded-xl transition-colors">Cancel</button>
+              <button onClick={() => handleDelete(deleteModalId)} className="flex-1 py-3 bg-rose-600 text-white rounded-xl font-black text-xs uppercase hover:bg-rose-700 transition-all">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-2">
         <div>
@@ -212,8 +234,8 @@ export default function VoiceManager() {
                           <Play size={16} fill="currentColor" stroke="none" />
                         </button>
                       )}
-                      <button 
-                        onClick={() => handleDelete(voice.id)}
+                      <button
+                        onClick={() => setDeleteModalId(voice.id)}
                         className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 hover:bg-rose-600 hover:text-white flex items-center justify-center text-rose-600 transition-all shadow-sm"
                         title="Purge Voice"
                       >

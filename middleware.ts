@@ -71,6 +71,18 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/login', request.url))
     }
 
+    // Require admin role for /admin routes on main domain
+    if (user && request.nextUrl.pathname.startsWith('/admin')) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single()
+        if (profile?.role !== 'admin') {
+            return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
+    }
+
     // Redirect already-logged-in users away from auth pages
     if (user && (
         request.nextUrl.pathname === '/login' ||

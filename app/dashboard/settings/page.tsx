@@ -80,6 +80,7 @@ export default function SettingsPage() {
   const [dangerZoneExpanded, setDangerZoneExpanded] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [loading, setLoading] = useState(true);
+  const [showDeleteAudioModal, setShowDeleteAudioModal] = useState(false);
 
   useEffect(() => {
     async function init() {
@@ -176,18 +177,18 @@ export default function SettingsPage() {
   };
 
   const handleDeleteAudio = async () => {
-    if (window.confirm('Are you sure? This will delete all your generated audio files. This cannot be undone.')) {
-      try {
-        const { error } = await supabase
-          .from('tts_jobs')
-          .delete()
-          .eq('user_id', profile.id);
-        
-        if (error) throw error;
-        toast.success('All audio history deleted');
-      } catch (err: any) {
-        toast.error('Error deleting audio: ' + err.message);
-      }
+    try {
+      const { error } = await supabase
+        .from('tts_jobs')
+        .delete()
+        .eq('user_id', profile.id);
+
+      if (error) throw error;
+      toast.success('All audio history deleted');
+    } catch (err: any) {
+      toast.error('Error deleting audio: ' + err.message);
+    } finally {
+      setShowDeleteAudioModal(false);
     }
   };
 
@@ -215,7 +216,20 @@ export default function SettingsPage() {
   return (
     <div style={{ fontFamily: 'DM Sans, sans-serif', maxWidth: '1200px' }}>
       <Toaster position="top-right" />
-      
+
+      {showDeleteAudioModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)' }}>
+          <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '20px', padding: '28px', width: 'min(400px,90vw)', boxShadow: '0 25px 60px rgba(0,0,0,0.4)' }}>
+            <h3 style={{ fontFamily: 'Syne, sans-serif', fontSize: '17px', fontWeight: 800, color: 'var(--text)', margin: '0 0 10px' }}>Delete Audio History?</h3>
+            <p style={{ fontSize: '13px', color: 'var(--muted)', margin: '0 0 24px', lineHeight: 1.6 }}>This will permanently delete all your generated audio files. This cannot be undone.</p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={() => setShowDeleteAudioModal(false)} style={{ flex: 1, padding: '12px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={handleDeleteAudio} style={{ flex: 1, padding: '12px', background: '#ef4444', border: 'none', borderRadius: '10px', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>Delete All</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Page Header ── */}
       <div style={{ marginBottom: '32px' }}>
         <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: '32px', fontWeight: 800, color: 'var(--text)', margin: '0 0 8px', letterSpacing: '-0.02em' }}>
@@ -439,8 +453,8 @@ export default function SettingsPage() {
 
             {dangerZoneExpanded && (
               <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <button 
-                  onClick={handleDeleteAudio}
+                <button
+                  onClick={() => setShowDeleteAudioModal(true)}
                   style={{ 
                     width: '100%', padding: '12px', borderRadius: '10px', background: 'none', 
                     border: '1px solid rgba(239,68,68,0.4)', color: '#ef4444', 

@@ -3,9 +3,10 @@
 import React, { useState, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   Play, Pause, RefreshCw, Zap, CheckCircle2, ChevronDown, Wand2, Globe2, Mic2
 } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 
@@ -52,7 +53,7 @@ export default function TextToSpeechPage() {
         const blob = await response.blob();
         setDemoAudio(URL.createObjectURL(blob));
       } else {
-        alert("Demo generation failed. Rate limits may apply to guests.");
+        toast.error("Demo generation failed. Rate limits may apply to guests.");
       }
     } catch (e) {
       console.error(e);
@@ -76,6 +77,7 @@ export default function TextToSpeechPage() {
 
   return (
     <div className="bg-[#F0EDE8] min-h-screen font-sans overflow-hidden text-slate-800 selection:bg-[#E8522A]/20">
+      <Toaster position="top-right" />
       <Navbar />
 
       {/* ── 1. HERO FOLD & DEMO INTERSECTION ── */}

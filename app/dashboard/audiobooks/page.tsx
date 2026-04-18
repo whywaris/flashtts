@@ -41,7 +41,7 @@ interface Chapter {
   errorMsg: string | null
 }
 
-interface Voice { id: string; name: string; language: string }
+interface Voice { id: string; name: string; language: string; voiceUrl?: string | null }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const wc = (t: string) => t.trim().split(/\s+/).filter(w => w.length > 0).length
@@ -115,6 +115,7 @@ export default function AudioBooksPage() {
   const [voiceSearch, setVoiceSearch] = useState('')
   const [showSettings, setShowSettings] = useState(false)
   const [dragOverId, setDragOverId] = useState<string | null>(null)
+  const [showClearModal, setShowClearModal] = useState(false)
 
   const cancelledRef = useRef(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -159,8 +160,8 @@ export default function AudioBooksPage() {
   }, [bookTitle, author, genre, language, rawText, speed, globalVoice, chapters])
 
   // ── Logic Variables ────────────────────────────────────────────────────────
-  const isFree = profile?.plan === 'free' || !profile?.plan
-  const creditsLeft = profile?.credits ?? 0
+  const isFree = (profile?.plan?.toLowerCase() === 'free') || !profile?.plan
+  const creditsLeft = (profile?.credits_limit ?? 0) - (profile?.credits_used ?? 0)
   const activeChapters = chapters.filter(c => c.text.trim())
   const totalChars = activeChapters.reduce((acc, c) => acc + c.charCount, 0)
   const totalWords = activeChapters.reduce((acc, c) => acc + c.wordCount, 0)
@@ -217,7 +218,7 @@ export default function AudioBooksPage() {
   // ── Voice picker ──────────────────────────────────────────────────────────
   function openPicker(target: 'global' | string) { setPickerTarget(target); setVoiceSearch(''); setShowVoicePicker(true) }
   function pickVoice(sv: any) {
-    const v: Voice = { id: sv.voice_id || sv.id, name: sv.voice_name || sv.name || 'Voice', language: sv.language || language }
+    const v: Voice = { id: sv.voice_id || sv.id, name: sv.voice_name || sv.name || 'Voice', language: sv.language || language, voiceUrl: sv.r2_url || null }
     if (pickerTarget === 'global') { setGlobalVoice(v); if (v.language) setLanguage(v.language) }
     else setChapter(pickerTarget, { voiceId: v.id, voiceName: v.name })
     setShowVoicePicker(false)
@@ -277,9 +278,10 @@ export default function AudioBooksPage() {
       const blobs: Blob[] = []
       for (const seg of segments) {
         if (cancelledRef.current) throw new Error('Cancelled')
+        const voiceUrl = globalVoice?.voiceUrl || null
         const res = await fetch('/api/tts', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: seg, voice_id: voiceId, voice_name: voiceName, language: lang, speed, format: 'mp3' }),
+          body: JSON.stringify({ text: seg, voice_id: voiceId, voice_url: voiceUrl, voice_name: voiceName, language: lang, speed, audio_format: 'mp3' }),
         })
         if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || `HTTP ${res.status}`) }
         blobs.push(new Blob([await res.blob()], { type: 'audio/mpeg' }))
@@ -720,12 +722,7 @@ export default function AudioBooksPage() {
 
           {/* CLEAR ACTION */}
           <button
-            onClick={() => {
-              if (!confirm('Clear everything and start fresh?')) return
-              setBookTitle(''); setAuthor(''); setGenre('Fiction'); setLanguage('en')
-              setRawText(''); setChapters([]); setGlobalVoice(null); setSpeed(1.0)
-              localStorage.removeItem('ab_draft_v3')
-            }}
+            onClick={() => setShowClearModal(true)}
             style={{ width: '100%', height: '42px', background: 'transparent', border: '1px solid var(--border)', color: 'var(--muted)', borderRadius: '12px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
           >
             Clear Project
@@ -803,6 +800,21 @@ export default function AudioBooksPage() {
               <button onClick={() => { setShowVoicePicker(false); router.push('/dashboard/library') }} style={{ background: 'none', border: 'none', color: '#f5c518', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
                 Browse Full Library →
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── CLEAR CONFIRM MODAL ─── */}
+      {showClearModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div onClick={() => setShowClearModal(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }} />
+          <div style={{ position: 'relative', width: 'min(400px, 90vw)', background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '20px', padding: '28px', boxShadow: '0 25px 60px rgba(0,0,0,0.6)' }}>
+            <h3 style={{ fontFamily: 'Syne, sans-serif', fontSize: '17px', fontWeight: 800, color: '#fff', margin: '0 0 10px' }}>Clear Project?</h3>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', margin: '0 0 24px', lineHeight: 1.6 }}>This will delete all chapters and settings. This action cannot be undone.</p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={() => setShowClearModal(false)} style={{ flex: 1, padding: '12px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => { setBookTitle(''); setAuthor(''); setGenre('Fiction'); setLanguage('en'); setRawText(''); setChapters([]); setGlobalVoice(null); setSpeed(1.0); localStorage.removeItem('ab_draft_v3'); setShowClearModal(false); }} style={{ flex: 1, padding: '12px', background: '#f05b5b', border: 'none', borderRadius: '12px', color: '#fff', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>Clear Everything</button>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -194,7 +194,14 @@ export default function HomePage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+
+  // ── Revoke blob URL on unmount ──
+  useEffect(() => {
+    return () => {
+      setAudioUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
+    };
+  }, []);
 
   // ── Fetch Voices from DB ──
   useEffect(() => {
@@ -222,7 +229,7 @@ export default function HomePage() {
   // ── Voice Change ──
   const handleVoiceChange = (voice: any) => {
     setSelectedVoice(voice);
-    setAudioUrl(null);
+    setAudioUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
     setAudioProgress(0);
     setIsPlaying(false);
     if (audioRef.current) {
@@ -238,7 +245,7 @@ export default function HomePage() {
     setIsLangDropdownOpen(false);
     setSelectedLang(langCode);
     setDemoText(lang.text);
-    setAudioUrl(null);
+    setAudioUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
     setAudioProgress(0);
     setIsPlaying(false);
     if (audioRef.current) {
@@ -280,7 +287,7 @@ export default function HomePage() {
   // ── Text Change ──
   const handleTextChange = (text: string) => {
     setDemoText(text.slice(0, 250));
-    setAudioUrl(null);
+    setAudioUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
     setAudioProgress(0);
     if (audioRef.current) {
       audioRef.current.pause();

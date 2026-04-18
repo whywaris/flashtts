@@ -26,7 +26,7 @@ async function checkGuestRateLimit(ip: string): Promise<boolean> {
     const count: number = data[0]?.result ?? 0;
     return count <= 10;
   } catch {
-    return true;
+    return false; // fail closed — Redis error = no guest access
   }
 }
 
@@ -61,6 +61,10 @@ export async function POST(req: NextRequest) {
     // ── Validation ───────────────────────────────────────────────────────────
     if (!text || text.trim().length === 0) {
       return NextResponse.json({ error: 'Text is required' }, { status: 400 })
+    }
+
+    if (text.length > 25000) {
+      return NextResponse.json({ error: 'Text too long. Maximum 25,000 characters per request.' }, { status: 413 })
     }
 
     const inputChars: number = text.length
@@ -148,12 +152,12 @@ export async function POST(req: NextRequest) {
         // Try saved_voices r2_url (cloned voices)
         const { data: savedVoice } = await supabase
           .from('saved_voices')
-          .select('r2_url, sample_url')
+          .select('r2_url')
           .eq('voice_id', voice_id)
           .eq('user_id', user.id)
           .single()
 
-        resolvedVoiceUrl = savedVoice?.r2_url || savedVoice?.sample_url || null
+        resolvedVoiceUrl = savedVoice?.r2_url || null
       }
     }
 
@@ -167,9 +171,9 @@ export async function POST(req: NextRequest) {
       language,
     })
 
-    // If RunPod failed, refund credits atomically
+    // If RunPod failed, refund credits
     if (result instanceof NextResponse && result.status !== 200) {
-      await supabase.rpc('increment_credits', { user_id: user.id, amount: -inputChars })
+      await supabase.rpc('increment_credits', { user_id: user.id, amount: inputChars })
       return result
     }
 
@@ -207,10 +211,7 @@ async function callRunPod({
   const runpodBody = {
     input: {
       text,
-      // ✅ Pass resolved voice URL — this is what RunPod uses for voice cloning/selection
-      voice: voice_url || null,
-      voice_url: voice_url || null,   // some handlers use this key
-      voice_id: voice_id || null,
+      voice_url: voice_url || null,
       voice_name: voice_name || null,
       speed,
       language,

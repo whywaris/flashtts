@@ -83,9 +83,9 @@ export default function UsersManager() {
   const getLimit = (plan: string) => {
     const p = plan?.toLowerCase()
     if (p === 'starter') return 200000
-    if (p === 'creator') return 600000
+    if (p === 'creator') return 500000
     if (p === 'pro') return 1000000
-    if (p === 'agency') return 3000000
+    if (p === 'studio') return 3000000
     return 10000 // Free
   }
 

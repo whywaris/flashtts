@@ -105,11 +105,14 @@ export default function VoiceCloneTrial() {
       {status === 'result' && (
         <div className={styles.result}>
           <div className={styles.successIcon}>✨</div>
-          <p className={styles.resultText}>Clone Ready! Hear the result:</p>
-          
+          <p className={styles.resultText}>Demo Preview Ready</p>
+          <p style={{ fontSize: '0.78rem', color: 'var(--muted)', margin: '0 0 12px', textAlign: 'center' }}>
+            This is a sample audio preview. Real voice cloning is available in the studio after signup.
+          </p>
+
           <button className={styles.playBtn} onClick={togglePlay}>
             {isPlaying ? <Pause fill="#fff" size={20} /> : <Play fill="#fff" size={20} />}
-            {isPlaying ? 'Stop Preview' : 'Listen to My Clone'}
+            {isPlaying ? 'Stop Preview' : 'Play Sample Preview'}
           </button>
 
           <Link href="/signup" className={styles.ctaBtn}>
@@ -134,7 +137,7 @@ export default function VoiceCloneTrial() {
       )}
 
       <div style={{ marginTop: '20px', fontSize: '0.75rem', color: 'var(--muted)', textAlign: 'center' }}>
-        No signup required for demo. Quality is enhanced in the Pro studio.
+        Interactive demo only — not real voice cloning. Full cloning available after signup.
       </div>
     </div>
   );

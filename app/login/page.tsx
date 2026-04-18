@@ -35,7 +35,7 @@ export default function LoginPage() {
                 redirectTo: `${window.location.origin}/auth/callback`
             }
         })
-        if (error) alert(error.message)
+        if (error) setError(error.message)
     }
 
     return (
