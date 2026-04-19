@@ -30,7 +30,7 @@ export default function AnnouncementsPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [form, setForm] = useState<typeof EMPTY_FORM>({ ...EMPTY_FORM })
+  const [form, setForm] = useState({ ...EMPTY_FORM })
   const [saving, setSaving] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
