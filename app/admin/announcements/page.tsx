@@ -21,7 +21,7 @@ const TYPE_STYLES: Record<string, { bg: string; text: string; border: string; la
   error:   { bg: '#FEF2F2', text: '#991B1B', border: '#FECACA', label: 'Error' },
 }
 
-const EMPTY_FORM = { title: '', message: '', type: 'info' as const, is_active: false, starts_at: '', ends_at: '' }
+const EMPTY_FORM = { title: '', message: '', type: 'info' as 'info' | 'warning' | 'success' | 'error', is_active: false, starts_at: '', ends_at: '' }
 
 export default function AnnouncementsPage() {
   const supabase = createClient()
