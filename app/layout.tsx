@@ -80,9 +80,9 @@ export const metadata: Metadata = {
 
   // ── Icons ──
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon-16x16.png',
-    apple: '/apple-touch-icon.png',
+    icon: 'https://pub-3f46038553dd48c18ff7e328b4172cab.r2.dev/FlashTTS%20Logo.png',
+    shortcut: 'https://pub-3f46038553dd48c18ff7e328b4172cab.r2.dev/FlashTTS%20Logo.png',
+    apple: 'https://pub-3f46038553dd48c18ff7e328b4172cab.r2.dev/FlashTTS%20Logo.png',
   },
 
   // ── App info ──
@@ -101,6 +101,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="icon" type="image/png" href="https://pub-3f46038553dd48c18ff7e328b4172cab.r2.dev/FlashTTS%20Logo.png" />
+        <link rel="apple-touch-icon" href="https://pub-3f46038553dd48c18ff7e328b4172cab.r2.dev/FlashTTS%20Logo.png" />
         <link
           href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700;800&display=swap"
           rel="stylesheet"

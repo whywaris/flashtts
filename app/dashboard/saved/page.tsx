@@ -179,6 +179,21 @@ export default function SavedVoicesPage() {
     setRemovingId(null);
   };
 
+  // ── Use in TTS ─────────────────────────────────────────────────────────────
+  const handleUseInTTS = (voice: SavedVoice) => {
+    localStorage.setItem(
+      'flashtts_selected_voice',
+      JSON.stringify({
+        id: voice.voice_id || voice.id,
+        name: voice.voice_name || 'Unnamed Voice',
+        language: voice.language,
+        gender: voice.gender,
+        sample_url: voice.r2_url || voice.sample_url
+      })
+    );
+    router.push('/dashboard/tts');
+  };
+
   // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
@@ -338,18 +353,18 @@ export default function SavedVoicesPage() {
 
                 {/* Action buttons */}
                 <div style={{ display: 'flex', gap: '7px', marginTop: 'auto' }}>
-                  <Link
-                    href={`/dashboard/tts?voice=${v.voice_id}`}
+                  <button
+                    onClick={() => handleUseInTTS(v)}
                     style={{
                       flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
                       gap: '5px', padding: '9px', borderRadius: '9px',
                       background: 'rgba(245,197,24,0.08)', border: '1px solid rgba(245,197,24,0.2)',
                       color: '#f5c518', fontSize: '12px', fontWeight: 700,
-                      textDecoration: 'none', fontFamily: 'DM Sans, sans-serif',
+                      cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
                     }}
                   >
                     Use in TTS <ArrowRight size={11} strokeWidth={2.5} />
-                  </Link>
+                  </button>
                   <button
                     onClick={() => handleRemove(v)}
                     disabled={isRemoving}

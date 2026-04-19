@@ -65,7 +65,7 @@ interface SavedVoice {
   name: string;
   language?: string | null;
   gender?: string | null;
-  r2_url?: string | null;
+  sample_url?: string | null;
 }
 
 interface SelectedVoice {
@@ -98,7 +98,7 @@ function TTSPageInner() {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [previewPlayingId, setPreviewPlayingId] = useState<string | null>(null);
-  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // ─── UI / Modal State ───
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
@@ -117,6 +117,26 @@ function TTSPageInner() {
 
   // ─── Initialization ───
   useEffect(() => {
+    const stored = localStorage.getItem('flashtts_selected_voice')
+    if (stored) {
+      try {
+        const voice = JSON.parse(stored)
+        setSelectedVoice(voice);
+        if (voice.language) setLanguage(voice.language);
+        toast.success(`Voice loaded: ${voice.name}`, {
+          style: {
+            background: 'var(--card-bg)',
+            border: '1px solid #f5c518',
+            color: 'var(--text)'
+          },
+          icon: '🎙️'
+        });
+        localStorage.removeItem('flashtts_selected_voice')
+      } catch (e) {
+        localStorage.removeItem('flashtts_selected_voice')
+      }
+    }
+
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push('/login'); return; }
@@ -130,8 +150,8 @@ function TTSPageInner() {
 
       if (profile) {
         setUserPlan(profile.plan || 'free');
-        setCreditsUsed(profile.credits_used || 0);
-        setCreditsLimit(profile.credits_limit || 10000);
+        setCreditsUsed(profile.credits_used ?? 0);
+        setCreditsLimit(profile.credits_limit ?? 10000);
       }
 
       // Load recent voices from localStorage
@@ -191,19 +211,75 @@ function TTSPageInner() {
     return data?.sample_url || null;
   };
 
-  const playVoicePreview = useCallback((voiceId: string, url: string | null) => {
-    if (!url) return;
+  const handlePreview = useCallback((voiceId: string, sampleUrl: string | null) => {
+    if (!sampleUrl) return;
+
+    // Stop any currently playing audio first
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current.src = '';
+    }
+
     if (previewPlayingId === voiceId) {
-      previewAudioRef.current?.pause();
       setPreviewPlayingId(null);
       return;
     }
-    if (previewAudioRef.current) previewAudioRef.current.pause();
-    previewAudioRef.current = new Audio(url);
-    previewAudioRef.current.play();
+
+    // Play new audio
+    const audio = new Audio(sampleUrl);
+    audioRef.current = audio;
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(e => console.log('Audio abruptly paused', e));
+    }
+    
     setPreviewPlayingId(voiceId);
-    previewAudioRef.current.onended = () => setPreviewPlayingId(null);
+    audio.onended = () => setPreviewPlayingId(null);
   }, [previewPlayingId]);
+
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current.src = '';
+      audioRef.current = null;
+    }
+    setPreviewPlayingId(null);
+    setVoiceModalOpen(false);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && voiceModalOpen) {
+        handleCloseModal();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [voiceModalOpen, handleCloseModal]);
+
+  const handleUseVoice = useCallback((voice: SelectedVoice) => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+      audioRef.current.src = '';
+      audioRef.current = null;
+    }
+    setPreviewPlayingId(null);
+    setSelectedVoice(voice);
+    setVoiceModalOpen(false);
+  }, []);
 
   const updateRecentVoices = (voice: SelectedVoice) => {
     const updated = [
@@ -611,18 +687,33 @@ function TTSPageInner() {
                 onClick={handleGenerate}
                 disabled={generating || !text.trim()}
                 style={{
-                  width: '100%', padding: '11px 16px', borderRadius: '16px',
+                  width: '100%', padding: '13px 16px', borderRadius: '16px',
                   background: generating || !text.trim() ? 'var(--secondary)' : '#f5c518',
                   color: generating || !text.trim() ? 'rgba(0,0,0,0.3)' : '#000',
                   boxShadow: generating || !text.trim() ? 'none' : '0 10px 20px rgba(245,197,24,0.15)',
                   transition: 'all 0.2s',
-                  fontFamily: 'Syne, sans-serif'
+                  fontFamily: 'Syne, sans-serif',
+                  fontSize: '14px', fontWeight: 700, border: 'none', cursor: generating || !text.trim() ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                 }}
               >
-                <Zap size={18} fill="currentColor" />
-                {generating ? 'Generating...' : 'Generate Audio'}
+                {generating ? (
+                  <>
+                    <div style={{ width: '15px', height: '15px', border: '2px solid rgba(0,0,0,0.2)', borderTop: '2px solid rgba(0,0,0,0.6)', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    </svg>
+                    Generate Audio
+                  </>
+                )}
               </button>
-              <p style={{ fontSize: '11px', color: 'var(--muted)', marginTop: '10px', opacity: 0.5 }}>Ctrl+Enter</p>
+              <p style={{ textAlign: 'center', fontSize: '12px', color: '#aaaaaa', margin: '8px 0 0', fontFamily: 'inherit' }}>
+                Press Ctrl+Enter to generate
+              </p>
             </div>
           </div>
         </div>
@@ -630,7 +721,7 @@ function TTSPageInner() {
 
       {/* ─── VOICE MODAL ─── */}
       {voiceModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setVoiceModalOpen(false)}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={handleCloseModal}>
           <div 
             style={{ 
               background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '24px', 
@@ -647,7 +738,7 @@ function TTSPageInner() {
                   <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>{modalVoices.length} premium voices available</p>
                 </div>
                 <button 
-                  onClick={() => setVoiceModalOpen(false)} 
+                  onClick={handleCloseModal} 
                   style={{ 
                     background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', 
                     color: '#ffffff', borderRadius: '50%', width: '32px', height: '32px',
@@ -730,7 +821,7 @@ function TTSPageInner() {
                     return (
                       <div 
                         key={v.id}
-                        onClick={() => { setSelectedVoice(v); setVoiceModalOpen(false); }}
+                        onClick={() => handleUseVoice(v)}
                         className={`voice-modal-item ${isSelected ? 'selected' : ''}`}
                         style={{ 
                           display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 24px', 
@@ -760,7 +851,7 @@ function TTSPageInner() {
                         </div>
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                           <button 
-                            onClick={(e) => { e.stopPropagation(); playVoicePreview(v.id, v.sample_url); }}
+                            onClick={(e) => { e.stopPropagation(); handlePreview(v.id, v.sample_url); }}
                             style={{ 
                               width: '36px', height: '36px', borderRadius: '50%', 
                               background: previewPlayingId === v.id ? 'rgba(245,197,24,0.2)' : 'rgba(245,197,24,0.1)', 
@@ -805,6 +896,7 @@ function TTSPageInner() {
         .voice-modal-item:hover .select-badge { opacity: 1 !important; transform: translateX(0); }
         .select-badge { transition: all 0.2s; transform: translateX(5px); }
         select option { background: #1a1a1a; color: #fff; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
     </div>
   );

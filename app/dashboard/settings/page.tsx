@@ -207,8 +207,8 @@ export default function SettingsPage() {
 
   const currentPlan = profile?.plan?.toLowerCase() || 'free';
   const planInfo = PLAN_DATA[currentPlan] || PLAN_DATA.free;
-  const creditsUsed = profile?.credits_used || 0;
-  const creditsLimit = profile?.credits_limit || 10000;
+  const creditsUsed = profile?.credits_used ?? 0;
+  const creditsLimit = profile?.credits_limit ?? 10000;
   const usagePercentage = (creditsUsed / creditsLimit) * 100;
   
   const progressBarColor = usagePercentage > 90 ? '#ef4444' : usagePercentage > 70 ? '#f5c518' : '#22d3a5';

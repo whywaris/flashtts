@@ -28,12 +28,12 @@ export async function middleware(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
 
   // ── Admin Subdomain Routing ──
-  const isAdminSubdomain = 
+  const isAdminSubdomain =
     hostname === 'admin.flashtts.com' ||
     hostname.startsWith('admin.')
 
   if (isAdminSubdomain) {
-    // Not logged in → login page
+    // Not logged in → redirect to main site login
     if (!user) {
       return NextResponse.redirect(
         new URL('https://flashtts.com/login?redirect=admin', req.url)
@@ -47,36 +47,61 @@ export async function middleware(req: NextRequest) {
       .eq('id', user.id)
       .single()
 
-    // Not admin → back to dashboard
+    // Not admin → redirect to dashboard
     if (profile?.role !== 'admin') {
       return NextResponse.redirect(
         new URL('https://flashtts.com/dashboard', req.url)
       )
     }
 
-    // Is admin → rewrite to /admin routes
+    // ── Admin routing ──
     const url = req.nextUrl.clone()
-    
-    // Root → /admin
+
+    // Skip rewrite for static assets, api, _next
+    if (
+      pathname.startsWith('/_next') ||
+      pathname.startsWith('/api') ||
+      pathname.includes('.')
+    ) {
+      return res
+    }
+
+    // Root "/" → /admin
     if (pathname === '/') {
       url.pathname = '/admin'
       return NextResponse.rewrite(url)
     }
 
-    // /dashboard → /admin/dashboard etc
-    if (!pathname.startsWith('/admin')) {
-      url.pathname = `/admin${pathname}`
-      return NextResponse.rewrite(url)
+    // Already has /admin prefix → pass through
+    if (pathname.startsWith('/admin')) {
+      return res
     }
 
-    return res
+    // Everything else → prefix with /admin
+    // e.g. /users → /admin/users
+    //      /revenue → /admin/revenue
+    url.pathname = `/admin${pathname}`
+    return NextResponse.rewrite(url)
   }
 
-  // ── Main Site Auth ──
-  const isProtectedRoute = pathname.startsWith('/dashboard')
+  // ── Main Site: Protected Routes ──
+  const isProtectedRoute =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/settings')
 
   if (isProtectedRoute && !user) {
-    return NextResponse.redirect(new URL('/login', req.url))
+    const loginUrl = new URL('/login', req.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  // ── Main Site: Redirect logged-in users away from auth pages ──
+  const isAuthPage =
+    pathname === '/login' ||
+    pathname === '/signup'
+
+  if (isAuthPage && user) {
+    return NextResponse.redirect(new URL('/dashboard', req.url))
   }
 
   return res
@@ -84,6 +109,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)' 
+    '/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)',
   ],
 }

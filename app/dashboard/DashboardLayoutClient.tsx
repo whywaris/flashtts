@@ -23,6 +23,7 @@ import {
     Library,
     Flame,
 } from 'lucide-react';
+import AnnouncementBanner from '@/components/AnnouncementBanner';
 import { createClient } from '@/utils/supabase/client';
 import ThemeToggle from '@/components/ThemeToggle';
 
@@ -531,7 +532,7 @@ export default function DashboardLayoutClient({ children }: { children: React.Re
             />
 
             <main
-                className="transition-all duration-300 md:ml-64 p-4 md:p-7"
+                className="transition-all duration-300 md:ml-64"
                 style={{
                     minHeight: '100vh',
                     background: 'transparent',
@@ -539,7 +540,10 @@ export default function DashboardLayoutClient({ children }: { children: React.Re
                     zIndex: 1,
                 }}
             >
-                {children}
+                <AnnouncementBanner />
+                <div className="p-4 md:p-7">
+                    {children}
+                </div>
             </main>
         </div>
     );

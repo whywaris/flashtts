@@ -230,7 +230,7 @@ export default function VoiceLibraryPage() {
 
   // ── Use in TTS ──────────────────────────────────────────────────────────────
   function useInTTS(voice: any) {
-    localStorage.setItem('tts_selected_voice', JSON.stringify({
+    localStorage.setItem('flashtts_selected_voice', JSON.stringify({
       id: voice.id, name: voice.name,
       language: voice.language, gender: voice.gender,
       sample_url: voice.sample_url,

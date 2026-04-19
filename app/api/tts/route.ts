@@ -112,23 +112,25 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Atomically deduct credits before generating — prevents concurrent-request abuse
-    const { data: reserved, error: reserveErr } = await supabase.rpc('deduct_credits_atomic', {
-      p_user_id: user.id,
-      p_amount: inputChars,
-    })
+    const creditsUsed = profile?.credits_used ?? 0
+    const creditsLimit = profile?.credits_limit ?? 10000
+    const creditsRemaining = creditsLimit - creditsUsed
 
-    if (reserveErr || !reserved) {
+    if (creditsRemaining <= 0) {
       return NextResponse.json(
         { error: 'Credit limit reached. Please upgrade your plan.' },
         { status: 402 }
       )
     }
+    
+    if (creditsRemaining < inputChars) {
+      return NextResponse.json(
+        { error: 'Not enough credits remaining for this request.' },
+        { status: 400 }
+      )
+    }
 
-    // ── Resolve voice sample URL ──────────────────────────────────────────────
-    // Priority: 1) voice_url passed directly from frontend (must pass allowlist check)
-    //           2) Lookup from voices table using voice_id
-    //           3) Lookup from saved_voices r2_url (for cloned voices)
+    // ── Resolve voice sample URL BEFORE deducting credits ────────────────────
     let resolvedVoiceUrl: string | null = null
 
     if (voice_url) {
@@ -139,7 +141,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (!resolvedVoiceUrl && voice_id) {
-      // Try voices table first (library voices)
       const { data: libVoice } = await supabase
         .from('voices')
         .select('sample_url')
@@ -149,16 +150,32 @@ export async function POST(req: NextRequest) {
       if (libVoice?.sample_url) {
         resolvedVoiceUrl = libVoice.sample_url
       } else {
-        // Try saved_voices r2_url (cloned voices)
         const { data: savedVoice } = await supabase
           .from('saved_voices')
           .select('r2_url')
           .eq('voice_id', voice_id)
           .eq('user_id', user.id)
           .single()
-
         resolvedVoiceUrl = savedVoice?.r2_url || null
       }
+    }
+
+    // ── Atomically deduct credits ─────────────────────────────────────────────
+    const { data: reserved, error: reserveErr } = await supabase.rpc('deduct_credits_atomic', {
+      p_user_id: user.id,
+      p_amount: inputChars,
+    })
+
+    if (reserveErr) {
+      console.error('[TTS] deduct_credits_atomic error:', reserveErr)
+      return NextResponse.json({ error: 'Service error. Please try again.' }, { status: 500 })
+    }
+
+    if (!reserved) {
+      return NextResponse.json(
+        { error: 'Credit limit reached. Please upgrade your plan.' },
+        { status: 402 }
+      )
     }
 
     // ── Call RunPod ───────────────────────────────────────────────────────────

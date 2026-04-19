@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import Link from 'next/link'
-import { 
-  LayoutDashboard, Users, DollarSign, FileText, Music, 
-  BarChart2, Shield, Mail, LogOut, ArrowLeft, Zap
+import {
+  LayoutDashboard, Users, DollarSign, FileText, Music,
+  BarChart2, Shield, Mail, LogOut, ArrowLeft, Zap, Megaphone
 } from 'lucide-react'
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
@@ -62,9 +62,10 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
     {
       title: 'MENU',
       items: [
-        { label: 'Overview',            href: '/admin',         icon: LayoutDashboard },
-        { label: 'Users',               href: '/admin/users',   icon: Users },
-        { label: 'Revenue',             href: '/admin/revenue', icon: DollarSign },
+        { label: 'Overview',            href: '/admin',                  icon: LayoutDashboard },
+        { label: 'Users',               href: '/admin/users',            icon: Users },
+        { label: 'Announcements',       href: '/admin/announcements',    icon: Megaphone },
+        { label: 'Revenue',             href: '/admin/revenue',          icon: DollarSign },
         { label: 'Write & Manage Blog', href: '/admin/blog',    icon: FileText },
         { label: 'Add & Manage Voices', href: '/admin/voices',  icon: Music },
         { label: 'Usage',               href: '/admin/usage',   icon: BarChart2 },

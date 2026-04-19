@@ -161,7 +161,7 @@ export default function AudioBooksPage() {
 
   // ── Logic Variables ────────────────────────────────────────────────────────
   const isFree = (profile?.plan?.toLowerCase() === 'free') || !profile?.plan
-  const creditsLeft = (profile?.credits_limit ?? 0) - (profile?.credits_used ?? 0)
+  const creditsLeft = (profile?.credits_limit ?? 10000) - (profile?.credits_used ?? 0)
   const activeChapters = chapters.filter(c => c.text.trim())
   const totalChars = activeChapters.reduce((acc, c) => acc + c.charCount, 0)
   const totalWords = activeChapters.reduce((acc, c) => acc + c.wordCount, 0)

@@ -31,6 +31,18 @@ export default function Navbar() {
     setIsMenuOpen(false);
   }, [pathname]);
 
+  // Body scroll lock
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMenuOpen]);
+
   const isActive = (href: string) => {
     if (href.startsWith('/#')) return false; // Anchor links don't show active color by default unless matched exactly
     return pathname === href;
@@ -110,41 +122,64 @@ export default function Navbar() {
       {/* MOBILE MENU OVERLAY */}
       <AnimatePresence>
         {isMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="fixed inset-0 top-0 bg-[#F0EDE8] z-[55] pt-[80px] px-6 md:hidden"
-          >
-            <div className="flex flex-col gap-1">
-              {NAV_LINKS.map((link) => (
-                <Link 
-                  key={link.href} 
-                  href={link.href}
-                  className="py-4 text-[20px] font-bold text-slate-900 border-b border-black/5 flex items-center justify-between group"
-                >
-                  <span className={isActive(link.href) ? 'text-[#E8522A]' : ''}>{link.label}</span>
-                  <ArrowRight size={20} className="opacity-0 -translate-x-2 transition-all group-hover:opacity-100 group-hover:translate-x-0 text-[#E8522A]" />
-                </Link>
-              ))}
-            </div>
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-40 md:hidden"
+              style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
+              onClick={() => setIsMenuOpen(false)}
+            />
 
-            <div className="mt-10 flex flex-col gap-4">
-              <Link 
-                href="/login" 
-                className="w-full py-4 rounded-2xl border-2 border-slate-200 text-center font-bold text-slate-900 text-[16px] hover:bg-white transition-colors"
-              >
-                Log in
-              </Link>
-              <Link 
-                href="/signup" 
-                className="w-full py-4 rounded-2xl bg-[#E8522A] text-white text-center font-bold text-[16px] flex items-center justify-center gap-2 shadow-xl shadow-[#E8522A]/20"
-              >
-                Start Free <ArrowRight size={18} />
-              </Link>
-            </div>
-          </motion.div>
+            {/* Menu panel */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="fixed inset-x-0 top-0 z-50 md:hidden"
+              style={{
+                backgroundColor: '#F0EDE8',
+                overflowY: 'auto',
+                maxHeight: '100dvh',
+                paddingTop: '80px',
+                paddingLeft: '24px',
+                paddingRight: '24px',
+                paddingBottom: '32px',
+              }}
+            >
+              <div className="flex flex-col gap-1">
+                {NAV_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="py-4 text-[20px] font-bold text-slate-900 border-b border-black/5 flex items-center justify-between group"
+                  >
+                    <span className={isActive(link.href) ? 'text-[#E8522A]' : ''}>{link.label}</span>
+                    <ArrowRight size={20} className="opacity-0 -translate-x-2 transition-all group-hover:opacity-100 group-hover:translate-x-0 text-[#E8522A]" />
+                  </Link>
+                ))}
+              </div>
+
+              <div className="mt-10 flex flex-col gap-4">
+                <Link
+                  href="/login"
+                  className="w-full py-4 rounded-2xl border-2 border-slate-200 text-center font-bold text-slate-900 text-[16px] hover:bg-white transition-colors"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/signup"
+                  className="w-full py-4 rounded-2xl bg-[#E8522A] text-white text-center font-bold text-[16px] flex items-center justify-center gap-2 shadow-xl shadow-[#E8522A]/20"
+                >
+                  Start Free <ArrowRight size={18} />
+                </Link>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </nav>
