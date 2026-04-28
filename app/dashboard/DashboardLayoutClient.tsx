@@ -4,120 +4,134 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
-    LayoutDashboard,
-    FileText,
-    BookOpen,
-    Music,
-    Mic,
-    Headphones,
-    Bookmark,
-    Users,
-    Settings,
-    CreditCard,
-    Zap,
-    LogOut,
-    ChevronDown,
-    Menu,
-    X,
-    Clock,
-    Library,
-    Flame,
+    LayoutDashboard, FileText, Music, Mic, Bookmark,
+    Settings, CreditCard, Zap, LogOut, Menu,
+    Clock, Library, MessageSquare, Sun, Moon,
 } from 'lucide-react';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
 import { createClient } from '@/utils/supabase/client';
-import ThemeToggle from '@/components/ThemeToggle';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Profile {
     id: string;
     full_name?: string | null;
     plan?: string | null;
-    avatar_url?: string | null;
+    credits_used?: number;
+    credits_limit?: number;
 }
 
-// ─── Nav config ──────────────────────────────────────────────────────────────
+// ─── Constants ───────────────────────────────────────────────────────────────
+const SIDEBAR_W  = 240;
+const ACCENT     = '#2DD4BF'; // same in both themes, used for SVG icon color props
+
+// ─── Nav Config ──────────────────────────────────────────────────────────────
 const MAIN_NAV = [
-    { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-    { label: 'Text to Speech', icon: FileText, href: '/dashboard/tts' },
-    { label: 'Voice Library', icon: Music, href: '/dashboard/library' },
-    { label: 'Voice Cloning', icon: Mic, href: '/dashboard/cloning' },
-    { label: 'Ebook to AudioBook', icon: Library, href: '/dashboard/audiobooks' },
-    { label: 'Saved Voices', icon: Bookmark, href: '/dashboard/saved' },
-    { label: 'Voice History', icon: Clock, href: '/dashboard/history' },
+    { label: 'Dashboard',      icon: LayoutDashboard, href: '/dashboard' },
+    { label: 'Text to Speech', icon: FileText,         href: '/dashboard/tts' },
+    { label: 'Voice Library',  icon: Music,            href: '/dashboard/library' },
+    { label: 'Voice Cloning',  icon: Mic,              href: '/dashboard/cloning' },
+    { label: 'ebook to Audiobook', icon: Library,      href: '/dashboard/audiobooks' },
+    { label: 'Saved Voices',   icon: Bookmark,         href: '/dashboard/saved' },
+    { label: 'History',        icon: Clock,            href: '/dashboard/history' },
 ];
 
-const ACCOUNT_NAV = [
-    { label: 'Billing', icon: CreditCard, href: '/dashboard/billing' },
-    { label: 'Settings', icon: Settings, href: '/dashboard/settings' },
-    { label: 'Roast Me', icon: Flame, href: '/dashboard/roast-me' },
+const BOTTOM_NAV = [
+    { label: 'Billing',   icon: CreditCard,    href: '/dashboard/billing' },
+    { label: 'Settings',  icon: Settings,      href: '/dashboard/settings' },
+    { label: 'Feedback',  icon: MessageSquare, href: '/dashboard/roast-me' },
 ];
 
-// ─── Utility ─────────────────────────────────────────────────────────────────
-function getInitials(name?: string | null, email?: string | null): string {
+const PAGE_TITLES: Record<string, { title: string; sub: string }> = {
+    '/dashboard':           { title: 'Dashboard',      sub: 'Welcome back to your workspace' },
+    '/dashboard/tts':       { title: 'Text to Speech', sub: 'Convert text into natural speech' },
+    '/dashboard/library':   { title: 'Voice Library',  sub: 'Explore and preview all voices' },
+    '/dashboard/cloning':   { title: 'Voice Cloning',  sub: 'Clone and manage your voices' },
+    '/dashboard/audiobooks':{ title: 'ebook to Audiobook', sub: 'Convert ebooks to audio' },
+    '/dashboard/saved':     { title: 'Saved Voices',   sub: 'Your favourite voice collection' },
+    '/dashboard/history':   { title: 'History',        sub: 'Past generations' },
+    '/dashboard/billing':   { title: 'Billing',        sub: 'Plan and usage' },
+    '/dashboard/settings':  { title: 'Settings',       sub: 'Account preferences' },
+    '/dashboard/roast-me':  { title: 'Feedback',       sub: 'Share your thoughts' },
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function initials(name?: string | null, email?: string | null): string {
     if (name) {
-        const parts = name.trim().split(' ');
-        return parts.length >= 2
-            ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-            : name.slice(0, 2).toUpperCase();
+        const p = name.trim().split(' ');
+        return p.length >= 2 ? (p[0][0] + p[p.length - 1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
     }
-    if (email) return email.slice(0, 2).toUpperCase();
-    return 'U';
+    return email ? email.slice(0, 2).toUpperCase() : 'U';
 }
 
-// ─── NavLink ─────────────────────────────────────────────────────────────────
-function NavLink({
-    href,
-    icon: Icon,
-    label,
-    active,
-}: {
-    href: string;
-    icon: React.ElementType;
-    label: string;
-    active: boolean;
+function fmtNum(n: number): string {
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000)     return `${(n / 1_000).toFixed(0)}K`;
+    return n.toString();
+}
+
+// ─── NavItem ─────────────────────────────────────────────────────────────────
+function NavItem({ href, icon: Icon, label, active }: {
+    href: string; icon: React.ElementType; label: string; active: boolean;
 }) {
     return (
-        <Link
-            href={href}
-            style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '9px 12px',
-                borderRadius: '10px',
-                fontSize: '13.5px',
-                fontWeight: 500,
-                fontFamily: 'Geist, sans-serif',
-                letterSpacing: '0.01em',
-                textDecoration: 'none',
-                transition: 'all 0.18s ease',
-                ...(active
-                    ? {
-                        background: 'rgba(245, 197, 24, 0.08)',
-                        color: '#f5c518',
-                        border: '1px solid rgba(245, 197, 24, 0.18)',
-                    }
-                    : {
-                        color: 'var(--muted)',
-                        border: '1px solid transparent',
-                    }),
-            }}
-            className={active ? '' : 'nav-link-hover'}
-        >
-            <Icon size={16} strokeWidth={1.8} style={{ flexShrink: 0 }} />
-            {label}
+        <Link href={href} style={{ textDecoration: 'none' }}>
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    fontSize: '15px',
+                    fontWeight: active ? 600 : 450,
+                    fontFamily: 'Inter, sans-serif',
+                    letterSpacing: '0.005em',
+                    transition: 'all 0.15s ease',
+                    cursor: 'pointer',
+                    background: active ? 'var(--accent-dim)' : 'transparent',
+                    color: active ? 'var(--accent)' : 'var(--muted)',
+                    position: 'relative',
+                }}
+                className={active ? '' : 'dash-nav-item'}
+            >
+                {active && (
+                    <div style={{
+                        position: 'absolute',
+                        left: 0, top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '2.5px',
+                        height: '18px',
+                        borderRadius: '0 2px 2px 0',
+                        background: 'var(--accent)',
+                    }} />
+                )}
+                <Icon size={18} strokeWidth={active ? 2 : 1.7} style={{ flexShrink: 0 }} />
+                {label}
+            </div>
         </Link>
     );
 }
 
+// ─── NavGroup Label ──────────────────────────────────────────────────────────
+function GroupLabel({ children }: { children: React.ReactNode }) {
+    return (
+        <div style={{
+            fontSize: '12.5px',
+            fontWeight: 700,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            color: 'var(--faint)',
+            padding: '0 12px',
+            marginBottom: '6px',
+            fontFamily: 'Inter, sans-serif',
+        }}>
+            {children}
+        </div>
+    );
+}
+
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
-function Sidebar({
-    profile,
-    email,
-    onSignOut,
-    open,
-    onClose,
-}: {
+function Sidebar({ profile, email, onSignOut, open, onClose }: {
     profile: Profile | null;
     email: string | null;
     onSignOut: () => void;
@@ -125,426 +139,434 @@ function Sidebar({
     onClose: () => void;
 }) {
     const pathname = usePathname();
+    const isActive = (href: string) =>
+        href === '/dashboard' ? pathname === '/dashboard' : pathname.startsWith(href);
 
-    const isActive = (href: string) => {
-        if (href === '/dashboard') return pathname === '/dashboard';
-        return pathname.startsWith(href);
-    };
-
-    const displayName = profile?.full_name || email?.split('@')[0] || 'User';
-    const plan = profile?.plan || 'Free';
-    const initials = getInitials(profile?.full_name, email);
+    const name   = profile?.full_name || email?.split('@')[0] || 'User';
+    const plan   = (profile?.plan || 'free').charAt(0).toUpperCase() + (profile?.plan || 'free').slice(1);
+    const avatar = initials(profile?.full_name, email);
 
     return (
         <>
-            {/* Overlay for mobile */}
+            {/* Mobile overlay */}
             {open && (
-                <div 
-                    className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm transition-opacity"
+                <div
                     onClick={onClose}
+                    style={{
+                        position: 'fixed', inset: 0, zIndex: 40,
+                        background: 'rgba(0,0,0,0.45)',
+                        backdropFilter: 'blur(6px)',
+                    }}
+                    className="md:hidden"
                 />
             )}
 
             <aside
-                className={`fixed left-0 top-0 h-full w-64 z-50 transform transition-transform duration-300 ease-in-out md:translate-x-0 shadow-2xl md:shadow-none ${
-                    open ? 'translate-x-0' : '-translate-x-full'
-                }`}
                 style={{
+                    position: 'fixed',
+                    top: 0, left: 0,
+                    height: '100dvh',
+                    width: `${SIDEBAR_W}px`,
                     background: 'var(--sidebar-bg)',
-                    backdropFilter: 'blur(25px)',
-                    WebkitBackdropFilter: 'blur(25px)',
-                    borderRight: '1px solid var(--sidebar-border)',
+                    borderRight: '1px solid var(--border)',
                     display: 'flex',
                     flexDirection: 'column',
-                    overflowY: 'auto',
+                    zIndex: 50,
+                    transform: open ? 'translateX(0)' : undefined,
+                    transition: 'transform 0.25s ease, background 0.2s ease, border-color 0.2s ease',
                 }}
+                className={`${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
             >
-            {/* ── Logo ── */}
-            <div
-                style={{
-                    padding: '24px 20px 20px',
+                {/* ── Logo ── */}
+                <div style={{
+                    padding: '18px 14px 16px',
                     borderBottom: '1px solid var(--border)',
                     flexShrink: 0,
-                }}
-            >
-                <Link
-                    href="/dashboard"
-                    style={{
+                }}>
+                    <Link href="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+                        <div style={{
+                            width: '28px', height: '28px',
+                            borderRadius: '7px',
+                            background: 'linear-gradient(135deg, #2DD4BF 0%, #0d9488 100%)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            boxShadow: '0 0 14px rgba(45,212,191,0.25)',
+                            flexShrink: 0,
+                        }}>
+                            <Zap size={14} color="#0A0A0F" strokeWidth={2.5} fill="#0A0A0F" />
+                        </div>
+                        <span style={{
+                            fontFamily: 'Inter, sans-serif',
+                            fontWeight: 700,
+                            fontSize: '17px',
+                            color: 'var(--text)',
+                            letterSpacing: '-0.025em',
+                        }}>
+                            FlashTTS
+                        </span>
+                    </Link>
+                </div>
+
+                {/* ── Nav ── */}
+                <nav style={{
+                    flex: 1,
+                    padding: '16px 8px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '26px',
+                    overflowY: 'auto',
+                }}>
+                    {/* Main */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <GroupLabel>Menu</GroupLabel>
+                        {MAIN_NAV.map(item => (
+                            <NavItem
+                                key={item.href}
+                                href={item.href}
+                                icon={item.icon}
+                                label={item.label}
+                                active={isActive(item.href)}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Account */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <GroupLabel>Account</GroupLabel>
+                        {BOTTOM_NAV.map(item => (
+                            <NavItem
+                                key={item.href}
+                                href={item.href}
+                                icon={item.icon}
+                                label={item.label}
+                                active={isActive(item.href)}
+                            />
+                        ))}
+                    </div>
+                </nav>
+
+                {/* ── User Card ── */}
+                <div style={{ padding: '10px 8px 12px', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+                    <div style={{
                         display: 'flex',
                         alignItems: 'center',
                         gap: '9px',
-                        textDecoration: 'none',
-                    }}
-                >
-                    <div
-                        style={{
-                            width: '32px',
-                            height: '32px',
-                            borderRadius: '9px',
-                            background: 'linear-gradient(135deg, #f5c518 0%, #ffaa00 100%)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: '0 0 16px rgba(245,197,24,0.35)',
-                            flexShrink: 0,
-                        }}
-                    >
-                        <Zap size={17} color="#080810" strokeWidth={2.5} fill="#080810" />
-                    </div>
-                    <span
-                        style={{
-                            fontFamily: 'Instrument Serif, serif',
-                            fontWeight: 800,
-                            fontSize: '20px',
-                            color: 'var(--text)',
-                            letterSpacing: '-0.02em',
-                        }}
-                    >
-                        FlashTTS
-                    </span>
-                </Link>
-            </div>
-
-            {/* ── Navigation ── */}
-            <nav style={{ flex: 1, padding: '16px 12px 8px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {/* MAIN */}
-                <div>
-                    <p
-                        style={{
-                            fontFamily: 'Geist, sans-serif',
-                            fontSize: '10.5px',
-                            fontWeight: 600,
-                            letterSpacing: '0.1em',
-                            textTransform: 'uppercase',
-                            color: 'var(--muted)',
-                            padding: '0 12px',
-                            marginBottom: '6px',
-                        }}
-                    >
-                        Main
-                    </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        {MAIN_NAV.map((item) => (
-                            <NavLink
-                                key={item.href}
-                                href={item.href}
-                                icon={item.icon}
-                                label={item.label}
-                                active={isActive(item.href)}
-                            />
-                        ))}
-                    </div>
-                </div>
-
-                {/* ACCOUNT */}
-                <div>
-                    <p
-                        style={{
-                            fontFamily: 'Geist, sans-serif',
-                            fontSize: '10.5px',
-                            fontWeight: 600,
-                            letterSpacing: '0.1em',
-                            textTransform: 'uppercase',
-                            color: 'var(--muted)',
-                            padding: '0 12px',
-                            marginBottom: '6px',
-                        }}
-                    >
-                        Account
-                    </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        {ACCOUNT_NAV.map((item) => (
-                            <NavLink
-                                key={item.href}
-                                href={item.href}
-                                icon={item.icon}
-                                label={item.label}
-                                active={isActive(item.href)}
-                            />
-                        ))}
-                    </div>
-                </div>
-            </nav>
-
-            {/* ── User Pill ── */}
-            <div
-                style={{
-                    padding: '12px',
-                    borderTop: '1px solid var(--border)',
-                    flexShrink: 0,
-                }}
-            >
-                <div
-                    style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        padding: '10px 12px',
-                        borderRadius: '12px',
+                        padding: '9px 10px',
+                        borderRadius: '10px',
                         background: 'var(--card-bg)',
                         border: '1px solid var(--border)',
-                    }}
-                >
-                    {/* Avatar */}
-                    <div
-                        style={{
-                            width: '34px',
-                            height: '34px',
-                            borderRadius: '50%',
-                            background: 'linear-gradient(135deg, #f5c518 0%, #ff6b35 100%)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontFamily: 'Geist, sans-serif',
-                            fontWeight: 700,
-                            fontSize: '12px',
-                            color: '#080810',
+                    }}>
+                        {/* Avatar */}
+                        <div style={{
+                            width: '30px', height: '30px',
+                            borderRadius: '8px',
+                            background: 'linear-gradient(135deg, #2DD4BF 0%, #0d9488 100%)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontFamily: 'Inter, sans-serif',
+                            fontWeight: 700, fontSize: '11px',
+                            color: '#0A0A0F',
                             flexShrink: 0,
-                        }}
-                    >
-                        {initials}
-                    </div>
+                            letterSpacing: '-0.02em',
+                        }}>
+                            {avatar}
+                        </div>
 
-                    {/* Name + Plan */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                        <p
+                        {/* Name + Plan */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{
+                                fontFamily: 'Inter, sans-serif',
+                                fontWeight: 600, fontSize: '13.5px',
+                                color: 'var(--text)', margin: 0,
+                                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            }}>
+                                {name}
+                            </p>
+                            <p style={{
+                                fontFamily: 'Inter, sans-serif',
+                                fontSize: '11.5px', fontWeight: 500,
+                                color: ACCENT, margin: '1px 0 0',
+                            }}>
+                                {plan} plan
+                            </p>
+                        </div>
+
+                        {/* Sign out */}
+                        <button
+                            onClick={onSignOut}
+                            title="Sign out"
                             style={{
-                                fontFamily: 'Geist, sans-serif',
-                                fontWeight: 600,
-                                fontSize: '13px',
-                                color: 'var(--text)',
-                                margin: 0,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
+                                background: 'none', border: 'none',
+                                cursor: 'pointer', padding: '4px',
+                                borderRadius: '6px',
+                                color: 'var(--muted)',
+                                display: 'flex', alignItems: 'center',
+                                transition: 'all 0.15s ease',
+                                flexShrink: 0,
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.color = '#f87171';
+                                e.currentTarget.style.background = 'rgba(248,113,113,0.08)';
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.color = 'var(--muted)';
+                                e.currentTarget.style.background = 'none';
                             }}
                         >
-                            {displayName}
-                        </p>
-                        <span
-                            style={{
-                                fontFamily: 'Geist, sans-serif',
-                                fontSize: '10px',
-                                fontWeight: 600,
-                                color: '#f5c518',
-                                background: 'rgba(245,197,24,0.1)',
-                                border: '1px solid rgba(245,197,24,0.2)',
-                                borderRadius: '4px',
-                                padding: '1px 5px',
-                                letterSpacing: '0.04em',
-                                textTransform: 'uppercase',
-                            }}
-                        >
-                            {plan}
-                        </span>
+                            <LogOut size={15} strokeWidth={2} />
+                        </button>
                     </div>
-
-                    {/* Sign Out */}
-                    <button
-                        onClick={onSignOut}
-                        title="Sign out"
-                        style={{
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: '4px',
-                            borderRadius: '6px',
-                            color: 'var(--muted)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            transition: 'color 0.15s ease, background 0.15s ease',
-                            flexShrink: 0,
-                        }}
-                        className="sign-out-btn"
-                    >
-                        <LogOut size={14} strokeWidth={2} />
-                    </button>
                 </div>
-            </div>
-
-
-        </aside>
+            </aside>
         </>
     );
 }
 
-// ─── Background Orbs ─────────────────────────────────────────────────────────
-function BackgroundOrbs() {
+// ─── Credits Chip ─────────────────────────────────────────────────────────────
+function CreditsChip({ profile }: { profile: Profile | null }) {
+    const used      = profile?.credits_used  ?? 0;
+    const limit     = profile?.credits_limit ?? 10000;
+    const remaining = Math.max(0, limit - used);
+    const pct       = Math.min(100, (used / limit) * 100);
+    const low       = pct > 80;
+
     return (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-            <div
-                style={{
-                    position: 'absolute',
-                    top: '-120px',
-                    right: '-120px',
-                    width: '500px',
-                    height: '500px',
-                    borderRadius: '50%',
-                    background: '#f5c518',
-                    filter: 'blur(90px)',
-                    opacity: 0.06,
-                }}
-            />
-            <div
-                style={{
-                    position: 'absolute',
-                    bottom: '-100px',
-                    left: '100px',
-                    width: '380px',
-                    height: '380px',
-                    borderRadius: '50%',
-                    background: '#5b8ef0',
-                    filter: 'blur(90px)',
-                    opacity: 0.06,
-                }}
-            />
-            <div
-                style={{
-                    position: 'absolute',
-                    top: '40%',
-                    left: '-80px',
-                    width: '280px',
-                    height: '280px',
-                    borderRadius: '50%',
-                    background: '#22d3a5',
-                    filter: 'blur(90px)',
-                    opacity: 0.06,
-                }}
-            />
+        <div style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '6px 12px',
+            borderRadius: '8px',
+            background: 'var(--card-bg)',
+            border: `1px solid ${low ? 'rgba(239,68,68,0.2)' : 'var(--border)'}`,
+            fontFamily: 'Inter, sans-serif',
+            transition: 'background 0.2s ease',
+        }}>
+            <Zap size={12} color={low ? '#f87171' : ACCENT} fill={low ? '#f87171' : ACCENT} />
+            <span style={{ fontSize: '13.5px', fontWeight: 600, color: low ? '#f87171' : ACCENT }}>
+                {fmtNum(remaining)}
+            </span>
+            <span style={{ fontSize: '13px', color: 'var(--muted)', fontWeight: 400 }}>
+                credits left
+            </span>
         </div>
     );
 }
 
-// ─── Client Layout ─────────────────────────────────────────────────────────────
+// ─── Background Orbs (dark mode only) ────────────────────────────────────────
+function Orbs() {
+    return (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+            <div style={{
+                position: 'absolute', top: '-160px', right: '-80px',
+                width: '440px', height: '440px', borderRadius: '50%',
+                background: '#2DD4BF', filter: 'blur(110px)', opacity: 0.03,
+            }} />
+            <div style={{
+                position: 'absolute', bottom: '-80px', left: '160px',
+                width: '340px', height: '340px', borderRadius: '50%',
+                background: '#818cf8', filter: 'blur(110px)', opacity: 0.03,
+            }} />
+        </div>
+    );
+}
+
+// ─── Theme Toggle Button ──────────────────────────────────────────────────────
+function ThemeToggleBtn({ theme, onToggle }: { theme: 'light' | 'dark'; onToggle: () => void }) {
+    return (
+        <button
+            onClick={onToggle}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            style={{
+                width: '36px', height: '36px',
+                borderRadius: '8px',
+                background: 'var(--card-bg)',
+                border: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'var(--muted)',
+                transition: 'all 0.2s ease',
+                flexShrink: 0,
+            }}
+            className="theme-toggle-btn"
+        >
+            {theme === 'dark'
+                ? <Sun  size={15} strokeWidth={2} />
+                : <Moon size={15} strokeWidth={2} />
+            }
+        </button>
+    );
+}
+
+// ─── Main Layout ─────────────────────────────────────────────────────────────
 export default function DashboardLayoutClient({ children }: { children: React.ReactNode }) {
-    const router = useRouter();
-    const [profile, setProfile] = useState<Profile | null>(null);
-    const [email, setEmail] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [userId, setUserId] = useState<string | null>(null);
-
+    const router   = useRouter();
     const pathname = usePathname();
+    const [profile,     setProfile]     = useState<Profile | null>(null);
+    const [email,       setEmail]       = useState<string | null>(null);
+    const [loading,     setLoading]     = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [theme,       setTheme]       = useState<'light' | 'dark'>('light');
 
+    // ── Theme: restore from localStorage ────────────────────────────────────
     useEffect(() => {
-        setSidebarOpen(false);
-    }, [pathname]);
+        const saved = localStorage.getItem('flashtts_theme') as 'light' | 'dark' | null;
+        if (saved === 'dark' || saved === 'light') setTheme(saved);
+    }, []);
+
+    // ── Theme: apply data-theme to <html> and persist ────────────────────────
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('flashtts_theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
+
+    // Close mobile sidebar on navigation
+    useEffect(() => { setSidebarOpen(false); }, [pathname]);
 
     useEffect(() => {
         const supabase = createClient();
-
-        async function loadUser() {
+        async function load() {
             const { data: { user }, error } = await supabase.auth.getUser();
-            if (error || !user) {
-                router.push('/login');
-                return;
-            }
+            if (error || !user) { router.push('/login'); return; }
             setEmail(user.email ?? null);
-            setUserId(user.id);
 
-            const { data: profileData } = await supabase
+            const { data } = await supabase
                 .from('profiles')
-                .select('*')
+                .select('id, full_name, plan, credits_used, credits_limit')
                 .eq('id', user.id)
                 .single();
 
-            const p = profileData as Profile;
-            setProfile(p ?? null);
-            
+            setProfile((data as Profile) ?? null);
             setLoading(false);
         }
-
-        loadUser();
+        load();
     }, [router]);
 
     const handleSignOut = async () => {
-        const supabase = createClient();
-        await supabase.auth.signOut();
+        await createClient().auth.signOut();
         router.push('/login');
     };
 
     if (loading) {
         return (
-            <div
-                style={{
-                    minHeight: '100vh',
-                    background: '#080810',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                }}
-            >
-                <div
-                    style={{
-                        width: '40px',
-                        height: '40px',
-                        border: '3px solid rgba(245,197,24,0.2)',
-                        borderTop: '3px solid #f5c518',
-                        borderRadius: '50%',
-                        animation: 'spin 0.7s linear infinite',
-                    }}
-                />
-                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            <div style={{
+                minHeight: '100vh', background: 'var(--bg)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+                <div style={{
+                    width: '32px', height: '32px',
+                    border: `2.5px solid var(--accent-dim)`,
+                    borderTop: `2.5px solid ${ACCENT}`,
+                    borderRadius: '50%',
+                    animation: 'spin 0.65s linear infinite',
+                }} />
             </div>
         );
     }
 
+    const page = PAGE_TITLES[pathname];
+
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg)', position: 'relative' }}>
-            <BackgroundOrbs />
+        <div style={{ minHeight: '100vh', background: 'var(--bg)', position: 'relative', transition: 'background 0.2s ease' }}>
+            {theme === 'dark' && <Orbs />}
 
-
-            {/* Mobile Header */}
-            <header 
-                className="md:hidden flex items-center justify-between p-4 border-b border-white/10 sticky top-0 z-30"
-                style={{
-                    background: 'var(--bg)',
-                    backdropFilter: 'blur(20px)',
-                    WebkitBackdropFilter: 'blur(20px)',
-                    borderColor: 'var(--border)'
-                }}
-            >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{
-                        width: '32px', height: '32px', borderRadius: '8px',
-                        background: 'var(--accent)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                        <Zap size={16} color="#000" fill="#000" />
-                    </div>
-                    <span style={{ fontFamily: 'Instrument Serif, serif', fontWeight: 800, fontSize: '18px', color: 'var(--text)' }}>FlashTTS</span>
-                </div>
-                <button 
-                    onClick={() => setSidebarOpen(true)}
-                    style={{ background: 'none', border: 'none', color: 'var(--text)', cursor: 'pointer' }}
-                >
-                    <Menu size={24} />
-                </button>
-            </header>
-
-            <Sidebar 
-                profile={profile} 
-                email={email} 
-                onSignOut={handleSignOut} 
+            {/* ── Sidebar ── */}
+            <Sidebar
+                profile={profile}
+                email={email}
+                onSignOut={handleSignOut}
                 open={sidebarOpen}
                 onClose={() => setSidebarOpen(false)}
             />
 
+            {/* ── Main Content ── */}
             <main
-                className="transition-all duration-300 md:ml-64"
                 style={{
                     minHeight: '100vh',
-                    background: 'transparent',
                     position: 'relative',
                     zIndex: 1,
+                    marginLeft: 0,
                 }}
+                className="md:!ml-[240px]"
             >
                 <AnnouncementBanner />
-                <div className="p-4 md:p-7">
+
+                {/* Top Bar */}
+                {page && (
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '24px 28px 0',
+                        flexWrap: 'wrap',
+                        gap: '12px',
+                    }}>
+                        {/* Mobile hamburger + page title */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <button
+                                onClick={() => setSidebarOpen(true)}
+                                style={{
+                                    display: 'none', background: 'var(--card-bg)',
+                                    border: '1px solid var(--border)', borderRadius: '8px',
+                                    width: '36px', height: '36px', cursor: 'pointer',
+                                    alignItems: 'center', justifyContent: 'center',
+                                    color: 'var(--muted)', flexShrink: 0,
+                                }}
+                                className="mob-menu-btn"
+                            >
+                                <Menu size={16} />
+                            </button>
+
+                            <div>
+                                <h1 style={{
+                                    fontFamily: 'Inter, sans-serif',
+                                    fontSize: '22px',
+                                    fontWeight: 700,
+                                    color: 'var(--text)',
+                                    margin: 0,
+                                    letterSpacing: '-0.025em',
+                                }}>
+                                    {page.title}
+                                </h1>
+                                <p style={{
+                                    fontFamily: 'Inter, sans-serif',
+                                    fontSize: '13px',
+                                    color: 'var(--muted)',
+                                    margin: '3px 0 0',
+                                    fontWeight: 400,
+                                }}>
+                                    {page.sub}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Right: theme toggle + credits */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <ThemeToggleBtn theme={theme} onToggle={toggleTheme} />
+                            <CreditsChip profile={profile} />
+                        </div>
+                    </div>
+                )}
+
+                {/* Page Content */}
+                <div style={{ padding: '20px 28px 40px' }}>
                     {children}
                 </div>
             </main>
+
+            <style>{`
+                .dash-nav-item:hover {
+                    background: var(--hover) !important;
+                    color: var(--text) !important;
+                }
+                .theme-toggle-btn:hover {
+                    border-color: var(--accent) !important;
+                    color: var(--accent) !important;
+                }
+                @keyframes spin { to { transform: rotate(360deg); } }
+                nav::-webkit-scrollbar { width: 0; }
+                @media (max-width: 768px) {
+                    .mob-menu-btn { display: flex !important; }
+                }
+            `}</style>
         </div>
     );
 }

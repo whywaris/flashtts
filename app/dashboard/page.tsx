@@ -1,27 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { createClient } from '@/utils/supabase/client';
-import { getAvatarPath, getAvatarBackdrop } from '@/utils/avatar';
-import ThemeToggle from '@/components/ThemeToggle';
 import {
   Mic,
   Music,
-  Headphones,
   Bookmark,
-  FileText,
-  ChevronRight,
-  Layers,
-  Zap,
-  Activity,
   Library,
-  Volume2
+  Volume2,
+  Layers,
+  ChevronRight,
+  BarChart2,
+  Zap,
+  Clock,
+  Users,
 } from 'lucide-react';
+import { getAvatarPath, getAvatarBackdrop } from '@/utils/avatar';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
 interface Profile {
   full_name?: string | null;
   plan?: string | null;
@@ -32,274 +29,228 @@ interface Profile {
 interface Voice {
   id: string;
   name: string;
-  description?: string | null;
-  gender?: string | null;
   language?: string | null;
+  gender?: string | null;
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-function getGreeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 18) return 'Good afternoon';
-  return 'Good evening';
+function fmtNum(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
+  return `${n}`;
 }
 
+function avatarColor(name: string): string {
+  const colors = ['#2DD4BF', '#14B8A6', '#0D9488', '#059669', '#10B981', '#22C55E', '#06B6D4'];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
+}
 
+function VoiceAvatar({ name, size = 38 }: { name: string; size?: number }) {
+  const avatarPath = getAvatarPath(name);
+  const backdrop = getAvatarBackdrop(name);
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%', background: backdrop,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0, border: `1px solid var(--border)`, overflow: 'hidden',
+    }}>
+      <img 
+        src={avatarPath} 
+        alt={name} 
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+      />
+    </div>
+  );
+}
 
-// ─── Feature Cards ────────────────────────────────────────────────────────────
-const FEATURE_CARDS = [
+const QUICK_ACTIONS = [
   {
     icon: Volume2,
-    emoji: '🔊',
     title: 'Text to Speech',
     desc: 'Convert any text into natural human-like audio instantly',
     href: '/dashboard/tts',
-    iconColor: '#f5c518',
   },
   {
     icon: Mic,
-    emoji: '🧬',
     title: 'Voice Cloning',
     desc: 'Clone your voice with just 30 seconds of audio',
     href: '/dashboard/cloning',
-    iconColor: '#22d3a5',
   },
   {
     icon: Music,
-    emoji: '🎙️',
     title: 'Voice Library',
-    desc: '551 voices across 19 languages — preview & save',
+    desc: '1,234+ voices across 19 languages — preview & save',
     href: '/dashboard/library',
-    iconColor: '#5b8ef0',
   },
   {
     icon: Library,
-    emoji: '📚',
-    title: 'Ebook to AudioBook',
+    title: 'ebook to Audiobook',
     desc: 'Generate complete long-form audiobooks automatically',
     href: '/dashboard/audiobooks',
-    iconColor: '#a855f7',
-  },
-  {
-    icon: Bookmark,
-    emoji: '📁',
-    title: 'Saved Voices',
-    desc: 'Your personal voice collection — no limit',
-    href: '/dashboard/saved',
-    iconColor: '#f59e0b',
   },
 ];
 
-// ─── Clone Options ────────────────────────────────────────────────────────────
 const CLONE_OPTIONS = [
   {
     icon: Mic,
     title: 'Clone your Voice',
     desc: 'Create a realistic digital clone of your voice',
     href: '/dashboard/cloning',
-    color: '#22d3a5', // matched to cloning icon
   },
   {
-    icon: Layers, // Changed to layers generically instead of mic again across mock
+    icon: Layers,
     title: 'Voice Collections',
     desc: 'Curated voices for every use case — 19 languages',
     href: '/dashboard/library',
-    color: '#5b8ef0', // matched to library
   },
   {
     icon: Bookmark,
     title: 'Saved Voices',
     desc: 'Access your personal saved voice collection',
     href: '/dashboard/saved',
-    color: '#f5c518', // matched to saved
   },
 ];
 
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const router = useRouter();
+  const supabase = useMemo(() => createClient(), []);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userName, setUserName] = useState<string>('');
   const [voices, setVoices] = useState<Voice[]>([]);
+  const [clonesUsed, setClonesUsed] = useState(0);
+  const [generationsToday, setGenerationsToday] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const supabase = createClient();
-
     async function load() {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) { router.push('/login'); return; }
 
-      if (error || !user) {
-        router.push('/login');
-        return;
-      }
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
 
-      // Profile
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('full_name, plan, credits_limit, credits_used')
-        .eq('id', user.id)
-        .single();
+      const [profileRes, voicesRes, clonesRes, jobsRes] = await Promise.all([
+        supabase.from('profiles').select('full_name, plan, credits_limit, credits_used').eq('id', user.id).single(),
+        supabase.from('voices').select('id, name, language, gender').eq('is_active', true).order('created_at', { ascending: false }).limit(5),
+        supabase.from('cloned_voices').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('tts_jobs').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', todayStart.toISOString()),
+      ]);
 
-      setProfile(profileData ?? null);
+      setProfile(profileRes.data ?? null);
       setUserName(
-        profileData?.full_name?.split(' ')[0] ||
-          user.email?.split('@')[0] ||
-          'there'
+        profileRes.data?.full_name?.split(' ')[0] ||
+        user.email?.split('@')[0] ||
+        'there'
       );
-
-      // Latest voices
-      const { data: voiceData } = await supabase
-        .from('voices')
-        .select('id, name, description, gender, language')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      setVoices(voiceData ?? []);
+      setVoices(voicesRes.data ?? []);
+      setClonesUsed(clonesRes.count ?? 0);
+      setGenerationsToday(jobsRes.count ?? 0);
       setLoading(false);
     }
-
     load();
-  }, [router]);
+  }, [router, supabase]);
 
   if (loading) {
     return (
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '60vh',
-        }}
-      >
-        <div
-          style={{
-            width: '36px',
-            height: '36px',
-            border: '3px solid rgba(245,197,24,0.2)',
-            borderTop: '3px solid #f5c518',
-            borderRadius: '50%',
-            animation: 'spin 0.7s linear infinite',
-          }}
-        />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+        <div style={{
+          width: '36px', height: '36px',
+          border: '3px solid rgba(45,212,191,0.2)',
+          borderTop: '3px solid #2DD4BF',
+          borderRadius: '50%',
+          animation: 'spin 0.7s linear infinite',
+        }} />
       </div>
     );
   }
 
+  const creditsUsed = profile?.credits_used ?? 0;
+  const creditsLimit = profile?.credits_limit ?? 10000;
+  const creditsRemaining = Math.max(0, creditsLimit - creditsUsed);
+  const usagePct = creditsLimit > 0 ? Math.min(100, Math.round((creditsUsed / creditsLimit) * 100)) : 0;
+
+  const STATS = [
+    { icon: BarChart2, label: 'Characters Used', value: fmtNum(creditsUsed), sub: 'this month' },
+    { icon: Zap, label: 'Characters Remaining', value: fmtNum(creditsRemaining), sub: `${usagePct}% used` },
+    { icon: Users, label: 'Voice Clones', value: `${clonesUsed}`, sub: 'created' },
+    { icon: Clock, label: 'Generations Today', value: `${generationsToday}`, sub: 'audio files' },
+  ];
+
   return (
-    <div style={{ fontFamily: 'Geist, sans-serif' }}>
-      <title>Dashboard | FlashTTS</title>
+    <div style={{ fontFamily: 'Inter, sans-serif' }}>
 
-      {/* ── Topbar / Header ── */}
-      <div
-        className="flex justify-between items-end mb-8"
-        style={{ width: '100%' }}
-      >
-        <div>
-          <h1
-            style={{
-              fontFamily: 'Geist, sans-serif',
-              fontSize: '36px',
-              fontWeight: 800,
-              color: 'var(--text)',
-              margin: '0',
-              letterSpacing: '-0.02em',
+
+      {/* Stats Bar */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {STATS.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div key={stat.label} style={{
+              background: 'var(--card-bg)',
+              border: '1px solid var(--border)',
+              borderLeft: '3px solid #2DD4BF',
+              borderRadius: '12px',
+              padding: '20px',
               display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}
-          >
-            Dashboard
-          </h1>
-          <p 
-            style={{ 
-              fontSize: '14px', 
-              fontWeight: 500, 
-              color: 'var(--muted)', 
-              margin: '6px 0 0 0',
-              fontFamily: 'Geist, sans-serif' 
-            }}
-          >
-            {getGreeting()}, {userName} 👋
-          </p>
-        </div>
-
-        <div style={{ flexShrink: 0 }}>
-          <ThemeToggle />
-        </div>
+              flexDirection: 'column',
+              gap: '12px',
+            }}>
+              <Icon size={18} color="#2DD4BF" strokeWidth={2} />
+              <div>
+                <p style={{
+                  fontSize: '26px', fontWeight: 800,
+                  color: 'var(--text)', margin: 0,
+                  letterSpacing: '-0.02em', lineHeight: 1,
+                }}>
+                  {stat.value}
+                </p>
+                <p style={{ fontSize: '12px', color: 'var(--muted)', margin: '6px 0 0', fontWeight: 500 }}>
+                  {stat.label}{' '}
+                  <span style={{ opacity: 0.6 }}>— {stat.sub}</span>
+                </p>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* ── Feature Cards ── */}
-      <div
-        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12"
-      >
-        {FEATURE_CARDS.map((card) => {
+      {/* Quick Actions */}
+      <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--muted)', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        Quick Actions
+      </p>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        {QUICK_ACTIONS.map((card) => {
+          const Icon = card.icon;
           return (
-            <Link
-              key={card.href}
-              href={card.href}
-              style={{ textDecoration: 'none' }}
-            >
-              <div
-                className="feature-card"
-                style={{
-                  background: 'var(--card-bg)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '24px',
-                  padding: '24px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '16px',
-                }}
-              >
-                <div
-                  style={{
-                    width: '46px',
-                    height: '46px',
-                    borderRadius: '14px',
-                    background: `${card.iconColor}15`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '20px',
-                    border: `1px solid ${card.iconColor}20`
-                  }}
-                >
-                  {card.emoji}
+            <Link key={card.href} href={card.href} style={{ textDecoration: 'none' }}>
+              <div className="qa-card" style={{
+                background: 'var(--card-bg)',
+                border: '1px solid var(--border)',
+                borderRadius: '12px',
+                padding: '20px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px',
+              }}>
+                <div style={{
+                  width: '42px', height: '42px', borderRadius: '10px',
+                  background: 'rgba(45,212,191,0.1)',
+                  border: '1px solid rgba(45,212,191,0.15)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Icon size={20} color="#2DD4BF" strokeWidth={2} />
                 </div>
                 <div>
-                    <h3
-                    style={{
-                        fontFamily: 'Geist, sans-serif',
-                        fontSize: '15px',
-                        fontWeight: 700,
-                        color: 'var(--text)',
-                        margin: '0 0 8px',
-                        letterSpacing: '-0.01em',
-                    }}
-                    >
+                  <p style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)', margin: '0 0 6px', letterSpacing: '-0.01em' }}>
                     {card.title}
-                    </h3>
-                    <p
-                    style={{
-                        fontSize: '13px',
-                        color: 'var(--muted)',
-                        margin: 0,
-                        lineHeight: 1.5,
-                        fontWeight: 500
-                    }}
-                    >
+                  </p>
+                  <p style={{ fontSize: '12px', color: 'var(--muted)', margin: 0, lineHeight: 1.5, fontWeight: 500 }}>
                     {card.desc}
-                    </p>
+                  </p>
                 </div>
               </div>
             </Link>
@@ -307,205 +258,137 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* ── Bottom 2-col grid ── */}
-      <div
-        className="grid grid-cols-1 lg:grid-cols-2 gap-10" // Increased gap to match screenshot flow
-      >
-        {/* LEFT – Latest from the library */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <h2
-            style={{
-              fontFamily: 'Geist, sans-serif',
-              fontSize: '22px',
-              fontWeight: 800,
-              color: 'var(--text)',
-              margin: '0 0 20px',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            Latest from the library
-          </h2>
+      {/* Bottom 2-col */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {/* Recent Voices */}
+        <div style={{
+          background: 'var(--card-bg)',
+          border: '1px solid var(--border)',
+          borderRadius: '12px',
+          padding: '24px',
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+          <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--muted)', margin: '0 0 18px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Recent Voices
+          </p>
+
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
             {voices.length === 0 ? (
               <p style={{ color: 'var(--muted)', fontSize: '13px', textAlign: 'center', padding: '24px 0' }}>
                 No voices found.
               </p>
-            ) : (
-              voices.map((voice) => {
-                const vColor = getAvatarBackdrop(voice.name || 'V');
-                const vPath = getAvatarPath(voice.name || 'V', voice.gender);
-                return (
-                  <div
-                    key={voice.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '16px',
-                      padding: '12px',
-                      borderRadius: '16px',
-                      transition: 'background 0.15s ease',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => router.push(`/dashboard/tts?voice=${voice.id}`)}
-                    className="voice-row-hover"
-                  >
-                    <div
-                      style={{
-                        position: 'relative',
-                        width: '46px',
-                        height: '46px',
-                        borderRadius: '50%',
-                        background: vColor,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        overflow: 'hidden',
-                        border: '1px solid rgba(0,0,0,0.05)'
-                      }}
-                    >
-                      <Image src={vPath} alt={voice.name || 'Avatar'} fill style={{ objectFit: 'cover' }} />
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p
-                        style={{
-                          fontWeight: 700,
-                          fontSize: '14px',
-                          color: 'var(--text)',
-                          margin: '0 0 4px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          fontFamily: 'Geist, sans-serif'
-                        }}
-                      >
-                        {voice.name} <span style={{ color: 'var(--muted)', fontWeight: 500 }}>— {(voice.gender || '').charAt(0).toUpperCase() + (voice.gender || '').slice(1)}</span>
-                      </p>
-                      <p
-                        style={{
-                          fontSize: '12px',
-                          color: 'var(--muted)',
-                          margin: 0,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          fontWeight: 500
-                        }}
-                      >
-                        {voice.description || `${voice.language || ''}`.trim() || 'Premium voice selection...'}
-                      </p>
+            ) : voices.map((voice) => {
+              const initial = (voice.name || 'V').charAt(0).toUpperCase();
+              const color = avatarColor(voice.name || 'V');
+              return (
+                <div
+                  key={voice.id}
+                  className="voice-row"
+                  onClick={() => router.push(`/dashboard/tts?voice=${voice.id}`)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '14px',
+                    padding: '10px 12px', borderRadius: '10px',
+                    cursor: 'pointer', transition: 'background 0.15s ease',
+                  }}
+                >
+                  <VoiceAvatar name={voice.name || 'V'} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      fontSize: '13px', fontWeight: 700, color: 'var(--text)',
+                      margin: '0 0 4px', overflow: 'hidden',
+                      textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {voice.name}
+                    </p>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      {voice.language && (
+                        <span style={{
+                          fontSize: '11px', color: 'var(--muted)',
+                          fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em',
+                        }}>
+                          {voice.language}
+                        </span>
+                      )}
+                      {voice.gender && (
+                        <span style={{
+                          fontSize: '10px', fontWeight: 600,
+                          padding: '2px 8px', borderRadius: '99px',
+                          background: 'rgba(45,212,191,0.08)',
+                          color: '#2DD4BF',
+                          border: '1px solid rgba(45,212,191,0.18)',
+                          textTransform: 'capitalize',
+                        }}>
+                          {voice.gender}
+                        </span>
+                      )}
                     </div>
                   </div>
-                );
-              })
-            )}
+                  <ChevronRight size={14} color="var(--muted)" style={{ opacity: 0.35, flexShrink: 0 }} />
+                </div>
+              );
+            })}
           </div>
 
-          <Link
-            href="/dashboard/library"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              marginTop: '16px',
-              padding: '12px 18px',
-              borderRadius: '99px',
-              background: 'var(--card-bg)',
-              border: '1px solid var(--border)',
-              color: 'var(--text)',
-              fontSize: '13px',
-              fontWeight: 600,
-              textDecoration: 'none',
-              transition: 'all 0.15s ease',
-              alignSelf: 'flex-start'
-            }}
-            className="explore-btn"
-          >
-            Explore Library
-            <ChevronRight size={14} strokeWidth={2.5} color="var(--muted)" />
+          <Link href="/dashboard/library" className="explore-btn" style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            marginTop: '18px', padding: '10px 16px',
+            borderRadius: '8px',
+            background: 'transparent',
+            border: '1px solid var(--border)',
+            color: 'var(--muted)',
+            fontSize: '13px', fontWeight: 600, textDecoration: 'none',
+            transition: 'all 0.15s ease', alignSelf: 'flex-start',
+          }}>
+            Explore Library →
           </Link>
         </div>
 
-        {/* RIGHT – Create or clone a voice */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <h2
-            style={{
-              fontFamily: 'Geist, sans-serif',
-              fontSize: '22px',
-              fontWeight: 800,
-              color: 'var(--text)',
-              margin: '0 0 20px',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            Create or clone a voice
-          </h2>
+        {/* Create or Clone */}
+        <div style={{
+          background: 'var(--card-bg)',
+          border: '1px solid var(--border)',
+          borderRadius: '12px',
+          padding: '24px',
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
+          <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--muted)', margin: '0 0 18px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Create or Clone
+          </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {CLONE_OPTIONS.map((opt) => {
               const Icon = opt.icon;
               return (
-                <Link
-                  key={opt.href}
-                  href={opt.href}
-                  style={{ textDecoration: 'none' }}
-                >
-                  <div
-                    className="clone-card"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '18px',
-                      padding: '20px 24px',
-                      borderRadius: '24px',
-                      background: 'var(--card-bg)',
-                      border: '1px solid var(--border)',
-                      cursor: 'pointer',
-                      transition: 'all 0.18s ease',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: '46px',
-                        height: '46px',
-                        borderRadius: '14px',
-                        background: `${opt.color}15`,
-                        border: `1px solid ${opt.color}20`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Icon size={20} color={opt.color} strokeWidth={2} />
+                <Link key={opt.href} href={opt.href} style={{ textDecoration: 'none' }}>
+                  <div className="clone-card" style={{
+                    display: 'flex', alignItems: 'center', gap: '16px',
+                    padding: '16px 18px',
+                    borderRadius: '10px',
+                    border: '1px solid var(--border)',
+                    background: 'transparent',
+                    cursor: 'pointer', transition: 'all 0.18s ease',
+                  }}>
+                    <div style={{
+                      width: '40px', height: '40px', borderRadius: '10px',
+                      background: 'rgba(45,212,191,0.1)',
+                      border: '1px solid rgba(45,212,191,0.15)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>
+                      <Icon size={18} color="#2DD4BF" strokeWidth={2} />
                     </div>
-                    
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p
-                        style={{
-                          fontFamily: 'Geist, sans-serif',
-                          fontSize: '15px',
-                          fontWeight: 700,
-                          color: 'var(--text)',
-                          margin: '0 0 6px',
-                        }}
-                      >
+                      <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', margin: '0 0 4px' }}>
                         {opt.title}
                       </p>
-                      <p
-                        style={{
-                          fontSize: '13px',
-                          color: 'var(--muted)',
-                          margin: 0,
-                          fontWeight: 500
-                        }}
-                      >
+                      <p style={{ fontSize: '12px', color: 'var(--muted)', margin: 0, fontWeight: 500 }}>
                         {opt.desc}
                       </p>
                     </div>
-
-                    <ChevronRight size={18} color="var(--muted)" style={{ opacity: 0.6 }} />
+                    <ChevronRight size={16} color="var(--muted)" style={{ opacity: 0.45, flexShrink: 0 }} />
                   </div>
                 </Link>
               );
@@ -513,25 +396,28 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-      
+
       <style>{`
-        .clone-card:hover {
-            border-color: rgba(245, 197, 24, 0.4) !important;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.04);
-            transform: translateY(-1px);
+        .qa-card:hover {
+          border-color: rgba(45,212,191,0.25) !important;
+          box-shadow: 0 0 24px rgba(45,212,191,0.08);
+          background: rgba(45,212,191,0.04) !important;
+          backdrop-filter: blur(12px);
+          transform: translateY(-2px);
         }
-        .feature-card:hover {
-            border-color: rgba(245, 197, 24, 0.4) !important;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.04);
-            transform: translateY(-2px);
+        .clone-card:hover {
+          border-color: rgba(45,212,191,0.25) !important;
+          box-shadow: 0 0 18px rgba(45,212,191,0.08);
+          background: rgba(45,212,191,0.04) !important;
+          backdrop-filter: blur(12px);
         }
         .explore-btn:hover {
-            background: rgba(245, 197, 24, 0.1) !important;
-            border-color: rgba(245, 197, 24, 0.25) !important;
-            color: #f5c518 !important;
+          border-color: rgba(45,212,191,0.3) !important;
+          color: #2DD4BF !important;
+          background: rgba(45,212,191,0.06) !important;
         }
-        .voice-row-hover:hover {
-            background: var(--card-bg) !important;
+        .voice-row:hover {
+          background: var(--hover) !important;
         }
       `}</style>
     </div>

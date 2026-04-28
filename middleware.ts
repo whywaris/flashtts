@@ -7,15 +7,12 @@ export async function middleware(req: NextRequest) {
   const hostname = req.headers.get('host') || ''
   const pathname = req.nextUrl.pathname
 
-  // ── Supabase client ──
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return req.cookies.getAll()
-        },
+        getAll() { return req.cookies.getAll() },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) => {
             res.cookies.set(name, value, options)
@@ -27,37 +24,13 @@ export async function middleware(req: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  // ── Admin Subdomain Routing ──
+  // ── ADMIN SUBDOMAIN ──
   const isAdminSubdomain =
     hostname === 'admin.flashtts.com' ||
     hostname.startsWith('admin.')
 
   if (isAdminSubdomain) {
-    // Not logged in → redirect to main site login
-    if (!user) {
-      return NextResponse.redirect(
-        new URL('https://flashtts.com/login?redirect=admin', req.url)
-      )
-    }
-
-    // Check admin role in DB
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    // Not admin → redirect to dashboard
-    if (profile?.role !== 'admin') {
-      return NextResponse.redirect(
-        new URL('https://flashtts.com/dashboard', req.url)
-      )
-    }
-
-    // ── Admin routing ──
-    const url = req.nextUrl.clone()
-
-    // Skip rewrite for static assets, api, _next
+    // Static files and API routes pass through before any auth check
     if (
       pathname.startsWith('/_next') ||
       pathname.startsWith('/api') ||
@@ -66,39 +39,58 @@ export async function middleware(req: NextRequest) {
       return res
     }
 
-    // Root "/" → /admin
+    // Not logged in → main site login
+    if (!user) {
+      return NextResponse.redirect(
+        new URL('https://www.flashtts.com/login', req.url)
+      )
+    }
+
+    // Check admin role
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    // Not admin → main dashboard
+    if (profile?.role !== 'admin') {
+      return NextResponse.redirect(
+        new URL('https://www.flashtts.com/dashboard', req.url)
+      )
+    }
+
+    // Admin confirmed ✅
+    const url = req.nextUrl.clone()
+
+    // Root → /admin
     if (pathname === '/') {
       url.pathname = '/admin'
       return NextResponse.rewrite(url)
     }
 
-    // Already has /admin prefix → pass through
+    // Already /admin/* → pass through
     if (pathname.startsWith('/admin')) {
       return res
     }
 
-    // Everything else → prefix with /admin
-    // e.g. /users → /admin/users
-    //      /revenue → /admin/revenue
-    url.pathname = `/admin${pathname}`
+    // Anything else → prefix /admin
+    url.pathname = '/admin' + pathname
     return NextResponse.rewrite(url)
   }
 
-  // ── Main Site: Protected Routes ──
-  const isProtectedRoute =
-    pathname.startsWith('/dashboard') ||
-    pathname.startsWith('/settings')
+  // ── MAIN SITE ROUTING ──
+  // Dashboard protected routes
+  const protectedPaths = ['/dashboard', '/settings', '/billing']
+  const isProtected = protectedPaths.some(p => pathname.startsWith(p))
 
-  if (isProtectedRoute && !user) {
-    const loginUrl = new URL('/login', req.url)
-    loginUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(loginUrl)
+  if (isProtected && !user) {
+    return NextResponse.redirect(new URL('/login', req.url))
   }
 
-  // ── Main Site: Redirect logged-in users away from auth pages ──
-  const isAuthPage =
-    pathname === '/login' ||
-    pathname === '/signup'
+  // Auth pages — redirect to dashboard if already logged in
+  const authPaths = ['/login', '/signup']
+  const isAuthPage = authPaths.some(p => pathname.startsWith(p))
 
   if (isAuthPage && user) {
     return NextResponse.redirect(new URL('/dashboard', req.url))
@@ -109,6 +101,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\..*$).*)',
   ],
 }

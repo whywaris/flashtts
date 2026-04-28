@@ -9,7 +9,7 @@ import { ArrowRight } from 'lucide-react';
 const NAV_LINKS = [
   { label: 'Text to Speech', href: '/text-to-speech' },
   { label: 'Voice Cloning', href: '/voice-cloning' },
-  { label: 'Pricing', href: '/#pricing' },
+  { label: 'Pricing', href: '/pricing' },
   { label: 'Blog', href: '/blog' },
 ];
 

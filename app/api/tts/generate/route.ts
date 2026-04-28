@@ -65,16 +65,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ─── Fetch reference audio ────────────────────────────────────────────
+    // ─── Fetch reference audio if voice cloning ───────────────────────────
     let refAudioBase64: string | null = null;
 
-    if (referenceAudioUrl) {
+    if (voiceType === 'cloned' && referenceAudioUrl) {
       try {
-        console.log('[FlashTTS] Fetching reference audio:', referenceAudioUrl);
         const audioRes = await fetch(referenceAudioUrl);
         if (audioRes.ok) {
           const originalBuffer = Buffer.from(await audioRes.arrayBuffer());
-          
+
           // ─── Convert to WAV if needed ───
           try {
             const inputPath = join(tmpdir(), `input-${randomUUID()}`);
@@ -82,7 +81,6 @@ export async function POST(req: NextRequest) {
             
             await writeFile(inputPath, originalBuffer);
             
-            // Run ffmpeg to convert to WAV (16kHz, mono, pcm_s16le is standard for many TTS models)
             await new Promise((resolve, reject) => {
               const ff = spawn('ffmpeg', [
                 '-i', inputPath,
@@ -100,21 +98,16 @@ export async function POST(req: NextRequest) {
             refAudioBase64 = wavBuffer.toString('base64');
             console.log('[FlashTTS] Converted to WAV! Size:', wavBuffer.byteLength, 'bytes');
 
-            // Cleanup
             await unlink(inputPath).catch(() => {});
             await unlink(outputPath).catch(() => {});
           } catch (convErr) {
             console.warn('[FlashTTS] ffmpeg conversion failed, falling back to original:', convErr);
             refAudioBase64 = originalBuffer.toString('base64');
           }
-        } else {
-          console.error('[FlashTTS] Failed to fetch audio:', audioRes.status);
         }
       } catch (e) {
         console.error('[FlashTTS] Failed to fetch reference audio:', e);
       }
-    } else {
-      console.log('[FlashTTS] No reference audio — voiceType:', voiceType);
     }
 
     // ─── Call Modal API ───────────────────────────────────────────────────

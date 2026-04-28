@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play, Pause, RefreshCw, Shield, Clock, Coins, Star,
@@ -155,28 +156,24 @@ const TESTIMONIALS = [
   },
 ];
 
-// ── Pricing Plans ──
-const EXTRACTED_PLANS = [
-  {
-    id: 'free',
-    name: 'Free',
-    priceMonthly: 0,
-    priceYearly: 0,
-    chars: '10,000 chars',
-    features: [
-      "Max 500 chars / generation",
-      "1 voice clone",
-      "10–15 basic voices",
-      "Standard generation speed",
-      "Watermarked audio"
-    ],
-    isFree: true
-  },
-  { id: 'starter', name: 'Starter', priceMonthly: 9, priceYearly: 7, chars: '200,000 chars', features: ["Max 3K chars / generation", "2 voice clones", "20–30 standard voices", "Normal generation speed", "No watermark"] },
-  { id: 'creator', name: 'Creator', priceMonthly: 19, priceYearly: 15, chars: '500,000 chars', features: ["Max 5K chars / generation", "5 voice clones", "50+ emotion voices", "Fast generation speed", "High-quality audio export"], isPopular: true },
-  { id: 'pro', name: 'Pro', priceMonthly: 39, priceYearly: 31, chars: '1M chars', features: ["Max 10K chars / generation", "9 voice clones", "100+ premium voices", "Priority processing", "All export formats"] },
-  { id: 'studio', name: 'Studio', priceMonthly: 79, priceYearly: 63, chars: '3M chars', features: ["Max 20K chars / generation", "15 voice clones", "Exclusive voices & API", "Team collaboration", "Commercial usage rights"] }
-];
+// ── Pricing Plans (imported from shared config) ──
+import { PLANS as IMPORTED_PLANS } from '@/lib/plans';
+const EXTRACTED_PLANS = IMPORTED_PLANS.map(p => ({
+  id: p.id,
+  name: p.name,
+  priceMonthly: p.priceMonthly,
+  priceYearly: p.priceYearly,
+  chars: p.chars,
+  features: [
+    `${p.charsPerGen} chars/generation`,
+    `${p.voiceClones} voice clone${p.voiceClones === '1' ? '' : 's'}`,
+    p.voiceLibrary,
+    p.speed,
+    p.history,
+  ],
+  isFree: p.isFree,
+  isPopular: p.isPopular,
+}));
 
 export default function HomePage() {
   // ── Demo Widget State ──
@@ -192,9 +189,18 @@ export default function HomePage() {
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
+
+  // ── Check auth state ──
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setIsLoggedIn(!!user);
+    });
+  }, [supabase]);
 
   // ── Revoke blob URL on unmount ──
   useEffect(() => {
@@ -382,28 +388,35 @@ export default function HomePage() {
                     "name": "Free Plan",
                     "price": "0",
                     "priceCurrency": "USD",
-                    "description": "10,000 characters per month, 1 voice clone"
+                    "description": "10,000 characters per month, 1 voice clone, commercial use"
                   },
                   {
                     "@type": "Offer",
                     "name": "Starter Plan",
                     "price": "9",
                     "priceCurrency": "USD",
-                    "description": "200,000 characters per month, 2 voice clones"
+                    "description": "200,000 characters per month, 3 voice clones"
                   },
                   {
                     "@type": "Offer",
                     "name": "Creator Plan",
                     "price": "19",
                     "priceCurrency": "USD",
-                    "description": "500,000 characters per month, 5 voice clones"
+                    "description": "600,000 characters per month, 10 voice clones"
                   },
                   {
                     "@type": "Offer",
                     "name": "Pro Plan",
                     "price": "39",
                     "priceCurrency": "USD",
-                    "description": "1,000,000 characters per month, 9 voice clones"
+                    "description": "2,000,000 characters per month, 25 voice clones"
+                  },
+                  {
+                    "@type": "Offer",
+                    "name": "Studio Plan",
+                    "price": "79",
+                    "priceCurrency": "USD",
+                    "description": "3,000,000 characters per month, unlimited voice clones"
                   }
                 ],
                 "aggregateRating": {
@@ -944,14 +957,15 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="flex overflow-x-auto md:grid md:grid-cols-2 lg:grid-cols-5 gap-[12px] md:gap-6 pb-4 md:pb-0">
+          <div className="overflow-x-auto md:overflow-visible pb-4 md:pb-0">
+          <div className="flex md:grid md:grid-cols-2 lg:grid-cols-5 gap-[12px] md:gap-6 pt-5">
             {EXTRACTED_PLANS.map((plan, i) => {
               const price = billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly;
               const isFree = (plan as any).isFree;
 
               return (
-                <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } } }} className={`bg-white rounded-[24px] border ${plan.isPopular ? 'border-[#E8522A] shadow-xl relative' : 'border-[#e2dfdb] hover:border-slate-400 shadow-sm'} transition-colors flex flex-col shrink-0 md:shrink`} style={{ padding: '20px', minWidth: '200px' }}>
-                  {plan.isPopular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#E8522A] text-white px-4 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase">Most Popular</div>}
+                <motion.div key={i} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } } }} className={`bg-white rounded-[24px] border relative overflow-visible ${plan.isPopular ? 'border-[#E8522A] shadow-xl' : 'border-[#e2dfdb] hover:border-slate-400 shadow-sm'} transition-colors flex flex-col shrink-0 md:shrink`} style={{ padding: '20px', minWidth: '200px' }}>
+                  {plan.isPopular && <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#E8522A] text-white px-4 py-1 rounded-full text-[11px] font-bold tracking-widest uppercase z-10">Most Popular</div>}
                   <h4 className="font-['Syne'] font-bold text-[20px] text-slate-900 mb-2">{plan.name}</h4>
                   <div className="flex items-baseline gap-2 mb-2">
                     <span className="font-['Syne'] font-extrabold text-[36px] text-slate-900">${price}</span>
@@ -962,7 +976,7 @@ export default function HomePage() {
                   </p>
                   <ul className="flex-1 flex flex-col gap-4 mb-8">
                     <li className="flex items-start gap-3 text-[14px] text-slate-800 font-bold">
-                      <CheckCircle2 size={18} className="text-[#E8522A] shrink-0" />{plan.chars} per month
+                      <CheckCircle2 size={18} className="text-[#E8522A] shrink-0" />{plan.chars} chars/month
                     </li>
                     {plan.features.map((f, j) => (
                       <li key={j} className="flex items-start gap-3 text-[14px] text-slate-600">
@@ -970,12 +984,19 @@ export default function HomePage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/signup" className={`w-full py-3 rounded-xl flex items-center justify-center font-['Syne'] font-bold text-[16px] transition-transform hover:-translate-y-0.5 ${plan.isPopular ? 'bg-[#E8522A] text-white shadow-lg' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>
+                  <button onClick={() => router.push(isLoggedIn ? '/dashboard/billing' : '/signup')} className={`w-full py-3 rounded-xl flex items-center justify-center font-['Syne'] font-bold text-[16px] transition-transform hover:-translate-y-0.5 cursor-pointer ${plan.isPopular ? 'bg-[#E8522A] text-white shadow-lg' : 'bg-slate-100 text-slate-800 hover:bg-slate-200'}`}>
                     {isFree ? 'Get Started Free' : 'Start for Free'}
-                  </Link>
+                  </button>
                 </motion.div>
               );
             })}
+          </div>
+          </div>
+
+          <div className="text-center mt-10">
+            <Link href={isLoggedIn ? '/dashboard/billing' : '/pricing'} className="inline-flex items-center gap-2 text-[#E8522A] font-['Syne'] font-bold text-[16px] hover:underline">
+              See All Plans & Compare Features <ArrowRight size={16} />
+            </Link>
           </div>
         </div>
       </section>

@@ -7,7 +7,26 @@
       "Bash(npm install *)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(curl -L \"https://pub-3f46038553dd48c18ff7e328b4172cab.r2.dev/FlashTTS%20Logo.png\" -o \"C:/Users/LENOVO/Desktop/FlashTTS/public/favicon.png\")",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "mcp__claude_ai_Vercel__get_deployment_build_logs",
+      "Bash(git config *)",
+      "Bash(git commit *)",
+      "mcp__claude_ai_Vercel__list_deployments",
+      "Bash(awk '{print $1}')",
+      "Bash(xargs -I{} git grep -l \"eyJ\" {})",
+      "Bash(xargs -I{} git grep -l \"lyyzkmpjpvxrzxjohjxp\\\\|supabase\\\\.co\" {})",
+      "Bash(git filter-branch *)",
+      "Bash(git stash *)",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --force --index-filter \"git rm -rf --cached --ignore-unmatch scratch/\" --prune-empty --tag-name-filter cat -- --all)",
+      "Bash(xargs -I{} git ls-tree -r {} --name-only)",
+      "Bash(xargs -I{} git update-ref -d {})",
+      "Bash(git reflog *)",
+      "Bash(git gc *)",
+      "Bash(npm uninstall *)"
     ]
   }
 }

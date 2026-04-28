@@ -3,10 +3,11 @@ import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import {
-  BookOpen, Mic, Zap, Download, Play, Pause,
-  Plus, Trash2, GripVertical, ChevronDown, ChevronUp,
+  Mic, Zap, Download, Play, Pause,
+  Plus, Trash2, GripVertical,
   RotateCcw, X, Search, Settings2, AlertCircle, Lock
 } from 'lucide-react'
+import { getAvatarPath, getAvatarBackdrop } from '@/utils/avatar'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const LANGUAGES = [
@@ -88,6 +89,24 @@ const statusColor: Record<string, string> = {
   generating: '#a855f7',
   done: '#22d3a5',
   error: '#f05b5b',
+}
+
+function VoiceAvatar({ name, size = 32 }: { name: string; size?: number }) {
+  const avatarPath = getAvatarPath(name);
+  const backdrop = getAvatarBackdrop(name);
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%', background: backdrop,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0, border: `1px solid var(--border)`, overflow: 'hidden',
+    }}>
+      <img 
+        src={avatarPath} 
+        alt={name} 
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+      />
+    </div>
+  );
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -236,20 +255,30 @@ export default function AudioBooksPage() {
     audioRef.current = a; setPlayingId(ch.id)
   }
 
-  function downloadChapter(ch: Chapter) {
+  async function downloadChapter(ch: Chapter) {
     if (!ch.audioUrl) return
-    const a = document.createElement('a')
-    a.href = ch.audioUrl
-    a.download = `${bookTitle || 'Book'} - ${ch.title}.mp3`
-    a.click()
+    try {
+      const res = await fetch(ch.audioUrl)
+      const blob = await res.blob()
+      const blobUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = `${bookTitle || 'Book'} - ${ch.title}.mp3`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(blobUrl)
+    } catch {
+      window.open(ch.audioUrl, '_blank')
+    }
   }
 
   async function downloadAll() {
     const done = chapters.filter(c => c.status === 'done' && c.audioUrl)
     if (!done.length) return
     for (const ch of done) {
-      downloadChapter(ch)
-      await new Promise(r => setTimeout(r, 600)) // slight delay to open multiple prompts
+      await downloadChapter(ch)
+      await new Promise(r => setTimeout(r, 400))
     }
   }
 
@@ -333,7 +362,7 @@ export default function AudioBooksPage() {
         fontSize: '15px', color: 'var(--text)',
         margin: '0 0 6px'
       }}>
-        Audiobooks is a paid feature
+        ebook to Audiobook is a paid feature
       </p>
       <p style={{
         fontSize: '13px', color: 'var(--muted)',
@@ -359,7 +388,7 @@ export default function AudioBooksPage() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <div style={{ fontFamily: 'DM Sans, sans-serif', width: '100%', animation: 'fade-in 0.3s ease' }}>
-      <title>eBook to AudioBook Studio</title>
+
 
       {/* ── Page Header ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px', gap: '16px', flexWrap: 'wrap' }}>
@@ -369,7 +398,7 @@ export default function AudioBooksPage() {
           </div>
           <div>
             <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: '24px', fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-0.02em' }}>
-              eBook to AudioBook
+              ebook to Audiobook
             </h1>
             <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>
               Paste · Split · Generate MP3s
@@ -410,15 +439,15 @@ export default function AudioBooksPage() {
                   onChange={e => setBookTitle(e.target.value)}
                   placeholder="Book Title..."
                   className="book-title-input focus-purple"
-                  style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px 12px 42px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--text)', fontSize: '15px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif', outline: 'none', transition: 'all 0.2s' }}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '12px 14px 12px 42px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--text)', fontSize: '15px', fontWeight: 600, fontFamily: 'DM Sans, sans-serif', outline: 'none', transition: 'all 0.2s' }}
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <input value={author} onChange={e => setAuthor(e.target.value)} placeholder="Author" className="focus-purple" style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none', transition: 'all 0.2s' }} />
-                <select value={genre} onChange={e => setGenre(e.target.value)} className="focus-purple" style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
+                <input value={author} onChange={e => setAuthor(e.target.value)} placeholder="Author" className="focus-purple" style={{ padding: '10px 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none', transition: 'all 0.2s' }} />
+                <select value={genre} onChange={e => setGenre(e.target.value)} className="focus-purple" style={{ padding: '10px 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
                   {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
                 </select>
-                <select value={language} onChange={e => setLanguage(e.target.value)} className="focus-purple" style={{ padding: '10px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
+                <select value={language} onChange={e => setLanguage(e.target.value)} className="focus-purple" style={{ padding: '10px 12px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', color: 'var(--text)', fontSize: '13px', fontFamily: 'DM Sans, sans-serif', outline: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
                   {LANGUAGES.map(l => <option key={l.code} value={l.code}>{l.flag} {l.label}</option>)}
                 </select>
               </div>
@@ -441,7 +470,7 @@ export default function AudioBooksPage() {
               onChange={e => setRawText(e.target.value)}
               placeholder={'Paste the entire book content here...\n\nWe will detect chapters and sections for you.'}
               className="book-textarea focus-purple"
-              style={{ width: '100%', minHeight: '220px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', outline: 'none', resize: 'vertical', color: 'var(--text)', fontSize: '14px', lineHeight: '1.8', fontFamily: 'DM Sans, sans-serif', boxSizing: 'border-box', transition: 'all 0.2s' }}
+              style={{ width: '100%', minHeight: '220px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '16px', outline: 'none', resize: 'vertical', color: 'var(--text)', fontSize: '14px', lineHeight: '1.8', fontFamily: 'DM Sans, sans-serif', boxSizing: 'border-box', transition: 'all 0.2s' }}
             />
 
             <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
@@ -510,7 +539,7 @@ export default function AudioBooksPage() {
                             <GripVertical size={14} />
                           </span>
                           
-                          <div style={{ minWidth: '24px', height: '24px', borderRadius: '50%', background: ch.status === 'done' ? 'rgba(34,211,165,0.1)' : 'rgba(255,255,255,0.05)', border: `1px solid ${ch.status === 'done' ? 'rgba(34,211,165,0.2)' : 'rgba(255,255,255,0.1)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 800, color: ch.status === 'done' ? '#22d3a5' : 'var(--muted)' }}>
+                          <div style={{ minWidth: '24px', height: '24px', borderRadius: '50%', background: ch.status === 'done' ? 'rgba(34,211,165,0.1)' : 'var(--surface)', border: `1px solid ${ch.status === 'done' ? 'rgba(34,211,165,0.2)' : 'var(--border)'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 800, color: ch.status === 'done' ? '#22d3a5' : 'var(--muted)' }}>
                              {ch.status === 'done' ? '✓' : idx + 1}
                           </div>
 
@@ -520,7 +549,7 @@ export default function AudioBooksPage() {
                               onChange={e => setChapter(ch.id, { title: e.target.value })}
                               onClick={e => e.stopPropagation()}
                               autoFocus
-                              style={{ flex: 1, padding: '4px 8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(168,85,247,0.3)', borderRadius: '6px', color: 'var(--text)', fontSize: '13px', fontWeight: 700, outline: 'none' }}
+                              style={{ flex: 1, padding: '4px 8px', background: 'var(--surface)', border: '1px solid rgba(168,85,247,0.3)', borderRadius: '6px', color: 'var(--text)', fontSize: '13px', fontWeight: 700, outline: 'none' }}
                             />
                           ) : (
                             <span style={{ flex: 1, fontSize: '14px', fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -571,7 +600,7 @@ export default function AudioBooksPage() {
                             <textarea
                               value={ch.text}
                               onChange={e => setChapter(ch.id, { text: e.target.value })}
-                              style={{ width: '100%', minHeight: '160px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'var(--text)', fontSize: '13px', lineHeight: '1.7', outline: 'none', resize: 'vertical' }}
+                              style={{ width: '100%', minHeight: '160px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px', color: 'var(--text)', fontSize: '13px', lineHeight: '1.7', outline: 'none', resize: 'vertical' }}
                             />
                             {ch.status === 'error' && (
                               <div style={{ marginTop: '8px', color: '#f05b5b', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -583,7 +612,7 @@ export default function AudioBooksPage() {
 
                       {/* Generating Progress */}
                       {ch.status === 'generating' && (
-                        <div style={{ height: '3px', background: 'rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ height: '3px', background: 'var(--border)', position: 'relative', overflow: 'hidden' }}>
                            <div className="generating-purple-bar" style={{ position: 'absolute', height: '100%', width: '40%', background: '#a855f7', borderRadius: '99px' }} />
                         </div>
                       )}
@@ -620,7 +649,7 @@ export default function AudioBooksPage() {
                    <span style={{ fontSize: '12px', color: 'var(--muted)' }}>Generating: {doneCount} / {activeChapters.length} chapters</span>
                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#a855f7' }}>{progress}%</span>
                 </div>
-                <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
+                <div style={{ height: '8px', background: 'var(--border)', borderRadius: '99px', overflow: 'hidden' }}>
                    <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, #a855f7, #7c3aed)', borderRadius: '99px', transition: 'width 0.4s ease' }} />
                 </div>
               </div>
@@ -664,7 +693,7 @@ export default function AudioBooksPage() {
             <p style={{ fontSize: '12px', color: 'var(--muted)', margin: '0 0 16px' }}>by {author || 'Unknown Author'}</p>
             <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', flexWrap: 'wrap' }}>
                <span style={{ fontSize: '10px', fontWeight: 700, background: 'rgba(168,85,247,0.15)', color: '#a855f7', padding: '4px 10px', borderRadius: '8px' }}>{genre}</span>
-               <span style={{ fontSize: '10px', fontWeight: 700, background: 'rgba(255,255,255,0.05)', color: 'var(--muted)', padding: '4px 10px', borderRadius: '8px' }}>{language.toUpperCase()}</span>
+               <span style={{ fontSize: '10px', fontWeight: 700, background: 'var(--surface)', color: 'var(--muted)', padding: '4px 10px', borderRadius: '8px', border: '1px solid var(--border)' }}>{language.toUpperCase()}</span>
             </div>
           </div>
 
@@ -673,9 +702,7 @@ export default function AudioBooksPage() {
             <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '16px' }}>Primary Voice</div>
             {globalVoice ? (
                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px', background: 'rgba(168,85,247,0.05)', borderRadius: '12px', marginBottom: '12px', border: '1px solid rgba(168,85,247,0.15)' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#a855f7', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '14px' }}>
-                    {globalVoice.name[0]}
-                  </div>
+                  <VoiceAvatar name={globalVoice.name} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{globalVoice.name}</div>
                     <div style={{ fontSize: '10px', color: 'var(--muted)' }}>{globalVoice.language?.toUpperCase()}</div>
@@ -708,7 +735,7 @@ export default function AudioBooksPage() {
                        <span style={{ color: 'var(--muted)' }}>Progress</span>
                        <span style={{ color: '#22d3a5', fontWeight: 700 }}>{progress}%</span>
                     </div>
-                    <div style={{ height: '3px', background: 'rgba(255,255,255,0.05)', borderRadius: '99px', overflow: 'hidden' }}>
+                    <div style={{ height: '3px', background: 'var(--border)', borderRadius: '99px', overflow: 'hidden' }}>
                        <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg, #a855f7, #22d3a5)', borderRadius: '99px' }} />
                     </div>
                   </div>
@@ -778,9 +805,7 @@ export default function AudioBooksPage() {
                   return (
                     <div key={v.id} className="voice-list-item" onClick={() => pickVoice(v)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'all 0.2s' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(168,85,247,0.15)', color: '#a855f7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800 }}>
-                          {name[0].toUpperCase()}
-                        </div>
+                        <VoiceAvatar name={name} size={40} />
                         <div>
                           <div style={{ fontFamily: 'Syne, sans-serif', fontSize: '14px', fontWeight: 700, color: '#fff' }}>{name}</div>
                           <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>{(v.language || language).toUpperCase()}</div>

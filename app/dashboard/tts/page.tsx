@@ -294,6 +294,8 @@ function TTSPageInner() {
     if (!text.trim()) { toast.error('Please enter some text first'); return; }
     if (!selectedVoice) { toast.error('Please select a voice first'); return; }
 
+    console.log('Voice data:', JSON.stringify(selectedVoice, null, 2));
+
     setGenerating(true);
     setAudioUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
     setAudioBlob(null);
@@ -316,6 +318,7 @@ function TTSPageInner() {
           voice_id: selectedVoice.id,
           voice_name: selectedVoice.name,
           voice_url: voiceUrl,
+          referenceAudioUrl: selectedVoice.referenceAudioUrl || selectedVoice.sample_url || null,
           language: language,
           speed: speed,
           emotion: emotion,
@@ -329,10 +332,14 @@ function TTSPageInner() {
         throw new Error(errData.error || 'Generation failed');
       }
 
-      const rawBlob = await response.blob();
-      const mp3Blob = new Blob([rawBlob], { type: 'audio/mpeg' });
-      const url = URL.createObjectURL(mp3Blob);
-      setAudioBlob(mp3Blob);
+      const data = await response.json();
+      if (!data.audioUrl) throw new Error('No audio URL returned');
+
+      const audioRes = await fetch(data.audioUrl);
+      const audioBuffer = await audioRes.arrayBuffer();
+      const wavBlob = new Blob([audioBuffer], { type: 'audio/wav' });
+      const url = URL.createObjectURL(wavBlob);
+      setAudioBlob(wavBlob);
       setAudioUrl(url);
       setCreditsUsed(prev => prev + text.trim().length);
       updateRecentVoices(selectedVoice);

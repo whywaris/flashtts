@@ -1,449 +1,359 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/utils/supabase/client';
-import { initializePaddle, Paddle } from '@paddle/paddle-js';
-import {
-    CreditCard,
-    Zap,
-    Download,
-    CheckCircle2,
-    Loader2
-} from 'lucide-react';
+import { PLANS, type PlanConfig, type PlanId } from '@/lib/plans';
+import { Zap, CheckCircle2, Loader2, Crown, Star, Sparkles, ArrowRight } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
+
+const T = {
+  bg:      'var(--bg)',
+  card:    'var(--card-bg)',
+  surface: 'var(--surface)',
+  accent:  '#2DD4BF',
+  border:  'var(--border)',
+  muted:   'var(--muted)',
+  text:    'var(--text)',
+};
 
 interface Profile {
-    id: string;
-    plan?: string;
-    credits_used?: number;
-    credits_limit?: number;
+  id: string;
+  plan?: string;
+  credits_used?: number;
+  credits_limit?: number;
 }
 
-const PLANS_DATA = [
-    {
-        id: 'starter',
-        name: 'Starter',
-        priceMonthly: 9,
-        priceYearly: 7,
-        chars: '200,000 chars / 200 mins',
-        features: [
-            "Max 3,000 chars per generation",
-            "~65 generations",
-            "2 voice clones",
-            "20–30 standard voices",
-            "Normal generation speed",
-            "No watermark"
-        ],
-        priceIdMonthly: 'pri_01kmt741wy5sezfcjz4xv9493v',
-        priceIdYearly: 'pri_01kmt7fx50ephpdvhtyxz4y3zm',
-    },
-    {
-        id: 'creator',
-        name: 'Creator',
-        priceMonthly: 19,
-        priceYearly: 15,
-        chars: '500,000 chars / 500 mins',
-        features: [
-            "Max 5,000 chars per generation",
-            "~100 generations",
-            "5 voice clones",
-            "50+ voices with emotions",
-            "Fast generation speed",
-            "High-quality audio export"
-        ],
-        isPopular: true,
-        priceIdMonthly: 'pri_01kmt7bptvbg9v4kkbwrstv9c9',
-        priceIdYearly: 'pri_01kmt7gyq5gcbcrrhkb7mddxek',
-    },
-    {
-        id: 'pro',
-        name: 'Pro',
-        priceMonthly: 39,
-        priceYearly: 31,
-        chars: '1,000,000 chars / 1000 mins',
-        features: [
-            "Max 10,000 chars per generation",
-            "~100 generations",
-            "9 voice clones",
-            "100+ premium voices",
-            "Priority processing",
-            "All export formats"
-        ],
-        priceIdMonthly: 'pri_01kmt7cqkrxcmwfp4h69gsh0s6',
-        priceIdYearly: 'pri_01kmt7jaktramdxxxwq4gv4sm6',
-    },
-    {
-        id: 'studio',
-        name: 'Studio',
-        priceMonthly: 79,
-        priceYearly: 63,
-        chars: '3,000,000 chars / 3000 mins',
-        features: [
-            "Max 20,000 chars per generation",
-            "~150 generations",
-            "15 voice clones",
-            "Full library + exclusive voices",
-            "API access & Team collab",
-            "Commercial usage rights"
-        ],
-        priceIdMonthly: 'pri_01kmt7dkg934xhvpjjb09zfrbj',
-        priceIdYearly: 'pri_01kmt7kmraz2x817ak64jq2q6t',
-    }
-];
+const PLAN_ICONS: Record<PlanId, React.ReactNode> = {
+  free:    <Star size={18} />,
+  starter: <Zap size={18} />,
+  creator: <Crown size={18} />,
+  pro:     <Sparkles size={18} />,
+  studio:  <span style={{ fontSize: 16 }}>🎙️</span>,
+};
+
+function getPlanFeatures(plan: PlanConfig): string[] {
+  return [
+    `${plan.charsPerGen} chars/generation`,
+    `${plan.voiceClones} voice clone${plan.voiceClones === '1' ? '' : 's'}`,
+    plan.voiceLibrary,
+    plan.speed,
+    plan.history,
+    plan.emotionControl,
+    plan.languages,
+    plan.support,
+  ];
+}
+
+function getSavingsPercent(plan: PlanConfig): number {
+  if (plan.isFree || plan.priceMonthly === 0) return 0;
+  return Math.round(((plan.priceMonthly * 12 - plan.yearlyTotal) / (plan.priceMonthly * 12)) * 100);
+}
 
 export default function BillingPage() {
-    const [profile, setProfile] = useState<Profile | null>(null);
-    const [email, setEmail] = useState('');
-    const [loading, setLoading] = useState(true);
-    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-    const [paddle, setPaddle] = useState<Paddle | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [email, setEmail] = useState('');
+  const [userId, setUserId] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const supabase = useMemo(() => createClient(), []);
 
-    useEffect(() => {
-        // Initialize Paddle explicitly
-        initializePaddle({
-            environment: process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT === 'sandbox' ? 'sandbox' : 'production',
-            token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN || '',
-        }).then((paddleInstance) => {
-            if (paddleInstance) {
-                // Ensure environment is set explicitly as requested
-                if (process.env.NEXT_PUBLIC_PADDLE_ENVIRONMENT === 'sandbox') {
-                    paddleInstance.Environment.set('sandbox');
-                }
-                setPaddle(paddleInstance);
-            }
-        });
-
-        const fetchProfile = async () => {
-            const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-
-            if (user) {
-                setEmail(user.email || '');
-                const { data } = await supabase
-                    .from('profiles')
-                    .select('id, plan, credits_used, credits_limit')
-                    .eq('id', user.id)
-                    .single();
-
-                setProfile(data);
-            }
-            setLoading(false);
-        };
-
-        fetchProfile();
-    }, []);
-
-    if (loading) {
-        return (
-            <div className="flex w-full items-center justify-center p-20 min-h-[50vh]">
-                <Loader2 className="animate-spin text-[var(--muted)]" size={32} />
-            </div>
-        );
+  // Show portal error toasts when redirected back from /api/lemonsqueezy/portal
+  useEffect(() => {
+    const err = searchParams.get('error');
+    if (err === 'no_subscription') {
+      toast.error('No active LemonSqueezy subscription found. Please subscribe first.');
+    } else if (err === 'portal') {
+      toast.error('Could not open the billing portal. Please try again or contact support.');
+    } else if (err === 'config') {
+      toast.error('Payment configuration error. Please contact support.');
     }
+  }, [searchParams]);
 
-    const currentPlan = (profile?.plan || 'Free').toUpperCase();
-    const used = profile?.credits_used || 0;
-    const limit = profile?.credits_limit || 10000;
-    const remaining = Math.max(0, limit - used);
-    const rawUsagePercent = (used / limit) * 100;
-    const usagePercent = Math.min(100, Math.max(0, rawUsagePercent));
-    const isFree = currentPlan === 'FREE';
+  useEffect(() => {
+    async function fetchProfile() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setEmail(user.email || '');
+        setUserId(user.id);
+        const { data } = await supabase.from('profiles').select('id, plan, credits_used, credits_limit').eq('id', user.id).single();
+        setProfile(data);
+      }
+      setLoading(false);
+    }
+    fetchProfile();
+  }, [supabase]);
 
-    const fmt = (num: number) => num.toLocaleString();
+  const handleCheckout = async (plan: PlanConfig) => {
+    if (plan.isFree) return;
+    const currentPlanId = (profile?.plan || 'free').toLowerCase();
+    if (currentPlanId !== 'free') {
+      router.push('/api/lemonsqueezy/portal');
+      return;
+    }
+    const variantId = billingCycle === 'yearly' ? plan.variantYearly : plan.variantMonthly;
+    if (!variantId) return;
+    setLoadingPlan(plan.id);
+    try {
+      const res = await fetch('/api/lemonsqueezy/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ variantId, userId, userEmail: email }),
+      });
+      const data = await res.json();
+      if (data.url) { window.location.href = data.url; }
+    } catch {
+      // silent — user sees no redirect
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
 
-    return (
-        <div style={{ width: '100%', margin: '0 auto', paddingBottom: '40px' }}>
-            <title>Billing</title>
-            <div style={{ marginBottom: '32px' }}>
-                <h1 style={{ 
-                    fontFamily: 'Instrument Serif, serif', 
-                    fontSize: '36px', 
-                    fontWeight: 800, 
-                    color: 'var(--text)',
-                    margin: '0 0 8px 0',
-                    letterSpacing: '-0.02em'
-                }}>Billing</h1>
-                <p style={{ color: 'var(--muted)', fontSize: '15px', margin: 0 }}>
-                    Manage your plan, usage, and billing details.
+  if (loading) return (
+    <div style={{ display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'center', padding: '80px 0', minHeight: '50vh' }}>
+      <Loader2 size={32} color={T.muted} style={{ animation: 'spin 0.8s linear infinite' }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+
+  const currentPlanId = (profile?.plan || 'free').toLowerCase() as PlanId;
+  const currentPlanName = (profile?.plan || 'Free').toUpperCase();
+  const used      = profile?.credits_used  || 0;
+  const limit     = profile?.credits_limit || 10_000;
+  const remaining = Math.max(0, limit - used);
+  const usagePct  = Math.min(100, Math.max(0, (used / limit) * 100));
+  const isFree    = currentPlanId === 'free';
+  const fmt = (n: number) => n.toLocaleString();
+
+  return (
+    <div style={{ width: '100%', fontFamily: 'Inter, sans-serif', paddingBottom: 40 }}>
+      <Toaster position="top-right" toastOptions={{ style: { background: T.card, color: T.text, border: `1px solid ${T.border}` } }} />
+
+
+      {/* Current plan card */}
+      <div style={{
+        background: T.card, borderRadius: 16, padding: 28, marginBottom: 32,
+        border: `1px solid ${T.border}`,
+        boxShadow: `0 0 0 1px rgba(45,212,191,0.15), 0 8px 32px rgba(45,212,191,0.06)`,
+        position: 'relative', overflow: 'hidden',
+      }}>
+        {/* Teal glow accent */}
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${T.accent}, transparent)`, opacity: 0.6 }} />
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 24 }}>
+          <div style={{ flex: '1 1 280px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <span style={{ background: `rgba(45,212,191,0.12)`, color: T.accent, padding: '3px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em' }}>
+                CURRENT PLAN
+              </span>
+              <span style={{ color: T.muted, fontSize: 13 }}>
+                {isFree ? 'No renewal' : 'Renews automatically'}
+              </span>
+            </div>
+            <h2 style={{ fontSize: 28, fontWeight: 700, margin: '0 0 20px', color: T.text }}>{currentPlanName}</h2>
+
+            <div style={{ maxWidth: 380 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13 }}>
+                <span style={{ color: T.text, fontWeight: 500 }}>Monthly Allowance</span>
+                <span style={{ color: T.muted }}>{fmt(used)} / {fmt(limit)} chars</span>
+              </div>
+              <div style={{ height: 6, background: T.border, borderRadius: 4, overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${usagePct}%`, background: usagePct >= 80 ? '#ef4444' : T.accent, borderRadius: 4, transition: 'width 0.4s' }} />
+              </div>
+              {usagePct >= 80 && (
+                <p style={{ color: '#ef4444', fontSize: 12, marginTop: 8, fontWeight: 500 }}>
+                  80%+ used — upgrade to avoid interruption
                 </p>
+              )}
+            </div>
+          </div>
+
+          <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 16 }}>
+            {/* Billing cycle toggle */}
+            <div style={{ display: 'inline-flex', background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, padding: 4 }}>
+              <button
+                onClick={() => setBillingCycle('monthly')}
+                style={{ padding: '7px 14px', borderRadius: 7, fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.2s', background: billingCycle === 'monthly' ? T.card : 'transparent', color: billingCycle === 'monthly' ? T.text : T.muted }}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setBillingCycle('yearly')}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 7, fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all 0.2s', background: billingCycle === 'yearly' ? `rgba(45,212,191,0.12)` : 'transparent', color: billingCycle === 'yearly' ? T.accent : T.muted }}
+              >
+                Yearly <span style={{ background: T.accent, color: '#0A0A0F', padding: '2px 6px', borderRadius: 4, fontSize: 10, fontWeight: 800 }}>-20%</span>
+              </button>
             </div>
 
-            {/* ── SECTION 1: Current Plan Card ── */}
-            <div style={{
-                background: 'var(--card-bg)',
-                border: '1px solid var(--border)',
-                borderRadius: '24px',
-                padding: '32px',
-                boxShadow: '0 8px 30px rgba(0,0,0,0.03)',
-                marginBottom: '40px',
-                position: 'relative',
-                overflow: 'hidden'
-            }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '24px' }}>
-                    <div style={{ flex: '1 1 300px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-                            <span style={{ 
-                                background: 'rgba(245, 197, 24, 0.15)', 
-                                color: '#f5c518', 
-                                padding: '4px 10px', 
-                                borderRadius: '8px', 
-                                fontSize: '12px', 
-                                fontWeight: 700, 
-                                letterSpacing: '0.05em' 
-                            }}>
-                                CURRENT PLAN
-                            </span>
-                            <span style={{ color: 'var(--muted)', fontSize: '14px', fontWeight: 500 }}>
-                                {isFree ? 'No renewal' : 'Renews automatically'}
-                            </span>
-                        </div>
-                        <h2 style={{ fontSize: '32px', fontWeight: 700, margin: '0 0 4px 0', color: 'var(--text)' }}>
-                            {currentPlan}
-                        </h2>
-                        
-                        <div style={{ marginTop: '28px', maxWidth: '400px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px', fontWeight: 500 }}>
-                                <span style={{ color: 'var(--text)' }}>Monthly Allowances</span>
-                                <span style={{ color: 'var(--muted)' }}>{fmt(used)} / {fmt(limit)} chars</span>
-                            </div>
-                            <div style={{ 
-                                height: '8px', 
-                                background: 'var(--border)', 
-                                borderRadius: '4px', 
-                                overflow: 'hidden' 
-                            }}>
-                                <div style={{ 
-                                    height: '100%', 
-                                    width: `${usagePercent}%`, 
-                                    background: usagePercent >= 80 ? '#ef4444' : 'linear-gradient(90deg, #f5c518 0%, #ff8a00 100%)',
-                                    borderRadius: '4px',
-                                    transition: 'width 0.4s ease'
-                                }} />
-                            </div>
-                            {usagePercent >= 80 && (
-                                <p style={{ color: '#ef4444', fontSize: '13px', marginTop: '10px', fontWeight: 500 }}>
-                                    ⚠️ 80% usage reached — upgrade to avoid interruption
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
-                    <div style={{ flexShrink: 0, textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '20px' }}>
-                        <div>
-                            <p style={{ color: 'var(--muted)', fontSize: '14px', marginBottom: '6px' }}>Billing Cycle</p>
-                            <div style={{ 
-                                display: 'inline-flex', 
-                                background: 'var(--bg)', 
-                                border: '1px solid var(--border)', 
-                                borderRadius: '12px',
-                                padding: '4px'
-                            }}>
-                                <button
-                                    onClick={() => setBillingCycle('monthly')}
-                                    style={{
-                                        padding: '8px 16px',
-                                        borderRadius: '8px',
-                                        fontSize: '13px',
-                                        fontWeight: 600,
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s',
-                                        background: billingCycle === 'monthly' ? 'var(--card-bg)' : 'transparent',
-                                        color: billingCycle === 'monthly' ? 'var(--text)' : 'var(--muted)',
-                                        boxShadow: billingCycle === 'monthly' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none'
-                                    }}
-                                >
-                                    Monthly
-                                </button>
-                                <button
-                                    onClick={() => setBillingCycle('yearly')}
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '6px',
-                                        padding: '8px 16px',
-                                        borderRadius: '8px',
-                                        fontSize: '13px',
-                                        fontWeight: 600,
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s',
-                                        background: billingCycle === 'yearly' ? 'rgba(245, 197, 24, 0.1)' : 'transparent',
-                                        color: billingCycle === 'yearly' ? '#f5c518' : 'var(--muted)',
-                                        boxShadow: billingCycle === 'yearly' ? '0 2px 8px rgba(0,0,0,0.06)' : 'none'
-                                    }}
-                                >
-                                    Yearly <span style={{ background: '#f5c518', color: '#080810', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 800 }}>-20%</span>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <button
-                            onClick={() => {
-                                const plansSection = document.getElementById('plans-section');
-                                plansSection?.scrollIntoView({ behavior: 'smooth' });
-                            }}
-                            style={{
-                                padding: '12px 24px',
-                                background: isFree ? '#f5c518' : 'var(--bg)',
-                                color: isFree ? '#080810' : 'var(--text)',
-                                border: isFree ? 'none' : '1px solid var(--border)',
-                                borderRadius: '12px',
-                                fontSize: '14px',
-                                fontWeight: 600,
-                                cursor: 'pointer',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                transition: 'all 0.2s',
-                                boxShadow: isFree ? '0 4px 14px rgba(245, 197, 24, 0.3)' : 'none',
-                            }}>
-                            {isFree ? 'Upgrade Plan' : 'Manage Subscription'}
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* ── SECTION 2: Usage Insights ── */}
-            <div style={{ marginBottom: '40px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '20px', color: 'var(--text)' }}>Usage Insights</h3>
-                <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-                    gap: '20px' 
-                }}>
-                    <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '20px', padding: '24px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <Zap size={24} color="#ef4444" />
-                        </div>
-                        <div>
-                            <p style={{ color: 'var(--muted)', fontSize: '13px', fontWeight: 500, margin: '0 0 4px 0' }}>Characters Used</p>
-                            <h4 style={{ fontSize: '24px', fontWeight: 700, margin: 0, color: 'var(--text)' }}>{fmt(used)}</h4>
-                        </div>
-                    </div>
-                    
-                    <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '20px', padding: '24px', display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(34, 197, 94, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <CheckCircle2 size={24} color="#22c55e" />
-                        </div>
-                        <div>
-                            <p style={{ color: 'var(--muted)', fontSize: '13px', fontWeight: 500, margin: '0 0 4px 0' }}>Remaining Characters</p>
-                            <h4 style={{ fontSize: '24px', fontWeight: 700, margin: 0, color: 'var(--text)' }}>{fmt(remaining)}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* ── SECTION 3: Upgrade Plans Grid ── */}
-            <div id="plans-section" style={{ marginBottom: '40px' }}>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text)', margin: 0 }}>Available Plans</h3>
-                    <p style={{ fontSize: '14px', color: 'var(--muted)', fontWeight: 500, margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Zap size={14} style={{ color: '#f5c518' }} />
-                        Upgrade now to unlock faster generation & higher limits
-                    </p>
-                </div>
-                
-                <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
-                    gap: '20px' 
-                }}>
-                    {PLANS_DATA.map(plan => {
-                        const isCurrent = currentPlan === plan.name.toUpperCase() && !isFree; // If free, none of these 4 are current
-                        const price = billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly;
-                        const priceId = billingCycle === 'yearly' ? plan.priceIdYearly : plan.priceIdMonthly;
-
-                        const handleUpgrade = () => {
-                            if (!paddle || !profile?.id) return;
-                            
-                            paddle.Checkout.open({
-                                items: [{ priceId }],
-                                customer: { email },
-                                customData: { user_id: profile.id }
-                            });
-                        };
-
-                        return (
-                            <div key={plan.id} style={{
-                                background: 'var(--card-bg)',
-                                border: plan.isPopular ? '2px solid #f5c518' : '1px solid var(--border)',
-                                borderRadius: '20px',
-                                padding: '32px 24px',
-                                position: 'relative',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                boxShadow: plan.isPopular ? '0 12px 30px rgba(245, 197, 24, 0.1)' : '0 4px 15px rgba(0,0,0,0.02)'
-                            }}>
-                                {plan.isPopular && (
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '-12px',
-                                        left: '50%',
-                                        transform: 'translateX(-50%)',
-                                        background: 'linear-gradient(135deg, #f5c518 0%, #ff8a00 100%)',
-                                        color: '#080810',
-                                        padding: '4px 12px',
-                                        borderRadius: '20px',
-                                        fontSize: '11px',
-                                        fontWeight: 800,
-                                        letterSpacing: '0.05em',
-                                        boxShadow: '0 4px 10px rgba(245, 197, 24, 0.4)'
-                                    }}>
-                                        ⭐ MOST POPULAR
-                                    </div>
-                                )}
-                                
-                                <h4 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text)', margin: '0 0 16px 0' }}>{plan.name}</h4>
-                                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
-                                    <span style={{ fontSize: '32px', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.02em' }}>${price}</span>
-                                    {billingCycle === 'yearly' && (
-                                        <span style={{ fontSize: '14px', textDecoration: 'line-through', color: 'var(--muted)', fontWeight: 500 }}>
-                                            ${plan.priceMonthly}
-                                        </span>
-                                    )}
-                                </div>
-                                <p style={{ color: 'var(--muted)', fontSize: '13px', margin: '0 0 24px 0' }}>
-                                    per month{billingCycle === 'yearly' && ', billed annually'}
-                                </p>
-                                
-                                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px 0', flex: 1, display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                                    <li style={{ fontSize: '13px', color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 600 }}>
-                                        <CheckCircle2 size={16} color="#f5c518" style={{ flexShrink: 0 }} /> 
-                                        {plan.chars}
-                                    </li>
-                                    {plan.features.map((feat, i) => (
-                                        <li key={i} style={{ fontSize: '13px', color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <CheckCircle2 size={16} color="#22c55e" style={{ flexShrink: 0 }} /> 
-                                            {feat}
-                                        </li>
-                                    ))}
-                                </ul>
-
-                                <button 
-                                    disabled={isCurrent}
-                                    onClick={handleUpgrade}
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px',
-                                        borderRadius: '12px',
-                                        border: isCurrent ? '1px solid var(--border)' : 'none',
-                                        background: isCurrent ? 'var(--bg)' : plan.isPopular ? '#f5c518' : 'var(--text)',
-                                        color: isCurrent ? 'var(--muted)' : plan.isPopular ? '#080810' : 'var(--bg)',
-                                        fontWeight: 600,
-                                        fontSize: '14px',
-                                        cursor: isCurrent ? 'default' : 'pointer',
-                                        transition: 'all 0.2s',
-                                        opacity: isCurrent ? 0.7 : 1
-                                    }}
-                                >
-                                    {isCurrent ? 'Current Plan' : 'Upgrade'}
-                                </button>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
+            {!isFree && (
+              <button
+                onClick={() => router.push('/api/lemonsqueezy/portal')}
+                style={{ padding: '10px 20px', background: T.surface, color: T.text, border: `1px solid ${T.border}`, borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+                className="manage-btn"
+              >
+                Manage Subscription
+              </button>
+            )}
+          </div>
         </div>
-    );
+      </div>
+
+      {/* Usage insights */}
+      <div style={{ marginBottom: 32 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16, color: T.text }}>Usage Insights</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 14, padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(45,212,191,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Zap size={20} color={T.accent} />
+            </div>
+            <div>
+              <p style={{ color: T.muted, fontSize: 12, fontWeight: 500, margin: '0 0 4px' }}>Characters Used</p>
+              <h4 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: T.text }}>{fmt(used)}</h4>
+            </div>
+          </div>
+          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 14, padding: 20, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <CheckCircle2 size={20} color="#22c55e" />
+            </div>
+            <div>
+              <p style={{ color: T.muted, fontSize: 12, fontWeight: 500, margin: '0 0 4px' }}>Remaining</p>
+              <h4 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: T.text }}>{fmt(remaining)}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Plans grid */}
+      <div style={{ marginBottom: 40 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 600, color: T.text, margin: 0 }}>Available Plans</h3>
+          <p style={{ fontSize: 13, color: T.muted, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Zap size={13} color={T.accent} /> Upgrade to unlock higher limits
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
+          {PLANS.map(plan => {
+            const isCurrent = currentPlanId === plan.id;
+            const price    = billingCycle === 'yearly' ? plan.priceYearly : plan.priceMonthly;
+            const features = getPlanFeatures(plan);
+            const savings  = getSavingsPercent(plan);
+
+            return (
+              <div
+                key={plan.id}
+                style={{
+                  background: T.card,
+                  border: isCurrent
+                    ? `2px solid ${T.accent}`
+                    : plan.isPopular
+                    ? `2px solid rgba(45,212,191,0.5)`
+                    : `1px solid ${T.border}`,
+                  borderRadius: 16, padding: '24px 18px',
+                  position: 'relative', display: 'flex', flexDirection: 'column',
+                  boxShadow: isCurrent
+                    ? `0 0 24px rgba(45,212,191,0.12)`
+                    : plan.isPopular
+                    ? `0 8px 28px rgba(45,212,191,0.07)`
+                    : 'none',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                }}
+                className="plan-card"
+              >
+                {/* Badge */}
+                {(plan.isPopular && !isCurrent) && (
+                  <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: T.accent, color: '#0A0A0F', padding: '3px 12px', borderRadius: 20, fontSize: 10, fontWeight: 800, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+                    MOST POPULAR
+                  </div>
+                )}
+                {isCurrent && (
+                  <div style={{ position: 'absolute', top: -12, left: '50%', transform: 'translateX(-50%)', background: T.accent, color: '#0A0A0F', padding: '3px 12px', borderRadius: 20, fontSize: 10, fontWeight: 800, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+                    CURRENT PLAN
+                  </div>
+                )}
+
+                {/* Plan icon + name */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0A0A0F', background: T.accent }}>
+                    {PLAN_ICONS[plan.id]}
+                  </div>
+                  <h4 style={{ fontSize: 16, fontWeight: 700, color: T.text, margin: 0 }}>{plan.name}</h4>
+                </div>
+
+                {/* Price */}
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 3 }}>
+                  <span style={{ fontSize: 30, fontWeight: 800, color: T.text, letterSpacing: '-0.02em' }}>${price}</span>
+                  {billingCycle === 'yearly' && !plan.isFree && (
+                    <span style={{ fontSize: 13, textDecoration: 'line-through', color: T.muted }}>${plan.priceMonthly}</span>
+                  )}
+                </div>
+                <p style={{ color: T.muted, fontSize: 12, margin: '0 0 4px' }}>
+                  {plan.isFree ? 'forever' : `per month${billingCycle === 'yearly' ? ', billed annually' : ''}`}
+                </p>
+                {billingCycle === 'yearly' && !plan.isFree && savings > 0 ? (
+                  <span style={{ display: 'inline-flex', alignSelf: 'flex-start', background: 'rgba(16,185,129,0.1)', color: '#10b981', fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 6, border: '1px solid rgba(16,185,129,0.2)', marginBottom: 12 }}>
+                    Save {savings}% · ${plan.yearlyTotal}/yr
+                  </span>
+                ) : <div style={{ marginBottom: 12 }} />}
+
+                {/* Chars highlight */}
+                <div style={{ padding: '8px 12px', borderRadius: 10, marginBottom: 14, background: 'rgba(45,212,191,0.08)', border: '1px solid rgba(45,212,191,0.15)' }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: T.accent }}>{plan.chars} chars/month</span>
+                </div>
+
+                {/* Features */}
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px', flex: 1, display: 'flex', flexDirection: 'column', gap: 9 }}>
+                  {features.map((feat, i) => (
+                    <li key={i} style={{ fontSize: 12, color: T.muted, display: 'flex', alignItems: 'flex-start', gap: 8, lineHeight: 1.4 }}>
+                      <CheckCircle2 size={13} color={T.accent} style={{ flexShrink: 0, marginTop: 1 }} />
+                      {feat}
+                    </li>
+                  ))}
+                  <li style={{ fontSize: 12, color: T.muted, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                    <CheckCircle2 size={13} color="#22c55e" style={{ flexShrink: 0, marginTop: 1 }} /> Commercial use
+                  </li>
+                  <li style={{ fontSize: 12, color: T.muted, display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                    <CheckCircle2 size={13} color="#22c55e" style={{ flexShrink: 0, marginTop: 1 }} /> No watermark
+                  </li>
+                </ul>
+
+                <button
+                  disabled={isCurrent || loadingPlan === plan.id}
+                  onClick={() => handleCheckout(plan)}
+                  style={{
+                    width: '100%', padding: '11px', borderRadius: 11,
+                    border: isCurrent ? `1px solid ${T.border}` : 'none',
+                    background: isCurrent ? T.surface : T.accent,
+                    color: isCurrent ? T.muted : '#0A0A0F',
+                    fontWeight: 700, fontSize: 13,
+                    cursor: isCurrent ? 'default' : 'pointer',
+                    opacity: isCurrent ? 0.7 : 1,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    transition: 'opacity 0.2s, transform 0.15s',
+                  }}
+                  className={isCurrent ? '' : 'upgrade-btn'}
+                >
+                  {isCurrent ? 'Current Plan' :
+                   plan.isFree ? 'Free Plan' :
+                   loadingPlan === plan.id ? 'Redirecting…' :
+                   currentPlanId !== 'free' ? 'Manage Subscription' : 'Upgrade'}
+                  {!isCurrent && !plan.isFree && loadingPlan !== plan.id && <ArrowRight size={13} />}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <style>{`
+        .plan-card:hover { transform: translateY(-2px); }
+        .upgrade-btn:hover { opacity: 0.88 !important; transform: translateY(-1px); }
+        .manage-btn:hover { border-color: rgba(45,212,191,0.3) !important; color: ${T.accent} !important; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
+    </div>
+  );
 }

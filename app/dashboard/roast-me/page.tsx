@@ -107,7 +107,7 @@ export default function RoastMePage() {
 
   return (
     <div style={{ fontFamily: 'DM Sans, sans-serif', maxWidth: '580px', margin: '0 auto' }}>
-      <title>Roast Me | FlashTTS</title>
+
       <Toaster position="top-right" />
 
       {/* ── Header ── */}

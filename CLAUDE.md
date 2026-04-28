@@ -17,7 +17,7 @@ FlashTTS is a production-ready AI Text-to-Speech SaaS platform built for content
 | Auth | Supabase Auth |
 | AI Inference | RunPod |
 | File Storage | Cloudflare R2 |
-| Payments | Paddle |
+| Payments | LemonSqueezy |
 | Email | Resend |
 | DNS/CDN | Cloudflare (DNS-only, grey proxy) |
 | Deployment | Vercel |
@@ -93,7 +93,7 @@ tts_jobs          — TTS generation history
 cloned_voices     — User voice clones
 saved_voices      — User's saved voices (from library or cloned)
 credit_transactions — Credit usage log
-subscriptions     — Paddle subscription tracking
+subscriptions     — LemonSqueezy subscription tracking
 pricing_plans     — Plan definitions
 audiobooks        — Audiobook projects
 audiobook_chapters — Individual chapters (has audio_url, duration_seconds)
@@ -209,11 +209,13 @@ Finnish (fi), Danish (da), Greek (el), Malay (ms)
 ## API Routes
 
 ```
-POST /api/tts              — Generate TTS audio
-POST /api/upload-voice     — Upload voice sample to R2
-POST /api/webhook/paddle   — Paddle payment webhooks
-POST /api/contact          — Contact form submission
-POST /api/admin/send-email — Admin bulk email
+POST /api/tts                        — Generate TTS audio
+POST /api/upload-voice               — Upload voice sample to R2
+POST /api/webhooks/lemonsqueezy      — LemonSqueezy payment webhooks
+POST /api/lemonsqueezy/checkout      — Create LemonSqueezy checkout session
+GET  /api/lemonsqueezy/portal        — Redirect to LemonSqueezy customer portal
+POST /api/contact                    — Contact form submission
+POST /api/admin/send-email           — Admin bulk email
 ```
 
 ### TTS API Notes
@@ -351,9 +353,9 @@ if (profile?.role !== 'admin') redirect('/dashboard')
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=        # server-side only, never expose
-NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=
-PADDLE_WEBHOOK_SECRET=            # REAL secret, not 'xxxx'
-NEXT_PUBLIC_PADDLE_ENVIRONMENT=   # 'sandbox' or 'production'
+LEMONSQUEEZY_API_KEY=
+LEMONSQUEEZY_STORE_ID=
+LEMONSQUEEZY_WEBHOOK_SECRET=      # REAL secret, not 'xxxx'
 CLOUDFLARE_R2_BUCKET=
 CLOUDFLARE_R2_ACCESS_KEY=
 CLOUDFLARE_R2_SECRET_KEY=
@@ -581,4 +583,4 @@ abuse@flashtts.com     — Abuse reports
 ---
 
 *Last updated: April 2026*
-*Project: FlashTTS | Stack: Next.js + Supabase + RunPod + Paddle*
+*Project: FlashTTS | Stack: Next.js + Supabase + RunPod + LemonSqueezy*

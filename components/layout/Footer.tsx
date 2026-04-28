@@ -51,7 +51,7 @@ export default function Footer() {
               <li><Link href="/text-to-speech" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Text to Speech</Link></li>
               <li><Link href="/voice-cloning" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Voice Cloning</Link></li>
               <li><Link href="/audiobook" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Audiobooks</Link></li>
-              <li><Link href="/#pricing" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Pricing</Link></li>
+              <li><Link href="/pricing" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Pricing</Link></li>
               <li><Link href="/blog" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Blog</Link></li>
               <li><Link href="/tools" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Tools</Link></li>
             </ul>
