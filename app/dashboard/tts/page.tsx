@@ -76,6 +76,7 @@ interface SelectedVoice {
   sample_url?: string | null;
   style?: string | null;
   tags?: string[] | null;
+  referenceAudioUrl?: string | null;
 }
 
 function TTSPageInner() {
