@@ -27,22 +27,22 @@ export interface PlanConfig {
 
 // LemonSqueezy Variant IDs
 export const LEMON_VARIANTS = {
-  starter:  { monthly: 1565143, yearly: 1565150 },
-  creator:  { monthly: 1565144, yearly: 1565154 },
-  pro:      { monthly: 1565147, yearly: 1565152 },
-  studio:   { monthly: 1565148, yearly: 1565159 },
+  starter: { monthly: 1618553, yearly: 1618565 },
+  creator: { monthly: 1618555, yearly: 1618567 },
+  pro:     { monthly: 1618556, yearly: 1618573 },
+  studio:  { monthly: 1618558, yearly: 1618576 },
 } as const;
 
 // Variant ID → Plan mapping for webhook processing
 export const VARIANT_TO_PLAN: Record<number, PlanId> = {
   [LEMON_VARIANTS.starter.monthly]: 'starter',
-  [LEMON_VARIANTS.starter.yearly]: 'starter',
+  [LEMON_VARIANTS.starter.yearly]:  'starter',
   [LEMON_VARIANTS.creator.monthly]: 'creator',
-  [LEMON_VARIANTS.creator.yearly]: 'creator',
-  [LEMON_VARIANTS.pro.monthly]: 'pro',
-  [LEMON_VARIANTS.pro.yearly]: 'pro',
-  [LEMON_VARIANTS.studio.monthly]: 'studio',
-  [LEMON_VARIANTS.studio.yearly]: 'studio',
+  [LEMON_VARIANTS.creator.yearly]:  'creator',
+  [LEMON_VARIANTS.pro.monthly]:     'pro',
+  [LEMON_VARIANTS.pro.yearly]:      'pro',
+  [LEMON_VARIANTS.studio.monthly]:  'studio',
+  [LEMON_VARIANTS.studio.yearly]:   'studio',
 };
 
 export const PLANS: PlanConfig[] = [
@@ -53,17 +53,17 @@ export const PLANS: PlanConfig[] = [
     priceYearly: 0,
     yearlyTotal: 0,
     chars: '10,000',
-    charsPerGen: '1,000',
+    charsPerGen: '500',
     voiceClones: '1',
     voiceLibrary: 'Basic voices only',
     formats: 'MP3 + WAV',
     speed: 'Standard generation speed',
     history: '7 days history',
     emotionControl: 'Full emotion control',
-    languages: 'All 23 languages',
+    languages: 'All 19 languages',
     support: 'Email support',
-    commercialUse: true,
-    noWatermark: true,
+    commercialUse: false,
+    noWatermark: false,
     credits: 10000,
     isFree: true,
   },
@@ -71,17 +71,17 @@ export const PLANS: PlanConfig[] = [
     id: 'starter',
     name: 'Starter',
     priceMonthly: 9,
-    priceYearly: 7, // $85/12 ≈ $7.08
-    yearlyTotal: 85,
+    priceYearly: 7, // $86/yr ÷ 12
+    yearlyTotal: 86,
     chars: '200,000',
-    charsPerGen: '5,000',
+    charsPerGen: '3,000',
     voiceClones: '3',
     voiceLibrary: 'Full voice library',
     formats: 'MP3 + WAV',
     speed: 'Standard generation speed',
     history: '30 days history',
     emotionControl: 'Full emotion control',
-    languages: 'All 23 languages',
+    languages: 'All 19 languages',
     support: 'Email support',
     commercialUse: true,
     noWatermark: true,
@@ -93,8 +93,8 @@ export const PLANS: PlanConfig[] = [
     id: 'creator',
     name: 'Creator',
     priceMonthly: 19,
-    priceYearly: 15, // $179/12 ≈ $14.92
-    yearlyTotal: 179,
+    priceYearly: 15, // $182/yr ÷ 12
+    yearlyTotal: 182,
     chars: '600,000',
     charsPerGen: '5,000',
     voiceClones: '10',
@@ -103,7 +103,7 @@ export const PLANS: PlanConfig[] = [
     speed: 'Fast generation speed',
     history: '90 days history',
     emotionControl: 'Full emotion control',
-    languages: 'All 23 languages',
+    languages: 'All 19 languages',
     support: 'Priority email support',
     commercialUse: true,
     noWatermark: true,
@@ -116,8 +116,8 @@ export const PLANS: PlanConfig[] = [
     id: 'pro',
     name: 'Pro',
     priceMonthly: 39,
-    priceYearly: 31, // $369/12 ≈ $30.75
-    yearlyTotal: 369,
+    priceYearly: 31, // $374/yr ÷ 12
+    yearlyTotal: 374,
     chars: '2,000,000',
     charsPerGen: '10,000',
     voiceClones: '25',
@@ -126,7 +126,7 @@ export const PLANS: PlanConfig[] = [
     speed: 'Priority generation speed',
     history: 'Unlimited history',
     emotionControl: 'Full emotion control',
-    languages: 'All 23 languages',
+    languages: 'All 19 languages',
     support: 'Priority + Chat support',
     commercialUse: true,
     noWatermark: true,
@@ -138,8 +138,8 @@ export const PLANS: PlanConfig[] = [
     id: 'studio',
     name: 'Studio',
     priceMonthly: 79,
-    priceYearly: 62, // $749/12 ≈ $62.42
-    yearlyTotal: 749,
+    priceYearly: 63, // $758/yr ÷ 12
+    yearlyTotal: 758,
     chars: '3,000,000',
     charsPerGen: '20,000',
     voiceClones: 'Unlimited',
@@ -148,7 +148,7 @@ export const PLANS: PlanConfig[] = [
     speed: 'Priority generation speed',
     history: 'Unlimited history',
     emotionControl: 'Full emotion control',
-    languages: 'All 23 languages',
+    languages: 'All 19 languages',
     support: 'Priority + Chat support',
     commercialUse: true,
     noWatermark: true,
@@ -158,7 +158,6 @@ export const PLANS: PlanConfig[] = [
   },
 ];
 
-// Helper to get credits limit for a given plan
 export function getCreditsForPlan(plan: string): number {
   const found = PLANS.find(p => p.id === plan);
   return found?.credits ?? 10000;
