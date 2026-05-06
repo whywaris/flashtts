@@ -350,6 +350,8 @@ export default function VoiceLibraryPage() {
   const [isLangOpen,      setIsLangOpen]      = useState(false)
   const [langSearch,      setLangSearch]      = useState('')
 
+  useEffect(() => { document.title = 'Voice Library | FlashTTS'; }, []);
+
   // ── Close dropdown on outside click ─────────────────────────────────────────
   useEffect(() => {
     function onMouseDown(e: MouseEvent) {

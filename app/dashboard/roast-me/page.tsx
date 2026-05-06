@@ -49,6 +49,8 @@ export default function RoastMePage() {
 
   const supabase = createClient()
 
+  useEffect(() => { document.title = 'Feedback | FlashTTS'; }, []);
+
   useEffect(() => {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser()

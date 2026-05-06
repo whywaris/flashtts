@@ -67,6 +67,8 @@ export default function SavedVoicesPage() {
   const [userPlan, setUserPlan] = useState<string>('free');
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  useEffect(() => { document.title = 'Saved Voices | FlashTTS'; }, []);
+
   useEffect(() => {
     async function init() {
       const { data: { user }, error: authErr } = await supabase.auth.getUser();

@@ -57,6 +57,8 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [showDeleteAudioModal, setShowDeleteAudioModal] = useState(false);
 
+  useEffect(() => { document.title = 'Settings | FlashTTS'; }, []);
+
   useEffect(() => {
     async function init() {
       const { data: { user }, error } = await supabase.auth.getUser();
