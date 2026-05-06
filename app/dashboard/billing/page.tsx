@@ -101,12 +101,16 @@ export default function BillingPage() {
       const res = await fetch('/api/lemonsqueezy/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ variantId, userId, userEmail: email }),
+        body: JSON.stringify({ variantId, billing: billingCycle }),
       });
       const data = await res.json();
-      if (data.url) { window.location.href = data.url; }
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        toast.error(data.error || 'Failed to create checkout. Please try again.');
+      }
     } catch {
-      // silent — user sees no redirect
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setLoadingPlan(null);
     }
@@ -336,11 +340,13 @@ export default function BillingPage() {
                   }}
                   className={isCurrent ? '' : 'upgrade-btn'}
                 >
-                  {isCurrent ? 'Current Plan' :
-                   plan.isFree ? 'Free Plan' :
-                   loadingPlan === plan.id ? 'Redirecting…' :
-                   currentPlanId !== 'free' ? 'Manage Subscription' : 'Upgrade'}
-                  {!isCurrent && !plan.isFree && loadingPlan !== plan.id && <ArrowRight size={13} />}
+                  {loadingPlan === plan.id
+                    ? <><Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} /> Redirecting…</>
+                    : isCurrent ? 'Current Plan'
+                    : plan.isFree ? 'Free Plan'
+                    : currentPlanId !== 'free' ? 'Manage Subscription'
+                    : <><span>Upgrade</span><ArrowRight size={13} /></>
+                  }
                 </button>
               </div>
             );
