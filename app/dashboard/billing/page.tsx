@@ -61,7 +61,7 @@ export default function BillingPage() {
   const searchParams = useSearchParams();
   const supabase = useMemo(() => createClient(), []);
 
-  useEffect(() => { document.title = 'Billing | FlashTTS'; }, []);
+  useEffect(() => { document.title = 'Billing'; }, []);
 
   // Show portal error toasts when redirected back from /api/lemonsqueezy/portal
   useEffect(() => {

@@ -122,7 +122,7 @@ export default function DashboardPage() {
   const [generationsToday, setGenerationsToday] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { document.title = 'Dashboard | FlashTTS'; }, []);
+  useEffect(() => { document.title = 'Dashboard'; }, []);
 
   useEffect(() => {
     async function load() {

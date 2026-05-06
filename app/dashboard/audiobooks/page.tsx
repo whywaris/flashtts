@@ -140,7 +140,7 @@ export default function AudioBooksPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const dragIdx = useRef<number | null>(null)
 
-  useEffect(() => { document.title = 'eBook to Audiobook | FlashTTS'; }, []);
+  useEffect(() => { document.title = 'eBook to Audiobook'; }, []);
 
   // ── Load ──────────────────────────────────────────────────────────────────
   useEffect(() => {

@@ -65,7 +65,7 @@ export default function HistoryPage() {
   const [showing, setShowing] = useState(20);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => { document.title = 'History | FlashTTS'; }, []);
+  useEffect(() => { document.title = 'History'; }, []);
 
   useEffect(() => {
     async function load() {

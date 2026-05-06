@@ -57,7 +57,7 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [showDeleteAudioModal, setShowDeleteAudioModal] = useState(false);
 
-  useEffect(() => { document.title = 'Settings | FlashTTS'; }, []);
+  useEffect(() => { document.title = 'Settings'; }, []);
 
   useEffect(() => {
     async function init() {

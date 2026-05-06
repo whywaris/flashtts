@@ -49,7 +49,7 @@ export default function RoastMePage() {
 
   const supabase = createClient()
 
-  useEffect(() => { document.title = 'Feedback | FlashTTS'; }, []);
+  useEffect(() => { document.title = 'Feedback'; }, []);
 
   useEffect(() => {
     async function init() {

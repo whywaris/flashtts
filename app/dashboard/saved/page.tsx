@@ -67,7 +67,7 @@ export default function SavedVoicesPage() {
   const [userPlan, setUserPlan] = useState<string>('free');
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  useEffect(() => { document.title = 'Saved Voices | FlashTTS'; }, []);
+  useEffect(() => { document.title = 'Saved Voices'; }, []);
 
   useEffect(() => {
     async function init() {

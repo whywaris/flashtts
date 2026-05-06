@@ -219,7 +219,7 @@ export default function VoiceCloningPage() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => { document.title = 'Voice Cloning | FlashTTS'; }, []);
+  useEffect(() => { document.title = 'Voice Cloning'; }, []);
 
   useEffect(() => {
     async function init() {

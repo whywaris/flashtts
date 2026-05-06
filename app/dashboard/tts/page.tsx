@@ -116,7 +116,7 @@ function TTSPageInner() {
 
   const perRequest = (PLAN_LIMITS[userPlan] || PLAN_LIMITS.free).perRequest;
 
-  useEffect(() => { document.title = 'Text to Speech | FlashTTS'; }, []);
+  useEffect(() => { document.title = 'Text to Speech'; }, []);
 
   // ─── Initialization ───
   useEffect(() => {
