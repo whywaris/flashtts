@@ -75,16 +75,28 @@ export default function BillingPage() {
     }
   }, [searchParams]);
 
+  // Reset button state when user returns from LemonSqueezy via back button (bfcache restore)
+  useEffect(() => {
+    const handlePageShow = () => setLoadingPlan(null);
+    window.addEventListener('pageshow', handlePageShow);
+    return () => window.removeEventListener('pageshow', handlePageShow);
+  }, []);
+
   useEffect(() => {
     async function fetchProfile() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setEmail(user.email || '');
-        setUserId(user.id);
-        const { data } = await supabase.from('profiles').select('id, plan, credits_used, credits_limit').eq('id', user.id).single();
-        setProfile(data);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setEmail(user.email || '');
+          setUserId(user.id);
+          const { data } = await supabase.from('profiles').select('id, plan, credits_used, credits_limit').eq('id', user.id).single();
+          setProfile(data);
+        }
+      } catch (e) {
+        console.error('fetchProfile error:', e);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchProfile();
   }, [supabase]);
