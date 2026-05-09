@@ -42,9 +42,6 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       text,
-      voiceId,
-      voiceName,
-      voiceType,
       referenceAudioUrl,
       exaggeration = 0.5,
       cfg_weight = 0.5,
@@ -65,70 +62,73 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ─── Fetch reference audio ────────────────────────────────────────────
+    // ─── Validate reference audio ─────────────────────────────────────────
+    if (!referenceAudioUrl) {
+      return NextResponse.json(
+        { error: 'No reference audio found for this voice' },
+        { status: 400 }
+      );
+    }
+
+    // ─── Fetch reference audio and convert to WAV base64 ─────────────────
     let refAudioBase64: string | null = null;
 
-    if (referenceAudioUrl) {
-      try {
-        console.log('[FlashTTS] Fetching reference audio:', referenceAudioUrl);
-        const audioRes = await fetch(referenceAudioUrl);
-        if (audioRes.ok) {
-          const originalBuffer = Buffer.from(await audioRes.arrayBuffer());
-          
-          // ─── Convert to WAV if needed ───
-          try {
-            const inputPath = join(tmpdir(), `input-${randomUUID()}`);
-            const outputPath = join(tmpdir(), `output-${randomUUID()}.wav`);
-            
-            await writeFile(inputPath, originalBuffer);
-            
-            // Run ffmpeg to convert to WAV (16kHz, mono, pcm_s16le is standard for many TTS models)
-            await new Promise((resolve, reject) => {
-              const ff = spawn('ffmpeg', [
-                '-i', inputPath,
-                '-ar', '16000',
-                '-ac', '1',
-                '-f', 'wav',
-                outputPath,
-                '-y'
-              ]);
-              ff.on('close', (code) => code === 0 ? resolve(true) : reject(new Error(`ffmpeg exited with code ${code}`)));
-              ff.on('error', reject);
-            });
+    try {
+      console.log('[FlashTTS] Fetching cloned voice reference audio:', referenceAudioUrl);
+      const audioRes = await fetch(referenceAudioUrl);
+      if (audioRes.ok) {
+        const originalBuffer = Buffer.from(await audioRes.arrayBuffer());
 
-            const wavBuffer = await readFile(outputPath);
-            refAudioBase64 = wavBuffer.toString('base64');
-            console.log('[FlashTTS] Converted to WAV! Size:', wavBuffer.byteLength, 'bytes');
+        try {
+          const inputPath = join(tmpdir(), `input-${randomUUID()}`);
+          const outputPath = join(tmpdir(), `output-${randomUUID()}.wav`);
 
-            // Cleanup
-            await unlink(inputPath).catch(() => {});
-            await unlink(outputPath).catch(() => {});
-          } catch (convErr) {
-            console.warn('[FlashTTS] ffmpeg conversion failed, falling back to original:', convErr);
-            refAudioBase64 = originalBuffer.toString('base64');
-          }
-        } else {
-          console.error('[FlashTTS] Failed to fetch audio:', audioRes.status);
+          await writeFile(inputPath, originalBuffer);
+
+          await new Promise((resolve, reject) => {
+            const ff = spawn('ffmpeg', [
+              '-i', inputPath,
+              '-ar', '16000',
+              '-ac', '1',
+              '-f', 'wav',
+              outputPath,
+              '-y',
+            ]);
+            ff.on('close', (code) => code === 0 ? resolve(true) : reject(new Error(`ffmpeg exited with code ${code}`)));
+            ff.on('error', reject);
+          });
+
+          const wavBuffer = await readFile(outputPath);
+          refAudioBase64 = wavBuffer.toString('base64');
+          console.log('[FlashTTS] WAV conversion done, size:', wavBuffer.byteLength);
+
+          await unlink(inputPath).catch(() => {});
+          await unlink(outputPath).catch(() => {});
+        } catch (convErr) {
+          console.warn('[FlashTTS] ffmpeg failed, using original:', convErr);
+          refAudioBase64 = originalBuffer.toString('base64');
         }
-      } catch (e) {
-        console.error('[FlashTTS] Failed to fetch reference audio:', e);
+      } else {
+        console.error('[FlashTTS] Failed to fetch reference audio:', audioRes.status);
       }
-    } else {
-      console.log('[FlashTTS] No reference audio — voiceType:', voiceType);
+    } catch (e) {
+      console.error('[FlashTTS] Reference audio fetch error:', e);
     }
+
+    const modalPayload: Record<string, unknown> = {
+      text: text.trim(),
+      ref_audio_base64: refAudioBase64,
+      exaggeration,
+      temperature,
+      cfg_weight,
+      seed: 0,
+    };
 
     // ─── Call Modal API ───────────────────────────────────────────────────
     const modalRes = await fetch(MODAL_API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: text.trim(),
-        ref_audio_base64: refAudioBase64,
-        exaggeration,
-        temperature,
-        cfg_weight,
-        seed: 0,
-      }),
+      body: JSON.stringify(modalPayload),
     });
 
     if (!modalRes.ok) {
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
     const audioBuffer = Buffer.from(modalData.audio_base64, 'base64');
     const fileName = `tts/${user.id}/${Date.now()}.wav`;
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('audio')
       .upload(fileName, audioBuffer, {
         contentType: 'audio/wav',

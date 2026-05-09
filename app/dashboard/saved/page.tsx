@@ -86,37 +86,11 @@ export default function SavedVoicesPage() {
 
       if (fetchErr) console.error('Fetch error:', fetchErr.message);
 
-      let savedVoices: SavedVoice[] = (savedRaw || []).map((v: any) => ({
+      const savedVoices: SavedVoice[] = (savedRaw || []).map((v: any) => ({
         ...v,
         voice_name: v.voice_name || v.name || 'Unnamed Voice',
         sample_url: null,
       }));
-
-      const idsNeedingAudio = savedVoices
-        .filter(v => !v.r2_url && v.source !== 'cloned')
-        .map(v => v.voice_id).filter(Boolean);
-
-      if (idsNeedingAudio.length > 0) {
-        const { data: voiceDetails } = await supabase
-          .from('voices').select('id, name, language, gender, sample_url')
-          .in('id', idsNeedingAudio);
-
-        const voiceMap: Record<string, any> = Object.fromEntries(
-          (voiceDetails || []).map(v => [v.id, v])
-        );
-
-        savedVoices = savedVoices.map(sv => {
-          const detail = voiceMap[sv.voice_id];
-          if (!detail) return sv;
-          return {
-            ...sv,
-            voice_name: sv.voice_name || detail.name || 'Unnamed Voice',
-            language: sv.language || detail.language || null,
-            gender: sv.gender || detail.gender || null,
-            sample_url: detail.sample_url || null,
-          };
-        });
-      }
 
       setVoices(savedVoices);
       setLoading(false);
@@ -160,23 +134,17 @@ export default function SavedVoicesPage() {
   };
 
   const handleUseInTTS = (voice: SavedVoice) => {
-    const isCloned = voice.source === 'cloned';
     localStorage.setItem('flashtts_selected_voice', JSON.stringify({
       id: voice.voice_id || voice.id,
       name: voice.voice_name || 'Unnamed Voice',
       language: voice.language,
       gender: voice.gender,
-      sample_url: voice.r2_url || voice.sample_url,
-      type: isCloned ? 'cloned' : 'library',
+      source: 'cloned',
+      r2_url: voice.r2_url || null,
+      referenceAudioUrl: voice.r2_url || null,
+      sample_url: null,
     }));
-    
-    // Support URL params for reliable loading
-    const params = new URLSearchParams();
-    params.set('voiceId', voice.id);
-    if (isCloned) params.set('voiceType', 'cloned');
-    else params.set('voiceType', 'saved');
-    
-    router.push(`/dashboard/tts?${params.toString()}`);
+    router.push('/dashboard/tts');
   };
 
   if (loading) return (
@@ -219,13 +187,10 @@ export default function SavedVoicesPage() {
             No saved voices yet
           </p>
           <p style={{ fontSize: 13, color: T.muted, margin: 0, maxWidth: 280, lineHeight: 1.6 }}>
-            Browse the voice library or clone a voice to get started
+            Clone a voice to get started
           </p>
           <div style={{ display: 'flex', gap: 10, marginTop: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <Link href="/dashboard/library" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, background: T.accent, color: '#0A0A0F', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
-              Browse Library <ArrowRight size={13} strokeWidth={2.5} />
-            </Link>
-            <Link href="/dashboard/cloning" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, background: T.surface, border: `1px solid ${T.border}`, color: T.text, fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+            <Link href="/dashboard/cloning" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10, background: T.accent, color: '#0A0A0F', fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
               Clone a Voice <Mic2 size={13} strokeWidth={2.5} />
             </Link>
           </div>

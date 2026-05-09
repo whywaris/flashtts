@@ -1,23 +1,10 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback, useMemo, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import Link from 'next/link';
+import { useEffect, useState, useCallback, useMemo, Suspense } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { createClient } from '@/utils/supabase/client';
 import { getAvatarPath, getAvatarBackdrop } from '@/utils/avatar';
-import { 
-  Zap, 
-  Search, 
-  X, 
-  Play, 
-  Pause, 
-  ChevronRight, 
-  Clock, 
-  Mic2,
-  Trash2,
-  Filter
-} from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
 // ─── Plan limits ────────────────────────────────────────────────────────────
@@ -50,24 +37,6 @@ const EMOTIONS = [
   { id: 'authoritative', label: '📢 Authoritative', emoji: '📢' },
 ];
 
-const LANGUAGES = [
-  { code: 'all', label: 'All' },
-  { code: 'en', label: 'EN' },
-  { code: 'ar', label: 'AR' },
-  { code: 'hi', label: 'HI' },
-  { code: 'es', label: 'ES' },
-  { code: 'fr', label: 'FR' },
-];
-
-interface SavedVoice {
-  id: string;
-  voice_id: string;
-  name: string;
-  language?: string | null;
-  gender?: string | null;
-  sample_url?: string | null;
-}
-
 interface SelectedVoice {
   id: string;
   name: string;
@@ -77,15 +46,15 @@ interface SelectedVoice {
   style?: string | null;
   tags?: string[] | null;
   referenceAudioUrl?: string | null;
+  source?: 'cloned' | null;
+  r2_url?: string | null;
 }
 
 function TTSPageInner() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
-  const searchParams = useSearchParams();
 
   // ─── Data State ───
-  const [userId, setUserId] = useState<string | null>(null);
   const [text, setText] = useState('');
   const [generating, setGenerating] = useState(false);
   const [speed, setSpeed] = useState(1.0);
@@ -98,17 +67,8 @@ function TTSPageInner() {
   // ─── Audio State ───
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [previewPlayingId, setPreviewPlayingId] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // ─── UI / Modal State ───
-  const [voiceModalOpen, setVoiceModalOpen] = useState(false);
-  const [modalVoices, setModalVoices] = useState<any[]>([]);
-  const [modalLoaded, setModalLoaded] = useState(false);
-  const [modalSearch, setModalSearch] = useState('');
-  const [modalLangFilter, setModalLangFilter] = useState('all');
-  const [modalGenderFilter, setModalGenderFilter] = useState('all');
-
+  // ─── UI State ───
   const [userPlan, setUserPlan] = useState<string>('free');
   const [creditsUsed, setCreditsUsed] = useState<number>(0);
   const [creditsLimit, setCreditsLimit] = useState<number>(10000);
@@ -143,7 +103,6 @@ function TTSPageInner() {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push('/login'); return; }
-      setUserId(user.id);
 
       const { data: profile } = await supabase
         .from('profiles')
@@ -163,126 +122,9 @@ function TTSPageInner() {
         try { setRecentVoices(JSON.parse(storedRecent)); } catch { }
       }
 
-      // Handle ?voice= URL param
-      const voiceParam = searchParams.get('voice');
-      if (voiceParam && !selectedVoice) {
-        const { data: libVoice } = await supabase
-          .from('voices')
-          .select('id, name, language, gender, sample_url, style, tags')
-          .eq('id', voiceParam)
-          .single();
-
-        if (libVoice) {
-          setSelectedVoice({
-            id: libVoice.id,
-            name: libVoice.name,
-            language: libVoice.language,
-            gender: libVoice.gender,
-            sample_url: libVoice.sample_url,
-            style: libVoice.style,
-            tags: libVoice.tags,
-          });
-          if (libVoice.language) setLanguage(libVoice.language);
-        }
-      }
     }
     init();
-  }, [router, searchParams, supabase]);
-
-  // ─── Modal Data Loading ───
-  useEffect(() => {
-    if (voiceModalOpen && !modalLoaded) {
-      supabase
-        .from('voices')
-        .select('id, name, language, gender, style, tags, sample_url')
-        .eq('is_active', true)
-        .order('name')
-        .then(({ data }) => {
-          setModalVoices(data || []);
-          setModalLoaded(true);
-        });
-    }
-  }, [voiceModalOpen, modalLoaded, supabase]);
-
-  // ─── Logic ───
-  const resolveVoiceSampleUrl = async (voiceId: string) => {
-    const { data } = await supabase
-      .from('voices')
-      .select('sample_url')
-      .eq('id', voiceId)
-      .single();
-    return data?.sample_url || null;
-  };
-
-  const handlePreview = useCallback((voiceId: string, sampleUrl: string | null) => {
-    if (!sampleUrl) return;
-
-    // Stop any currently playing audio first
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current.src = '';
-    }
-
-    if (previewPlayingId === voiceId) {
-      setPreviewPlayingId(null);
-      return;
-    }
-
-    // Play new audio
-    const audio = new Audio(sampleUrl);
-    audioRef.current = audio;
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(e => console.log('Audio abruptly paused', e));
-    }
-    
-    setPreviewPlayingId(voiceId);
-    audio.onended = () => setPreviewPlayingId(null);
-  }, [previewPlayingId]);
-
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = '';
-        audioRef.current = null;
-      }
-    };
-  }, []);
-
-  const handleCloseModal = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current.src = '';
-      audioRef.current = null;
-    }
-    setPreviewPlayingId(null);
-    setVoiceModalOpen(false);
-  }, []);
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && voiceModalOpen) {
-        handleCloseModal();
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [voiceModalOpen, handleCloseModal]);
-
-  const handleUseVoice = useCallback((voice: SelectedVoice) => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-      audioRef.current.src = '';
-      audioRef.current = null;
-    }
-    setPreviewPlayingId(null);
-    setSelectedVoice(voice);
-    setVoiceModalOpen(false);
-  }, []);
+  }, [router, supabase]);
 
   const updateRecentVoices = (voice: SelectedVoice) => {
     const updated = [
@@ -304,10 +146,10 @@ function TTSPageInner() {
     setAudioBlob(null);
     setError('');
 
-    let voiceUrl = selectedVoice.sample_url;
-    if (!voiceUrl) voiceUrl = await resolveVoiceSampleUrl(selectedVoice.id);
-    if (!voiceUrl) {
-      toast.error('Voice sample not found');
+    const referenceAudioUrl = selectedVoice.r2_url || selectedVoice.referenceAudioUrl || null;
+
+    if (!referenceAudioUrl) {
+      toast.error('Cloned voice reference audio not found');
       setGenerating(false);
       return;
     }
@@ -318,10 +160,7 @@ function TTSPageInner() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           text: text.trim(),
-          voice_id: selectedVoice.id,
-          voice_name: selectedVoice.name,
-          voice_url: voiceUrl,
-          referenceAudioUrl: selectedVoice.referenceAudioUrl || selectedVoice.sample_url || null,
+          referenceAudioUrl,
           language: language,
           speed: speed,
           emotion: emotion,
@@ -380,24 +219,6 @@ function TTSPageInner() {
 
         {/* --- LEFT COLUMN --- */}
         <div className="w-full lg:flex-1 min-w-0">
-
-          {/* Page Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <div>
-              <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: '24px', fontWeight: 800, color: 'var(--text)', margin: '0 0 4px' }}>
-                Text to Speech
-              </h1>
-              <p style={{ fontSize: '12px', color: 'var(--muted)' }}>
-                AI-powered · 20+ languages · 19 emotions
-              </p>
-            </div>
-            <div style={{ 
-              background: 'rgba(245,197,24,0.08)', border: '1px solid rgba(245,197,24,0.15)', 
-              borderRadius: '20px', padding: '6px 14px', color: '#f5c518', fontSize: '12px', fontWeight: 700 
-            }}>
-              ⚡ {(creditsLimit - creditsUsed).toLocaleString()} chars remaining
-            </div>
-          </div>
 
           {/* Script Templates */}
           <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '12px', marginBottom: '12px' }} className="no-scrollbar">
@@ -586,14 +407,14 @@ function TTSPageInner() {
                     <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {selectedVoice.name}
                     </div>
-                    <button onClick={() => setVoiceModalOpen(true)} style={{ fontSize: '11px', color: '#f5c518', textDecoration: 'none', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    <button onClick={() => router.push('/dashboard/saved')} style={{ fontSize: '11px', color: '#f5c518', textDecoration: 'none', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                       Change Voice →
                     </button>
                   </div>
                 </div>
               ) : (
-                <button 
-                  onClick={() => setVoiceModalOpen(true)}
+                <button
+                  onClick={() => router.push('/dashboard/saved')}
                   style={{ width: '100%', padding: '16px', border: '1px dashed var(--border)', borderRadius: '14px', background: 'transparent', textAlign: 'center', cursor: 'pointer' }}
                 >
                   <span style={{ fontSize: '13px', color: 'var(--muted)', fontWeight: 600 }}>🎙 Choose a Voice</span>
@@ -729,182 +550,10 @@ function TTSPageInner() {
         </div>
       </div>
 
-      {/* ─── VOICE MODAL ─── */}
-      {voiceModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={handleCloseModal}>
-          <div 
-            style={{ 
-              background: '#1a1a2e', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '24px', 
-              width: 'min(620px, 92vw)', maxHeight: '82vh', display: 'flex', flexDirection: 'column', 
-              overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05)' 
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', background: '#1a1a2e' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
-                <div>
-                  <h2 style={{ fontFamily: 'Syne, sans-serif', fontSize: '20px', fontWeight: 800, color: '#ffffff', margin: '0 0 4px' }}>Choose a Voice</h2>
-                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>{modalVoices.length} premium voices available</p>
-                </div>
-                <button 
-                  onClick={handleCloseModal} 
-                  style={{ 
-                    background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)', 
-                    color: '#ffffff', borderRadius: '50%', width: '32px', height: '32px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' 
-                  }}
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-              {/* Search */}
-              <div style={{ position: 'relative', marginBottom: '20px' }}>
-                <Search size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,0.4)' }} />
-                <input 
-                  type="text" 
-                  className="voice-search"
-                  placeholder="Search voices by name, style, or language..." 
-                  value={modalSearch}
-                  onChange={e => setModalSearch(e.target.value)}
-                  style={{ 
-                    width: '100%', padding: '12px 16px 12px 42px', background: 'rgba(255,255,255,0.07)', 
-                    border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#ffffff', 
-                    fontSize: '14px', outline: 'none' 
-                  }}
-                />
-              </div>
-
-              {/* Filters */}
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  {LANGUAGES.map(l => (
-                    <button 
-                      key={l.code}
-                      onClick={() => setModalLangFilter(l.code)}
-                      style={{ 
-                        padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, border: 'none', cursor: 'pointer',
-                        background: modalLangFilter === l.code ? '#f5c518' : 'transparent',
-                        color: modalLangFilter === l.code ? '#000000' : 'rgba(255,255,255,0.5)',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      {l.label}
-                    </button>
-                  ))}
-                </div>
-                <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  {['all', 'female', 'male'].map(g => (
-                    <button 
-                      key={g}
-                      onClick={() => setModalGenderFilter(g)}
-                      style={{ 
-                        padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, border: 'none', cursor: 'pointer',
-                        background: modalGenderFilter === g ? '#f5c518' : 'transparent',
-                        color: modalGenderFilter === g ? '#000000' : 'rgba(255,255,255,0.5)',
-                        textTransform: 'capitalize',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      {g === 'all' ? 'Both' : g}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Voice List */}
-            <div style={{ flex: 1, overflowY: 'auto', background: '#1a1a2e' }} className="voice-list-scrollbar">
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {modalVoices
-                  .filter(v => {
-                    const matchSearch = v.name.toLowerCase().includes(modalSearch.toLowerCase()) || 
-                                     (v.style || '').toLowerCase().includes(modalSearch.toLowerCase()) ||
-                                     v.language.toLowerCase().includes(modalSearch.toLowerCase());
-                    const matchLang = modalLangFilter === 'all' || v.language === modalLangFilter;
-                    const matchGender = modalGenderFilter === 'all' || v.gender === modalGenderFilter;
-                    return matchSearch && matchLang && matchGender;
-                  })
-                  .map(v => {
-                    const isSelected = selectedVoice?.id === v.id;
-                    return (
-                      <div 
-                        key={v.id}
-                        onClick={() => handleUseVoice(v)}
-                        className={`voice-modal-item ${isSelected ? 'selected' : ''}`}
-                        style={{ 
-                          display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 24px', 
-                          cursor: 'pointer', transition: 'all 0.15s', 
-                          borderBottom: '1px solid rgba(255,255,255,0.05)',
-                          background: isSelected ? 'rgba(245,197,24,0.1)' : 'transparent',
-                          borderLeft: isSelected ? '3px solid #f5c518' : 'none',
-                          paddingLeft: isSelected ? '21px' : '24px'
-                        }}
-                      >
-                        <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: getAvatarBackdrop(v.name), position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
-                          <Image src={getAvatarPath(v.name, v.gender)} alt={v.name} fill />
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: '14px', fontWeight: 600, color: '#ffffff', fontFamily: 'Syne, sans-serif' }}>{v.name}</div>
-                          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', display: 'flex', gap: '8px', alignItems: 'center', marginTop: '2px' }}>
-                            <span>{v.style || v.tags?.[0] || 'Professional'}</span>
-                            <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)' }} />
-                            <span style={{ 
-                              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', 
-                              color: 'rgba(255,255,255,0.5)', fontSize: '10px', fontWeight: 700, 
-                              padding: '2px 6px', borderRadius: '4px' 
-                            }}>
-                              {v.language.toUpperCase()}
-                            </span>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); handlePreview(v.id, v.sample_url); }}
-                            style={{ 
-                              width: '36px', height: '36px', borderRadius: '50%', 
-                              background: previewPlayingId === v.id ? 'rgba(245,197,24,0.2)' : 'rgba(245,197,24,0.1)', 
-                              border: previewPlayingId === v.id ? '1px solid rgba(245,197,24,0.5)' : '1px solid rgba(245,197,24,0.25)', 
-                              color: '#f5c518', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                            }}
-                          >
-                            {previewPlayingId === v.id ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />}
-                          </button>
-                          <div className="select-badge" style={{ fontSize: '12px', fontWeight: 700, background: '#f5c518', color: '#000', padding: '6px 12px', borderRadius: '8px', opacity: 0 }}>
-                            Select →
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })
-                }
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'center', background: '#1a1a2e' }}>
-               <Link href="/dashboard/library" style={{ fontSize: '13px', fontWeight: 700, color: '#f5c518', textDecoration: 'none' }}>
-                 Browse Full Voice library →
-               </Link>
-            </div>
-          </div>
-        </div>
-      )}
-
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .hover-accent-border:hover { border-color: #f5c518 !important; color: #f5c518 !important; }
-        .voice-list-scrollbar::-webkit-scrollbar { width: 4px; }
-        .voice-list-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .voice-list-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-        .voice-modal-item:hover { background: rgba(255,255,255,0.05) !important; }
-        .voice-modal-item.selected { background: rgba(245,197,24,0.1) !important; border-left: 3px solid #f5c518 !important; }
-        .voice-search::placeholder { color: rgba(255,255,255,0.35); }
-        .voice-search:focus { border: 1px solid rgba(245,197,24,0.4) !important; }
-        .voice-modal-item:hover .select-badge { opacity: 1 !important; transform: translateX(0); }
-        .select-badge { transition: all 0.2s; transform: translateX(5px); }
         select option { background: #1a1a1a; color: #fff; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>

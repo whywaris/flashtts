@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
-    LayoutDashboard, FileText, Music, Mic, Bookmark,
+    LayoutDashboard, FileText, Mic, Bookmark,
     Settings, CreditCard, Zap, LogOut, Menu,
-    Clock, Library, MessageSquare, Sun, Moon,
+    Library, MessageSquare, Sun, Moon,
 } from 'lucide-react';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
 import { createClient } from '@/utils/supabase/client';
@@ -28,11 +28,9 @@ const ACCENT     = '#2DD4BF'; // same in both themes, used for SVG icon color pr
 const MAIN_NAV = [
     { label: 'Dashboard',      icon: LayoutDashboard, href: '/dashboard' },
     { label: 'Text to Speech', icon: FileText,         href: '/dashboard/tts' },
-    { label: 'Voice Library',  icon: Music,            href: '/dashboard/library' },
     { label: 'Voice Cloning',  icon: Mic,              href: '/dashboard/cloning' },
     { label: 'ebook to Audiobook', icon: Library,      href: '/dashboard/audiobooks' },
     { label: 'Saved Voices',   icon: Bookmark,         href: '/dashboard/saved' },
-    { label: 'History',        icon: Clock,            href: '/dashboard/history' },
 ];
 
 const BOTTOM_NAV = [
@@ -44,11 +42,9 @@ const BOTTOM_NAV = [
 const PAGE_TITLES: Record<string, { title: string; sub: string }> = {
     '/dashboard':           { title: 'Dashboard',      sub: 'Welcome back to your workspace' },
     '/dashboard/tts':       { title: 'Text to Speech', sub: 'Convert text into natural speech' },
-    '/dashboard/library':   { title: 'Voice Library',  sub: 'Explore and preview all voices' },
     '/dashboard/cloning':   { title: 'Voice Cloning',  sub: 'Clone and manage your voices' },
     '/dashboard/audiobooks':{ title: 'ebook to Audiobook', sub: 'Convert ebooks to audio' },
     '/dashboard/saved':     { title: 'Saved Voices',   sub: 'Your favourite voice collection' },
-    '/dashboard/history':   { title: 'History',        sub: 'Past generations' },
     '/dashboard/billing':   { title: 'Billing',        sub: 'Plan and usage' },
     '/dashboard/settings':  { title: 'Settings',       sub: 'Account preferences' },
     '/dashboard/roast-me':  { title: 'Feedback',       sub: 'Share your thoughts' },

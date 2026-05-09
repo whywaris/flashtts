@@ -1,24 +1,20 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
 import {
   Mic,
-  Music,
   Bookmark,
   Library,
   Volume2,
-  Layers,
   ChevronRight,
   BarChart2,
   Zap,
   Clock,
   Users,
 } from 'lucide-react';
-import { getAvatarPath, getAvatarBackdrop } from '@/utils/avatar';
-
 interface Profile {
   full_name?: string | null;
   plan?: string | null;
@@ -26,42 +22,10 @@ interface Profile {
   credits_used?: number | null;
 }
 
-interface Voice {
-  id: string;
-  name: string;
-  language?: string | null;
-  gender?: string | null;
-}
-
 function fmtNum(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
   return `${n}`;
-}
-
-function avatarColor(name: string): string {
-  const colors = ['#2DD4BF', '#14B8A6', '#0D9488', '#059669', '#10B981', '#22C55E', '#06B6D4'];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return colors[Math.abs(hash) % colors.length];
-}
-
-function VoiceAvatar({ name, size = 38 }: { name: string; size?: number }) {
-  const avatarPath = getAvatarPath(name);
-  const backdrop = getAvatarBackdrop(name);
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%', background: backdrop,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexShrink: 0, border: `1px solid var(--border)`, overflow: 'hidden',
-    }}>
-      <img 
-        src={avatarPath} 
-        alt={name} 
-        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-      />
-    </div>
-  );
 }
 
 const QUICK_ACTIONS = [
@@ -76,12 +40,6 @@ const QUICK_ACTIONS = [
     title: 'Voice Cloning',
     desc: 'Clone your voice with just 30 seconds of audio',
     href: '/dashboard/cloning',
-  },
-  {
-    icon: Music,
-    title: 'Voice Library',
-    desc: '1,234+ voices across 19 languages — preview & save',
-    href: '/dashboard/library',
   },
   {
     icon: Library,
@@ -99,12 +57,6 @@ const CLONE_OPTIONS = [
     href: '/dashboard/cloning',
   },
   {
-    icon: Layers,
-    title: 'Voice Collections',
-    desc: 'Curated voices for every use case — 19 languages',
-    href: '/dashboard/library',
-  },
-  {
     icon: Bookmark,
     title: 'Saved Voices',
     desc: 'Access your personal saved voice collection',
@@ -115,9 +67,9 @@ const CLONE_OPTIONS = [
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
+  const userIdRef = useRef<string | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [userName, setUserName] = useState<string>('');
-  const [voices, setVoices] = useState<Voice[]>([]);
   const [clonesUsed, setClonesUsed] = useState(0);
   const [generationsToday, setGenerationsToday] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -129,12 +81,13 @@ export default function DashboardPage() {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error || !user) { router.push('/login'); return; }
 
+      userIdRef.current = user.id;
+
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
 
-      const [profileRes, voicesRes, clonesRes, jobsRes] = await Promise.all([
+      const [profileRes, clonesRes, jobsRes] = await Promise.all([
         supabase.from('profiles').select('full_name, plan, credits_limit, credits_used').eq('id', user.id).single(),
-        supabase.from('voices').select('id, name, language, gender').eq('is_active', true).order('created_at', { ascending: false }).limit(5),
         supabase.from('cloned_voices').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('tts_jobs').select('id', { count: 'exact', head: true }).eq('user_id', user.id).gte('created_at', todayStart.toISOString()),
       ]);
@@ -145,12 +98,24 @@ export default function DashboardPage() {
         user.email?.split('@')[0] ||
         'there'
       );
-      setVoices(voicesRes.data ?? []);
       setClonesUsed(clonesRes.count ?? 0);
       setGenerationsToday(jobsRes.count ?? 0);
       setLoading(false);
     }
     load();
+
+    async function refreshProfile() {
+      if (document.visibilityState !== 'visible' || !userIdRef.current) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name, plan, credits_limit, credits_used')
+        .eq('id', userIdRef.current)
+        .single();
+      if (data) setProfile(data);
+    }
+
+    document.addEventListener('visibilitychange', refreshProfile);
+    return () => document.removeEventListener('visibilitychange', refreshProfile);
   }, [router, supabase]);
 
   if (loading) {
@@ -260,92 +225,8 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* Bottom 2-col */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        {/* Recent Voices */}
-        <div style={{
-          background: 'var(--card-bg)',
-          border: '1px solid var(--border)',
-          borderRadius: '12px',
-          padding: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-        }}>
-          <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--muted)', margin: '0 0 18px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Recent Voices
-          </p>
-
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            {voices.length === 0 ? (
-              <p style={{ color: 'var(--muted)', fontSize: '13px', textAlign: 'center', padding: '24px 0' }}>
-                No voices found.
-              </p>
-            ) : voices.map((voice) => {
-              const initial = (voice.name || 'V').charAt(0).toUpperCase();
-              const color = avatarColor(voice.name || 'V');
-              return (
-                <div
-                  key={voice.id}
-                  className="voice-row"
-                  onClick={() => router.push(`/dashboard/tts?voice=${voice.id}`)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '14px',
-                    padding: '10px 12px', borderRadius: '10px',
-                    cursor: 'pointer', transition: 'background 0.15s ease',
-                  }}
-                >
-                  <VoiceAvatar name={voice.name || 'V'} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{
-                      fontSize: '13px', fontWeight: 700, color: 'var(--text)',
-                      margin: '0 0 4px', overflow: 'hidden',
-                      textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}>
-                      {voice.name}
-                    </p>
-                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                      {voice.language && (
-                        <span style={{
-                          fontSize: '11px', color: 'var(--muted)',
-                          fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em',
-                        }}>
-                          {voice.language}
-                        </span>
-                      )}
-                      {voice.gender && (
-                        <span style={{
-                          fontSize: '10px', fontWeight: 600,
-                          padding: '2px 8px', borderRadius: '99px',
-                          background: 'rgba(45,212,191,0.08)',
-                          color: '#2DD4BF',
-                          border: '1px solid rgba(45,212,191,0.18)',
-                          textTransform: 'capitalize',
-                        }}>
-                          {voice.gender}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <ChevronRight size={14} color="var(--muted)" style={{ opacity: 0.35, flexShrink: 0 }} />
-                </div>
-              );
-            })}
-          </div>
-
-          <Link href="/dashboard/library" className="explore-btn" style={{
-            display: 'inline-flex', alignItems: 'center', gap: '6px',
-            marginTop: '18px', padding: '10px 16px',
-            borderRadius: '8px',
-            background: 'transparent',
-            border: '1px solid var(--border)',
-            color: 'var(--muted)',
-            fontSize: '13px', fontWeight: 600, textDecoration: 'none',
-            transition: 'all 0.15s ease', alignSelf: 'flex-start',
-          }}>
-            Explore Library →
-          </Link>
-        </div>
+      {/* Bottom */}
+      <div className="grid grid-cols-1 gap-6">
 
         {/* Create or Clone */}
         <div style={{

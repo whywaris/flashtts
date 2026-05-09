@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Play, Pause, RefreshCw, Shield, Clock, Coins, Star,
+  Play, Shield, Clock, Coins, Star,
   ArrowRight, Zap, ChevronDown, CheckCircle2
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
@@ -24,29 +24,6 @@ const staggerContainer = {
   visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
 };
 
-// ── Languages ──
-const LANGUAGES = [
-  { code: 'en', label: 'English', flag: '🇬🇧', text: "In a world where every second counts, your voice is your greatest asset. Generate studio-quality audio in seconds. No waiting, no retakes, no expensive voice actors." },
-  { code: 'ar', label: 'Arabic', flag: '🇸🇦', text: "في عالم يتسارع فيه الزمن، صوتك هو أقوى أداة لديك. أنشئ تسجيلات صوتية احترافية في ثوانٍ. بلا انتظار، بلا إعادة تسجيل، بلا تكاليف باهظة." },
-  { code: 'hi', label: 'Hindi', flag: '🇮🇳', text: "एक ऐसी दुनिया में जहाँ हर पल मायने रखता है, आपकी आवाज़ आपकी सबसे बड़ी ताकत है। सेकंडों में स्टूडियो-क्वालिटी ऑडियो बनाएं. बिना इंतजार, बिना रीटेक." },
-  { code: 'es', label: 'Spanish', flag: '🇪🇸', text: "En un mundo donde cada segundo importa, tu voz es tu mayor activo. Genera audio de calidad profesional en segundos. Sin esperas, sin repeticiones, sin actores costosos." },
-  { code: 'fr', label: 'French', flag: '🇫🇷', text: "Dans un monde où chaque seconde compte, votre voix est votre meilleur atout. Créez des voix professionnelles en quelques secondes. Sans attente, sans prise multiple." },
-  { code: 'de', label: 'German', flag: '🇩🇪', text: "In einer Welt, in der jede Sekunde zählt, ist deine Stimme dein stärkstes Werkzeug. Erstelle professionelle Audioaufnahmen in Sekunden. Ohne Wartezeit, ohne Wiederholungen." },
-  { code: 'ja', label: 'Japanese', flag: '🇯🇵', text: "すべての瞬間が大切な世界で、あなたの声は最大の武器です。待ち時間なし、撮り直しなし。数秒でスタジオ品質の音声を生成しましょう。" },
-  { code: 'ko', label: 'Korean', flag: '🇰🇷', text: "매 순간이 중요한 세상에서, 당신의 목소리는 가장 강력한 도구입니다. 기다림 없이, 재녹음 없이. 몇 초 만에 스튜디오 품질의 오디오를 만들어보세요." },
-  { code: 'pt', label: 'Portuguese', flag: '🇧🇷', text: "Num mundo onde cada segundo importa, sua voz é o seu maior ativo. Gere áudio de qualidade profissional em segundos. Sem esperas, sem regravações, sem custos elevados." },
-  { code: 'tr', label: 'Turkish', flag: '🇹🇷', text: "Her saniyenin önemli olduğu bir dünyada sesiniz en büyük varlığınızdır. Saniyeler içinde profesyonel kalitede ses oluşturun. Bekleme yok, tekrar kayıt yok." },
-  { code: 'it', label: 'Italian', flag: '🇮🇹', text: "In un mondo dove ogni secondo conta, la tua voce è il tuo patrimonio più grande. Genera audio di qualità professionale in pochi secondi. Senza attese, senza ripetizioni." },
-  { code: 'nl', label: 'Dutch', flag: '🇳🇱', text: "In een wereld waar elke seconde telt, is jouw stem je grootste troef. Genereer professionele audiokwaliteit in seconden. Geen wachttijd, geen herhalingen, geen dure stemacteurs." },
-  { code: 'pl', label: 'Polish', flag: '🇵🇱', text: "W świecie, gdzie każda sekunda ma znaczenie, Twój głos jest Twoim największym atutem. Twórz profesjonalne nagrania w kilka sekund. Bez czekania, bez powtórek." },
-  { code: 'ru', label: 'Russian', flag: '🇷🇺', text: "В мире, где каждая секунда на счету, ваш голос — ваш главный инструмент. Создавайте профессиональные аудиозаписи за секунды. Без ожидания и повторных записей." },
-  { code: 'sv', label: 'Swedish', flag: '🇸🇪', text: "I en värld där varje sekund räknas är din röst ditt starkaste verktyg. Skapa professionellt ljud på sekunder. Ingen väntetid, inga omtagningar, inga dyra röstskådespelare." },
-  { code: 'no', label: 'Norwegian', flag: '🇳🇴', text: "I en verden der hvert sekund teller, er stemmen din ditt sterkeste verktøy. Lag profesjonell lydkvalitet på sekunder. Ingen ventetid, ingen omtakinger." },
-  { code: 'fi', label: 'Finnish', flag: '🇫🇮', text: "Maailmassa, jossa jokainen sekunti on tärkeä, äänesi on tärkein työkalusi. Luo ammattilaistason ääntä sekunneissa. Ei odottelua, ei uusintoja, ei kalliita näyttelijöitä." },
-  { code: 'da', label: 'Danish', flag: '🇩🇰', text: "I en verden, hvor hvert sekund tæller, er din stemme dit stærkeste redskab. Skab professionel lydkvalitet på få sekunder. Ingen ventetid, ingen omtagninger." },
-  { code: 'el', label: 'Greek', flag: '🇬🇷', text: "Σε έναν κόσμο όπου κάθε δευτερόλεπτο μετράει, η φωνή σας είναι το πιο ισχυρό εργαλείο σας. Δημιουργήστε επαγγελματικό ήχο σε δευτερόλεπτα. Χωρίς αναμονή." },
-  { code: 'ms', label: 'Malay', flag: '🇲🇾', text: "Dalam dunia di mana setiap saat penting, suara anda adalah aset terbesar anda. Jana audio berkualiti studio dalam beberapa saat. Tanpa penantian, tanpa rakaman semula." },
-];
 
 // ── FAQs ──
 const FAQS = [
@@ -177,21 +154,10 @@ const EXTRACTED_PLANS = IMPORTED_PLANS.map(p => ({
 
 export default function HomePage() {
   // ── Demo Widget State ──
-  const [selectedLang, setSelectedLang] = useState('en');
-  const [curVoices, setCurVoices] = useState<any[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState<any | null>(null);
-  const [demoText, setDemoText] = useState(LANGUAGES[0].text);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isLoadingVoices, setIsLoadingVoices] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audioProgress, setAudioProgress] = useState(0);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
 
@@ -201,130 +167,6 @@ export default function HomePage() {
       setIsLoggedIn(!!user);
     });
   }, [supabase]);
-
-  // ── Revoke blob URL on unmount ──
-  useEffect(() => {
-    return () => {
-      setAudioUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
-    };
-  }, []);
-
-  // ── Fetch Voices from DB ──
-  useEffect(() => {
-    async function fetchVoices() {
-      setIsLoadingVoices(true);
-      const { data } = await supabase
-        .from('voices')
-        .select('id, name, style, tags, description, sample_url')
-        .eq('language', selectedLang)
-        .eq('is_active', true)
-        .limit(5);
-
-      if (data && data.length > 0) {
-        setCurVoices(data);
-        setSelectedVoice(data[0]);
-      } else {
-        setCurVoices([]);
-        setSelectedVoice(null);
-      }
-      setIsLoadingVoices(false);
-    }
-    fetchVoices();
-  }, [selectedLang]);
-
-  // ── Voice Change ──
-  const handleVoiceChange = (voice: any) => {
-    setSelectedVoice(voice);
-    setAudioUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
-    setAudioProgress(0);
-    setIsPlaying(false);
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-  };
-
-  // ── Language Change ──
-  const handleLanguageChange = (langCode: string) => {
-    const lang = LANGUAGES.find(l => l.code === langCode);
-    if (!lang) return;
-    setIsLangDropdownOpen(false);
-    setSelectedLang(langCode);
-    setDemoText(lang.text);
-    setAudioUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
-    setAudioProgress(0);
-    setIsPlaying(false);
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-  };
-
-  // ── Generate Audio ──
-  const generateAudio = async (text: string) => {
-    if (!text.trim()) return null;
-    setIsGenerating(true);
-    try {
-      const response = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text,
-          guest: true,
-          language: selectedLang,
-          voice_id: selectedVoice?.id,
-          voice_url: selectedVoice?.sample_url
-        }),
-      });
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        setAudioUrl(url);
-        return url;
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsGenerating(false);
-    }
-    return null;
-  };
-
-  // ── Text Change ──
-  const handleTextChange = (text: string) => {
-    setDemoText(text.slice(0, 250));
-    setAudioUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
-    setAudioProgress(0);
-    if (audioRef.current) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    }
-  };
-
-  // ── Play / Pause ──
-  const handlePlayPause = async () => {
-    if (isPlaying) {
-      audioRef.current?.pause();
-      setIsPlaying(false);
-      return;
-    }
-
-    let currentUrl = audioUrl;
-    if (!currentUrl) currentUrl = await generateAudio(demoText);
-    if (!currentUrl) return;
-
-    if (!audioRef.current || audioRef.current.src !== currentUrl) {
-      audioRef.current = new Audio(currentUrl);
-      audioRef.current.onended = () => { setIsPlaying(false); setAudioProgress(0); };
-      audioRef.current.ontimeupdate = () => {
-        if (audioRef.current) {
-          setAudioProgress((audioRef.current.currentTime / audioRef.current.duration) * 100);
-        }
-      };
-    }
-    audioRef.current.play();
-    setIsPlaying(true);
-  };
 
   return (
     <div className="bg-[#F0EDE8] min-h-screen font-sans overflow-hidden text-slate-800 selection:bg-[#E8522A]/20">
@@ -533,155 +375,6 @@ export default function HomePage() {
           </motion.div>
         </div>
 
-        {/* ── DEMO WIDGET ── */}
-        <motion.div id="demo" initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.8 }} className="max-w-[1000px] mx-auto mt-20 relative z-20">
-          <div className="bg-white rounded-[32px] overflow-hidden shadow-2xl border border-white/50 backdrop-blur-xl ring-1 ring-black/5">
-            <div className="flex flex-col md:flex-row min-h-[500px]">
-
-              {/* LEFT: Voice Selector */}
-              <div className="w-full md:w-[320px] bg-slate-50/50 border-r border-slate-100 p-6 flex flex-col">
-                <h3 className="font-[Syne] font-bold text-[16px] text-slate-900 mb-6 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#E8522A]"></span> Choose a Voice
-                </h3>
-
-                <div className="flex flex-col gap-3 flex-1 overflow-y-auto max-h-[400px] pr-2">
-                  {isLoadingVoices ? (
-                    [...Array(5)].map((_, i) => (
-                      <div key={i} className="w-full h-[68px] bg-slate-100 animate-pulse rounded-2xl" />
-                    ))
-                  ) : (
-                    (curVoices ?? []).map((voice) => {
-                      const isSelected = selectedVoice?.id === voice.id;
-                      return (
-                        <button
-                          key={voice.id}
-                          onClick={() => handleVoiceChange(voice)}
-                          className={`w-full text-left p-3 rounded-2xl border-2 transition-all flex items-center gap-3 relative overflow-hidden ${isSelected ? 'border-[#E8522A] bg-white shadow-md' : 'border-transparent hover:bg-white hover:border-slate-200'
-                            }`}
-                        >
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 overflow-hidden bg-slate-200">
-                            <img
-                              src={voice.image_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${voice.name}`}
-                              alt={voice.name}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(voice.name)}&background=random&color=fff`;
-                              }}
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-bold text-[14px] text-slate-900 truncate">{voice.name}</div>
-                            <div className="text-[11px] text-slate-500 font-medium truncate">{voice.style || voice.tags?.[0] || 'Professional'}</div>
-                          </div>
-
-                          {isPlaying && isSelected && (
-                            <div className="flex items-end gap-0.5 h-4 shrink-0">
-                              {[...Array(4)].map((_, i) => (
-                                <motion.div
-                                  key={i}
-                                  animate={{ height: [4, 12, 6, 14, 4] }}
-                                  transition={{ repeat: Infinity, duration: 0.6, delay: i * 0.1 }}
-                                  className="w-1 bg-[#E8522A] rounded-full"
-                                />
-                              ))}
-                            </div>
-                          )}
-
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-
-                <Link href="/signup" className="mt-8 text-[13px] font-bold text-[#E8522A] flex items-center gap-2 hover:translate-x-1 transition-transform">
-                  Explore 1,000+ Voices <ArrowRight size={14} />
-                </Link>
-              </div>
-
-              {/* RIGHT: Controls */}
-              <div className="flex-1 p-6 sm:p-8 flex flex-col">
-                <div className="flex justify-between items-center mb-6">
-                  <div className="font-[Syne] font-bold text-[14px] text-slate-900 flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#E8522A] animate-pulse"></span> Try it without logging in
-                  </div>
-                  <span className={`font-bold text-[12px] ${demoText.length === 250 ? 'text-red-500' : demoText.length > 200 ? 'text-orange-500' : 'text-slate-400'}`}>
-                    {demoText.length} / 250 characters
-                  </span>
-                </div>
-
-                <div className="relative flex-1">
-                  <textarea
-                    value={demoText}
-                    onChange={e => handleTextChange(e.target.value)}
-                    className="w-full h-full min-h-[160px] bg-slate-50 border-2 border-slate-100 focus:border-[#E8522A] focus:bg-white rounded-2xl p-4 text-[16px] text-slate-700 resize-none outline-none transition-all text-left align-top"
-                    placeholder="Type your script here..."
-                  />
-                </div>
-
-                {/* Language + Play */}
-                <div className="mt-6 flex flex-col sm:flex-row gap-4 items-center">
-                  {/* Language Dropdown */}
-                  <div className="relative w-full sm:w-auto">
-                    <button
-                      onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
-                      className="w-full sm:w-auto px-4 py-3 bg-white border border-slate-200 rounded-xl flex items-center gap-3 text-[14px] font-bold text-slate-700 hover:border-slate-300 transition-all"
-                    >
-                      <span>{LANGUAGES.find(l => l.code === selectedLang)?.flag}</span>
-                      <span className="flex-1">{LANGUAGES.find(l => l.code === selectedLang)?.label}</span>
-                      <ChevronDown size={16} className={`text-slate-400 transition-transform ${isLangDropdownOpen ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    <AnimatePresence>
-                      {isLangDropdownOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 10 }}
-                          className="absolute bottom-full mb-2 left-0 w-max min-w-full max-h-[240px] overflow-y-auto bg-white rounded-xl shadow-2xl border border-slate-100 p-2 z-[100]"
-                        >
-                          {LANGUAGES.map((lang) => (
-                            <button
-                              key={lang.code}
-                              onClick={() => handleLanguageChange(lang.code)}
-                              className="w-full px-4 py-2.5 rounded-lg flex items-center gap-3 hover:bg-slate-50 transition-colors text-[14px] text-slate-700 font-medium whitespace-nowrap"
-                            >
-                              <span>{lang.flag}</span>
-                              <span>{lang.label}</span>
-                              {selectedLang === lang.code && <CheckCircle2 size={14} className="ml-auto text-blue-500" />}
-                            </button>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  {/* Play Button */}
-                  <div className="flex-1 w-full relative">
-                    <button
-                      onClick={handlePlayPause}
-                      disabled={isGenerating || demoText.length < 5}
-                      className="w-full py-4 bg-[#E8522A] hover:bg-[#d64119] text-white rounded-xl font-['Syne'] font-bold text-[16px] shadow-lg shadow-[#E8522A]/20 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isGenerating ? (
-                        <><RefreshCw className="animate-spin" size={18} /> Generating...</>
-                      ) : isPlaying ? (
-                        <><Pause size={18} fill="currentColor" /> Pause</>
-                      ) : audioUrl ? (
-                        <><Play size={18} fill="currentColor" /> Play Again</>
-                      ) : (
-                        <><Play size={18} fill="currentColor" /> Play Sample</>
-                      )}
-                    </button>
-
-                    <div className="absolute -bottom-2 left-0 right-0 h-1 bg-slate-100 rounded-full overflow-hidden">
-                      <motion.div className="h-full bg-[#E8522A]" animate={{ width: `${audioProgress}%` }} initial={{ width: 0 }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
       </section>
 
       {/* ── 2. MARQUEE ── */}

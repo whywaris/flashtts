@@ -393,21 +393,7 @@ export default function AudioBooksPage() {
 
 
       {/* ── Page Header ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px', gap: '16px', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
-            📚
-          </div>
-          <div>
-            <h1 style={{ fontFamily: 'Syne, sans-serif', fontSize: '24px', fontWeight: 800, color: 'var(--text)', margin: 0, letterSpacing: '-0.02em' }}>
-              ebook to Audiobook
-            </h1>
-            <p style={{ fontSize: '13px', color: 'var(--muted)', margin: 0 }}>
-              Paste · Split · Generate MP3s
-            </p>
-          </div>
-        </div>
-
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: '32px', gap: '16px', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <div style={{ background: 'rgba(245,197,24,0.08)', border: '1px solid rgba(245,197,24,0.15)', padding: '6px 14px', borderRadius: '99px', color: '#f5c518', fontSize: '12px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '6px' }}>
             ⚡ {creditsLeft.toLocaleString()} available
@@ -797,8 +783,8 @@ export default function AudioBooksPage() {
               {filteredSV.length === 0 ? (
                 <div style={{ padding: '40px 20px', textAlign: 'center' }}>
                   <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.4)', margin: '0 0 16px' }}>No saved voices yet.</p>
-                  <button onClick={() => { setShowVoicePicker(false); router.push('/dashboard/library') }} style={{ background: 'none', border: 'none', color: '#f5c518', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}>
-                    Browse Library →
+                  <button onClick={() => { setShowVoicePicker(false); router.push('/dashboard/cloning') }} style={{ background: 'none', border: 'none', color: '#f5c518', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}>
+                    Clone a Voice →
                   </button>
                 </div>
               ) : (
@@ -824,8 +810,8 @@ export default function AudioBooksPage() {
 
             {/* Modal Footer */}
             <div style={{ padding: '14px 24px', background: '#1a1a2e', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'center' }}>
-              <button onClick={() => { setShowVoicePicker(false); router.push('/dashboard/library') }} style={{ background: 'none', border: 'none', color: '#f5c518', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
-                Browse Full Library →
+              <button onClick={() => { setShowVoicePicker(false); router.push('/dashboard/cloning') }} style={{ background: 'none', border: 'none', color: '#f5c518', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}>
+                Clone a Voice →
               </button>
             </div>
           </div>

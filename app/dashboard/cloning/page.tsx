@@ -212,6 +212,8 @@ export default function VoiceCloningPage() {
   const [cloneSuccess, setCloneSuccess] = useState(false);
   const [cloneError, setCloneError] = useState('');
   const [clonedSavedVoiceId, setClonedSavedVoiceId] = useState<string | null>(null);
+  const [clonedVoiceId, setClonedVoiceId] = useState<string | null>(null);
+  const [clonedVoiceUrl, setClonedVoiceUrl] = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -343,12 +345,29 @@ export default function VoiceCloningPage() {
       }, { onConflict: 'user_id,voice_id' }).select('id').single();
 
       if (savedVoice?.id) setClonedSavedVoiceId(savedVoice.id);
+      if (cloned?.id) setClonedVoiceId(cloned.id);
+      setClonedVoiceUrl(r2Url);
       setCloneSuccess(true);
     } catch (err: any) {
       setCloneError(err?.message || 'Something went wrong. Please try again.');
     } finally {
       setCloning(false);
     }
+  };
+
+  const handleUseInTTS = () => {
+    if (!clonedVoiceId || !clonedVoiceUrl) return;
+    localStorage.setItem('flashtts_selected_voice', JSON.stringify({
+      id: clonedVoiceId,
+      name: voiceName,
+      source: 'cloned',
+      r2_url: clonedVoiceUrl,
+      referenceAudioUrl: clonedVoiceUrl,
+      gender: gender.toLowerCase(),
+      language: language.toLowerCase().slice(0, 2),
+      sample_url: null,
+    }));
+    router.push('/dashboard/tts');
   };
 
   const voiceLimit = PLAN_LIMITS[userPlan] ?? 1;
@@ -376,17 +395,18 @@ export default function VoiceCloningPage() {
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'stretch', width: '100%' }}>
             {clonedSavedVoiceId && (
-              <a
-                href={`/dashboard/tts?voiceId=${clonedSavedVoiceId}&voiceType=cloned`}
+              <button
+                onClick={handleUseInTTS}
                 style={{
                   padding: '13px 24px', borderRadius: '10px',
                   background: ACCENT, color: '#fff',
-                  fontWeight: 700, fontSize: '14px', textDecoration: 'none',
-                  textAlign: 'center', display: 'block',
+                  fontWeight: 700, fontSize: '14px',
+                  border: 'none', cursor: 'pointer',
+                  textAlign: 'center', display: 'block', width: '100%',
                 }}
               >
                 Generate Audio with this Voice →
-              </a>
+              </button>
             )}
             <div style={{ display: 'flex', gap: '10px' }}>
               <a href="/dashboard/saved" style={{
