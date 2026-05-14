@@ -38,14 +38,15 @@ export async function POST(req: NextRequest) {
   )
 
   if (action === 'update_plan') {
-    const { plan } = payload
-    if (!PLAN_LIMITS[plan]) return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
+    const newPlan = payload.plan as string
+    const newLimit = PLAN_LIMITS[newPlan] ?? 10000
+    if (!PLAN_LIMITS[newPlan]) return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
     const { error } = await admin
       .from('profiles')
-      .update({ plan, credits_limit: PLAN_LIMITS[plan] })
+      .update({ plan: newPlan, credits_limit: newLimit })
       .eq('id', userId)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ credits_limit: PLAN_LIMITS[plan] })
+    return NextResponse.json({ success: true, plan: newPlan, credits_limit: newLimit })
   }
 
   if (action === 'update_credits') {

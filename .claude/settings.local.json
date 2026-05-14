@@ -26,7 +26,13 @@
       "Bash(xargs -I{} git update-ref -d {})",
       "Bash(git reflog *)",
       "Bash(git gc *)",
-      "Bash(npm uninstall *)"
+      "Bash(npm uninstall *)",
+      "mcp__claude_ai_Vercel__list_teams",
+      "mcp__claude_ai_Vercel__list_projects",
+      "mcp__claude_ai_Vercel__get_runtime_logs",
+      "Bash(git rm *)",
+      "Bash(vercel --version)",
+      "Bash(npx vercel *)"
     ]
   }
 }

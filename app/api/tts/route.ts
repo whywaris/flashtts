@@ -8,6 +8,14 @@ import { randomUUID } from 'crypto';
 
 const MODAL_API_URL = 'https://genztts--flashtts-api.modal.run';
 
+// ─── Auto cfg_weight tuning based on language match ───────────────────────────
+function getTuningParams(textLanguage: string, voiceLanguage: string = 'en') {
+  if (textLanguage !== voiceLanguage) {
+    return { cfg_weight: 0.0, exaggeration: 0.5 };
+  }
+  return { cfg_weight: 0.4, exaggeration: 0.5 };
+}
+
 // ─── Character limits per plan ────────────────────────────────────────────────
 const PLAN_LIMITS: Record<string, number> = {
   free: 10000,
@@ -43,10 +51,14 @@ export async function POST(req: NextRequest) {
     const {
       text,
       referenceAudioUrl,
-      exaggeration = 0.5,
-      cfg_weight = 0.5,
       temperature = 0.8,
+      language: textLanguage = 'en',
+      voiceLanguage = 'en',
     } = body;
+
+    const tuned = getTuningParams(textLanguage, voiceLanguage);
+    const cfg_weight: number = body.cfg_weight ?? tuned.cfg_weight;
+    const exaggeration: number = body.exaggeration ?? tuned.exaggeration;
 
     if (!text?.trim()) {
       return NextResponse.json({ error: 'Text is required' }, { status: 400 });

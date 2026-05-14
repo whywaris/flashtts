@@ -26,6 +26,14 @@ const TEMPLATES = [
   { id: 'custom', label: '✍️ Custom', text: "" },
 ];
 
+const VOICE_PRESETS = [
+  { label: 'Balanced (Recommended)', value: 'balanced', cfg: 0.4, exag: 0.5 },
+  { label: 'Strict Clone (Clean audio only)', value: 'strict', cfg: 0.7, exag: 0.5 },
+  { label: 'Natural Flow (Fixes robotic voice)', value: 'natural', cfg: 0.25, exag: 0.4 },
+  { label: 'Expressive / Dramatic', value: 'expressive', cfg: 0.3, exag: 0.75 },
+  { label: 'Cross-Lingual (Different language)', value: 'crosslingual', cfg: 0.0, exag: 0.5 },
+];
+
 const EMOTIONS = [
   { id: 'neutral', label: '😐 Neutral', emoji: '😐' },
   { id: 'happy', label: '😊 Happy', emoji: '😊' },
@@ -61,6 +69,7 @@ function TTSPageInner() {
   const [language, setLanguage] = useState('en');
   const [selectedVoice, setSelectedVoice] = useState<SelectedVoice | null>(null);
   const [emotion, setEmotion] = useState('neutral');
+  const [voicePreset, setVoicePreset] = useState('balanced');
   const [format, setFormat] = useState<'mp3' | 'wav'>('mp3');
   const [recentVoices, setRecentVoices] = useState<SelectedVoice[]>([]);
 
@@ -155,6 +164,8 @@ function TTSPageInner() {
     }
 
     try {
+      const preset = VOICE_PRESETS.find(p => p.value === voicePreset) ?? VOICE_PRESETS[0];
+
       const response = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -162,6 +173,9 @@ function TTSPageInner() {
           text: text.trim(),
           referenceAudioUrl,
           language: language,
+          voiceLanguage: 'en',
+          cfg_weight: preset.cfg,
+          exaggeration: preset.exag,
           speed: speed,
           emotion: emotion,
           audio_format: format,
@@ -192,7 +206,12 @@ function TTSPageInner() {
     } finally {
       setGenerating(false);
     }
-  }, [text, selectedVoice, generating, speed, language, emotion, format, audioUrl, supabase]);
+  }, [text, selectedVoice, generating, speed, language, voicePreset, emotion, format, audioUrl, supabase]);
+
+  // ─── Auto-switch preset on language change ───
+  useEffect(() => {
+    setVoicePreset(language !== 'en' ? 'crosslingual' : 'balanced');
+  }, [language]);
 
   // ─── Keyboard Shortcut (after handleGenerate is declared) ───
   useEffect(() => {
@@ -452,6 +471,22 @@ function TTSPageInner() {
                  <option value="fi">🇫🇮 Finnish</option>
                  <option value="sv">🇸🇪 Swedish</option>
                  <option value="el">🇬🇷 Greek</option>
+              </select>
+            </div>
+
+            {/* Voice Style */}
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '8px' }}>
+                VOICE STYLE
+              </div>
+              <select
+                value={voicePreset}
+                onChange={e => setVoicePreset(e.target.value)}
+                style={{ width: '100%', padding: '10px 12px', background: 'var(--glass)', border: '1px solid var(--border)', borderRadius: '12px', color: 'var(--text)', fontSize: '13px', outline: 'none' }}
+              >
+                {VOICE_PRESETS.map(p => (
+                  <option key={p.value} value={p.value}>{p.label}</option>
+                ))}
               </select>
             </div>
 

@@ -5,8 +5,8 @@ import { useRouter, usePathname } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import Link from 'next/link'
 import {
-  LayoutDashboard, Users, DollarSign, FileText, Music,
-  BarChart2, Shield, Mail, LogOut, ArrowLeft, Zap, Megaphone
+  LayoutDashboard, Users, DollarSign, FileText,
+  BarChart2, Shield, Mail, ArrowLeft, Megaphone
 } from 'lucide-react'
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
@@ -67,7 +67,6 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
         { label: 'Announcements',       href: '/admin/announcements',    icon: Megaphone },
         { label: 'Revenue',             href: '/admin/revenue',          icon: DollarSign },
         { label: 'Write & Manage Blog', href: '/admin/blog',    icon: FileText },
-        { label: 'Add & Manage Voices', href: '/admin/voices',  icon: Music },
         { label: 'Usage',               href: '/admin/usage',   icon: BarChart2 },
       ]
     },

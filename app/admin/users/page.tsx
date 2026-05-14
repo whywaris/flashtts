@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { createClient } from '@/utils/supabase/client'
 import { Search, Mail, X, CheckCircle2, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 
@@ -39,8 +38,6 @@ const PLAN_COLORS: Record<string, { bg: string; text: string; border: string }> 
 }
 
 export default function UsersManager() {
-  const supabase = createClient() // still used for fetching users list
-
   const [users, setUsers] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -73,15 +70,14 @@ export default function UsersManager() {
   }, [])
 
   async function fetchUsers() {
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, email, full_name, plan, credits_used, credits_limit, created_at, is_banned, banned_reason')
-      .order('created_at', { ascending: false })
-    if (data) {
-      setUsers(data)
-      // Seed pending credit inputs with current limits
+    const res = await fetch('/api/admin/users')
+    const data = await res.json()
+    if (data.users) {
+      setUsers(data.users)
       const creditMap: Record<string, string> = {}
-      data.forEach((u: UserProfile) => { creditMap[u.id] = String(u.credits_limit ?? PLAN_LIMITS[u.plan] ?? 10000) })
+      data.users.forEach((u: UserProfile) => {
+        creditMap[u.id] = String(u.credits_limit ?? PLAN_LIMITS[u.plan] ?? 10000)
+      })
       setPendingCredits(creditMap)
     }
     setLoading(false)
