@@ -6,7 +6,7 @@ import Footer from '@/components/layout/Footer'
 export const revalidate = 0
 
 export const metadata = {
-  title: 'Blog | FlashTTS',
+  title: 'FlashTTS Blog',
   description: 'Latest insights, guides, and tutorials on AI text-to-speech from the FlashTTS team.',
 }
 
@@ -54,7 +54,7 @@ export default async function BlogPage() {
               BLOG
             </span>
             <h1 style={{ fontFamily: "'Instrument Serif', serif", fontSize: '48px', fontWeight: 700, color: '#0a0a0f', margin: '16px 0 12px', lineHeight: 1.2 }}>
-              Insights & Guides
+              FlashTTS Blog
             </h1>
             <p style={{ fontSize: '18px', color: '#6b6878', maxWidth: '500px', margin: '0 auto' }}>
               Tips, tutorials and news from the FlashTTS team
@@ -98,7 +98,7 @@ export default async function BlogPage() {
                     {posts[0].excerpt || posts[0].content?.replace(/<[^>]*>/g, '').slice(0, 200)}
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '13px', color: 'rgba(10,10,15,0.4)', marginBottom: '20px' }}>
-                    <span>FlashTTS Team</span>
+                    <span>{posts[0].author_name || 'Avis Littel'}</span>
                     <span>•</span>
                     <span>{formatDate(posts[0].published_at || posts[0].created_at)}</span>
                     <span>•</span>
