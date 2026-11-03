@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer())
 
-    // Validate by magic bytes — do not trust client-supplied Content-Type
+    // Validate by magic bytes - do not trust client-supplied Content-Type
     const magic = buffer.slice(0, 12)
     const isWebm = magic[0] === 0x1a && magic[1] === 0x45 && magic[2] === 0xdf && magic[3] === 0xa3
     const isMp3Id3 = magic[0] === 0x49 && magic[1] === 0x44 && magic[2] === 0x33  // ID3

@@ -1,9 +1,13 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import LegalLayout from '@/components/legal/LegalLayout';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Voice Cloning Policy | FlashTTS Ethics & Safety',
   description: 'Understand the ethical guidelines and legal requirements for using voice cloning on our platform.',
+  alternates: {
+    canonical: 'https://www.flashtts.com/voice-cloning-policy',
+  },
 };
 
 export default function VoiceCloningPolicyPage() {
@@ -54,8 +58,8 @@ export default function VoiceCloningPolicyPage() {
 
         <h2>Deepfake Policy</h2>
         <p>
-          Creating audio deepfakes — realistic fake recordings that misrepresent 
-          what someone said — is strictly prohibited. This may violate federal 
+          Creating audio deepfakes - realistic fake recordings that misrepresent 
+          what someone said - is strictly prohibited. This may violate federal 
           laws (such as the DEEPFAKES Accountability Act), state laws, and result 
           in civil liability for defamation.
         </p>

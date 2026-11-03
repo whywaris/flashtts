@@ -1,4 +1,4 @@
-export interface Voice {
+﻿export interface Voice {
   id: string;
   name: string;
   lang: string;
@@ -14,26 +14,26 @@ export interface Language {
 }
 
 export const LANGUAGES: Language[] = [
-  { code: 'en', label: 'English', flag: '🇺🇸', text: "In a world where every second counts, your voice is your greatest asset. Generate studio-quality audio in seconds — no waiting, no retakes, no expensive voice actors." },
-  { code: 'ar', label: 'Arabic', flag: '🇸🇦', text: "في عالم يتسارع فيه الزمن، صوتك هو أقوى أداة لديك. أنشئ تسجيلات صوتية احترافية في ثوانٍ — بلا انتظار، بلا إعادة تسجيل، بلا تكalif باهظة." },
-  { code: 'hi', label: 'Hindi', flag: '🇮🇳', text: "एक ऐसी दुनिया में जहाँ हर पल मायने रखता है, आपकी आवाज़ आपकी सबसे बड़ी ताकत है। सेकंडों में स्टूडियो-क्वालिटी ऑडियो बनाएं — बिना इंतजार, बिना रीटेक।" },
-  { code: 'es', label: 'Spanish', flag: '🇪🇸', text: "En un mundo donde cada segundo importa, tu voz es tu mayor activo. Genera audio de calidad profesional en segundos — sin esperas, sin repeticiones, sin actores costosos." },
-  { code: 'fr', label: 'French', flag: '🇫🇷', text: "Dans un monde où chaque seconde compte, votre voix est votre meilleur atout. Créez des voix professionnelles en quelques secondes — sans attente, sans prise multiple." },
-  { code: 'de', label: 'German', flag: '🇩🇪', text: "In einer Welt, in der jede Sekunde zählt, ist deine Stimme dein stärkstes Werkzeug. Erstelle professionelle Audioaufnahmen in Sekunden — ohne Wartezeit, ohne Wiederholungen." },
-  { code: 'ja', label: 'Japanese', flag: '🇯🇵', text: "すべての瞬間が大切な世界で、あなたの声は最大の武器です。待ち時間なし、撮り直しなし — 数秒でスタジオ品質の音声を生成しましょう。" },
-  { code: 'ko', label: 'Korean', flag: '🇰🇷', text: "매 순간이 중요한 세상에서, 당신의 목소리는 가장 강력한 도구입니다. 기다림 없이, 재녹음 없이 — 몇 초 만에 스튜디오 품질의 오디오를 만들어보세요." },
-  { code: 'pt', label: 'Portuguese', flag: '🇵🇹', text: "Num mundo onde cada segundo importa, sua voz é o seu maior ativo. Gere áudio de qualidade profissional em segundos — sem esperas, sem regravações, sem custos elevados." },
-  { code: 'tr', label: 'Turkish', flag: '🇹🇷', text: "Her saniyenin önemli olduğu bir dünyada sesiniz en büyük varlığınızdır. Saniyeler içinde profesyonel kalitede ses oluşturun — bekleme yok, tekrar kayıt yok." },
-  { code: 'it', label: 'Italian', flag: '🇮🇹', text: "In un mondo dove ogni secondo conta, la tua voce è il tuo patrimonio più grande. Genera audio di qualità professionale in pochi secondi — senza attese, senza ripetizioni." },
-  { code: 'nl', label: 'Dutch', flag: '🇳🇱', text: "In een wereld waar elke seconde telt, is jouw stem je grootste troef. Genereer professionele audiokwaliteit in seconden — geen wachttijd, geen herhalingen, geen dure stemacteurs." },
-  { code: 'pl', label: 'Polish', flag: '🇵🇱', text: "W świecie, gdzie każda sekunda ma znaczenie, Twój głos jest Twoim największym atutem. Twórz profesjonalne nagrania w kilka sekund — bez czekania, bez powtórek." },
-  { code: 'ru', label: 'Russian', flag: '🇷🇺', text: "В мире, где каждая секунда на счету, ваш голос — ваш главный инструмент. Создавайте профессиональные аудиозаписи за секунды — без ожидания и повторных записей." },
-  { code: 'sv', label: 'Swedish', flag: '🇸🇪', text: "In en värld där varje sekund räknas är din röst ditt starkaste verktyg. Skapa professionellt ljud på sekunder — ingen väntetid, inga omtagningar, inga dyra röstskådespelare." },
-  { code: 'no', label: 'Norwegian', flag: '🇳🇴', text: "I en verden der hvert sekund teller, er stemmen din ditt sterkeste verktøy. Lag profesjonell lydkvalitet på sekunder — ingen ventetid, ingen omtakinger." },
-  { code: 'fi', label: 'Finnish', flag: '🇫🇮', text: "Maailmassa, jossa jokainen sekunti on tärkeä, äänesi on tärkein työkalusi. Luo ammattilaistason ääntä sekunneissa — ei odottelua, ei uusintoja, ei kalliita näyttelijöitä." },
-  { code: 'da', label: 'Danish', flag: '🇩🇰', text: "I en verden, hvor hvert sekund tæller, er din stemme dit stærkeste redskab. Skab professionel lydkvalitet på få sekunder — ingen ventetid, ingen omtagninger, ingen dyre skuespillere." },
-  { code: 'el', label: 'Greek', flag: '🇬🇷', text: "Σε έναν κόσμο όπου κάθε δευτερόλεπτο μετράει, η φωνή σας είναι το πιο ισχυρό εργαλείο σας. Δημιουργήστε επαγγελματικό ήχο σε δευτερόλεπτα — χωρίς αναμονή, χωρίς επανάληψη." },
-  { code: 'ms', label: 'Malay', flag: '🇲🇾', text: "Dalam dunia di mana setiap saat penting, suara anda adalah aset terbesar anda. Jana audio berkualiti studio dalam beberapa saat — tanpa penantian, tanpa rakaman semula." },
+  { code: 'en', label: 'English', flag: '🇺🇸', text: "In a world where every second counts, your voice is your greatest asset. Generate studio-quality audio in seconds - no waiting, no retakes, no expensive voice actors." },
+  { code: 'ar', label: 'Arabic', flag: '🇸🇦', text: "في عالم يتسارع فيه الزمن، صوتك هو أقوى أداة لديك. أنشئ تسجيلات صوتية احترافية في ثوانٍ - بلا انتظار، بلا إعادة تسجيل، بلا تكalif باهظة." },
+  { code: 'hi', label: 'Hindi', flag: '🇮🇳', text: "एक ऐसी दुनिया में जहाँ हर पल मायने रखता है, आपकी आवाज़ आपकी सबसे बड़ी ताकत है। सेकंडों में स्टूडियो-क्वालिटी ऑडियो बनाएं - बिना इंतजार, बिना रीटेक।" },
+  { code: 'es', label: 'Spanish', flag: '🇪🇸', text: "En un mundo donde cada segundo importa, tu voz es tu mayor activo. Genera audio de calidad profesional en segundos - sin esperas, sin repeticiones, sin actores costosos." },
+  { code: 'fr', label: 'French', flag: '🇫🇷', text: "Dans un monde où chaque seconde compte, votre voix est votre meilleur atout. Créez des voix professionnelles en quelques secondes - sans attente, sans prise multiple." },
+  { code: 'de', label: 'German', flag: '🇩🇪', text: "In einer Welt, in der jede Sekunde zählt, ist deine Stimme dein stärkstes Werkzeug. Erstelle professionelle Audioaufnahmen in Sekunden - ohne Wartezeit, ohne Wiederholungen." },
+  { code: 'ja', label: 'Japanese', flag: '🇯🇵', text: "すべての瞬間が大切な世界で、あなたの声は最大の武器です。待ち時間なし、撮り直しなし - 数秒でスタジオ品質の音声を生成しましょう。" },
+  { code: 'ko', label: 'Korean', flag: '🇰🇷', text: "매 순간이 중요한 세상에서, 당신의 목소리는 가장 강력한 도구입니다. 기다림 없이, 재녹음 없이 - 몇 초 만에 스튜디오 품질의 오디오를 만들어보세요." },
+  { code: 'pt', label: 'Portuguese', flag: '🇵🇹', text: "Num mundo onde cada segundo importa, sua voz é o seu maior ativo. Gere áudio de qualidade profissional em segundos - sem esperas, sem regravações, sem custos elevados." },
+  { code: 'tr', label: 'Turkish', flag: '🇹🇷', text: "Her saniyenin önemli olduğu bir dünyada sesiniz en büyük varlığınızdır. Saniyeler içinde profesyonel kalitede ses oluşturun - bekleme yok, tekrar kayıt yok." },
+  { code: 'it', label: 'Italian', flag: '🇮🇹', text: "In un mondo dove ogni secondo conta, la tua voce è il tuo patrimonio più grande. Genera audio di qualità professionale in pochi secondi - senza attese, senza ripetizioni." },
+  { code: 'nl', label: 'Dutch', flag: '🇳🇱', text: "In een wereld waar elke seconde telt, is jouw stem je grootste troef. Genereer professionele audiokwaliteit in seconden - geen wachttijd, geen herhalingen, geen dure stemacteurs." },
+  { code: 'pl', label: 'Polish', flag: '🇵🇱', text: "W świecie, gdzie każda sekunda ma znaczenie, Twój głos jest Twoim największym atutem. Twórz profesjonalne nagrania w kilka sekund - bez czekania, bez powtórek." },
+  { code: 'ru', label: 'Russian', flag: '🇷🇺', text: "В мире, где каждая секунда на счету, ваш голос - ваш главный инструмент. Создавайте профессиональные аудиозаписи за секунды - без ожидания и повторных записей." },
+  { code: 'sv', label: 'Swedish', flag: '🇸🇪', text: "In en värld där varje sekund räknas är din röst ditt starkaste verktyg. Skapa professionellt ljud på sekunder - ingen väntetid, inga omtagningar, inga dyra röstskådespelare." },
+  { code: 'no', label: 'Norwegian', flag: '🇳🇴', text: "I en verden der hvert sekund teller, er stemmen din ditt sterkeste verktøy. Lag profesjonell lydkvalitet på sekunder - ingen ventetid, ingen omtakinger." },
+  { code: 'fi', label: 'Finnish', flag: '🇫🇮', text: "Maailmassa, jossa jokainen sekunti on tärkeä, äänesi on tärkein työkalusi. Luo ammattilaistason ääntä sekunneissa - ei odottelua, ei uusintoja, ei kalliita näyttelijöitä." },
+  { code: 'da', label: 'Danish', flag: '🇩🇰', text: "I en verden, hvor hvert sekund tæller, er din stemme dit stærkeste redskab. Skab professionel lydkvalitet på få sekunder - ingen ventetid, ingen omtagninger, ingen dyre skuespillere." },
+  { code: 'el', label: 'Greek', flag: '🇬🇷', text: "Σε έναν κόσμο όπου κάθε δευτερόλεπτο μετράει, η φωνή σας είναι το πιο ισχυρό εργαλείο σας. Δημιουργήστε επαγγελματικό ήχο σε δευτερόλεπτα - χωρίς αναμονή, χωρίς επανάληψη." },
+  { code: 'ms', label: 'Malay', flag: '🇲🇾', text: "Dalam dunia di mana setiap saat penting, suara anda adalah aset terbesar anda. Jana audio berkualiti studio dalam beberapa saat - tanpa penantian, tanpa rakaman semula." },
 ];
 
 export const DEMO_VOICES: Record<string, Voice[]> = {

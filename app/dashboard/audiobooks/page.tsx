@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -417,7 +417,7 @@ export default function AudioBooksPage() {
           {/* SECTION 01: BOOK INFO */}
           <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '20px', padding: '20px' }}>
             <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid var(--border)' }}>
-              01 — Book Info
+              01 - Book Info
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ position: 'relative' }}>
@@ -446,7 +446,7 @@ export default function AudioBooksPage() {
           <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '20px', padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid var(--border)' }}>
               <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)' }}>
-                02 — Paste Your Book
+                02 - Paste Your Book
               </div>
               <div style={{ fontSize: '11px', background: 'var(--glass)', padding: '2px 10px', borderRadius: '8px', color: 'var(--muted)' }}>
                 {wc(rawText).toLocaleString()} words
@@ -484,7 +484,7 @@ export default function AudioBooksPage() {
             <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '20px', padding: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid var(--border)' }}>
                 <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)' }}>
-                  03 — Chapters
+                  03 - Chapters
                 </div>
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   <span style={{ fontSize: '11px', color: 'var(--muted)' }}>{chapters.length} items</span>
@@ -614,7 +614,7 @@ export default function AudioBooksPage() {
           {/* SECTION 04: GENERATE CONTROLS */}
           <div style={{ background: 'var(--card-bg)', border: '1px solid var(--border)', borderRadius: '20px', padding: '20px' }}>
             <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '16px', paddingBottom: '10px', borderBottom: '1px solid var(--border)' }}>
-              04 — Generate
+              04 - Generate
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">

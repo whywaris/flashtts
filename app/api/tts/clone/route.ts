@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/utils/supabase/server'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
       cfg_weight:         0.5,
       reference_audio_b64,
     })
-    await pollRunPodJob(jobId) // discard output — validates the sample works
+    await pollRunPodJob(jobId) // discard output - validates the sample works
 
     // ── Upload to Cloudflare R2 ─────────────────────────────────────────────
     const r2Key = `cloned-voices/${user.id}/${Date.now()}.${ext}`

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -183,7 +183,7 @@ export default function BillingPage() {
               </div>
               {usagePct >= 80 && (
                 <p style={{ color: '#ef4444', fontSize: 12, marginTop: 8, fontWeight: 500 }}>
-                  80%+ used — upgrade to avoid interruption
+                  80%+ used - upgrade to avoid interruption
                 </p>
               )}
             </div>

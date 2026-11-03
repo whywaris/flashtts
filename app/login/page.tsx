@@ -24,15 +24,22 @@ export default function LoginPage() {
             setError(error.message)
             setLoading(false)
         } else {
-            window.location.assign('/dashboard')
+            const nextParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') : null
+            const target = nextParam || '/dashboard'
+            window.location.assign(target)
         }
     }
 
     async function handleGoogleLogin() {
+        const nextParam = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('next') : null
+        const callbackUrl = nextParam
+            ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextParam)}`
+            : `${window.location.origin}/auth/callback`
+
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${window.location.origin}/auth/callback`
+                redirectTo: callbackUrl
             }
         })
         if (error) setError(error.message)

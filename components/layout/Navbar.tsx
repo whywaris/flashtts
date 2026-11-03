@@ -60,7 +60,7 @@ export default function Navbar() {
         
         {/* LOGO */}
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-8 h-8 rounded-lg bg-[#E8522A] flex items-center justify-center text-white font-extrabold text-[16px] shadow-lg shadow-[#E8522A]/20 transition-transform group-hover:scale-105">
+          <div aria-hidden="true" className="w-8 h-8 rounded-lg bg-[#E8522A] flex items-center justify-center text-white font-extrabold text-[16px] shadow-lg shadow-[#E8522A]/20 transition-transform group-hover:scale-105">
             F
           </div>
           <span className="font-['Syne'] font-[800] text-[20px] text-slate-900 tracking-tight">

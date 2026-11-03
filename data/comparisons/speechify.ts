@@ -1,14 +1,14 @@
-import { ComparisonData } from './elevenlabs';
+﻿import { ComparisonData } from './elevenlabs';
 
 export const speechifyData: ComparisonData = {
   competitorName: 'Speechify',
   slug: 'speechify',
   metaTitle: 'FlashTTS vs Speechify: Built for Creators, Not Readers',
-  metaDescription: 'Comparing FlashTTS vs Speechify? Speechify is a reading app — not a content creation tool. FlashTTS is built for YouTubers, Podcasters & Agencies who need studio-quality audio at scale.',
+  metaDescription: 'Comparing FlashTTS vs Speechify? Speechify is a reading app - not a content creation tool. FlashTTS is built for YouTubers, Podcasters & Agencies who need studio-quality audio at scale.',
   hero: {
     badge: 'HONEST COMPARISON',
     title: 'FlashTTS vs Speechify: Wrong Tool vs Right Tool',
-    subheadline: "Speechify was built to help you READ content — not CREATE it. If you're a YouTuber, Podcaster, or Agency needing studio-quality voiceovers at scale, you need FlashTTS — not a reading app."
+    subheadline: "Speechify was built to help you READ content - not CREATE it. If you're a YouTuber, Podcaster, or Agency needing studio-quality voiceovers at scale, you need FlashTTS - not a reading app."
   },
   differenceBanner: {
     left: {
@@ -44,7 +44,7 @@ export const speechifyData: ComparisonData = {
     {
       icon: 'dollar',
       title: 'Better Value',
-      text: 'FlashTTS $9/mo vs Speechify $11.58/mo — with actual creation tools included.',
+      text: 'FlashTTS $9/mo vs Speechify $11.58/mo - with actual creation tools included.',
       badge: 'FlashTTS Wins',
       badgeColor: 'green'
     }
@@ -69,7 +69,7 @@ export const speechifyData: ComparisonData = {
   },
   pricingBreakdown: {
     heading: 'What You\'re Actually Paying For',
-    subtext: "Switch to FlashTTS — purpose-built for creators who publish daily.",
+    subtext: "Switch to FlashTTS - purpose-built for creators who publish daily.",
     creators: [
       {
         type: 'Faceless YouTube Creator',
@@ -116,21 +116,21 @@ export const speechifyData: ComparisonData = {
   },
   warningSection: {
     title: 'A Note on Speechify Billing',
-    text: 'Independent user reports across Reddit and BBB document unexpected auto-renewal charges from Speechify — including charges after confirmed cancellations. Always use a separate payment method when trialing and set calendar reminders before trial expiration.',
+    text: 'Independent user reports across Reddit and BBB document unexpected auto-renewal charges from Speechify - including charges after confirmed cancellations. Always use a separate payment method when trialing and set calendar reminders before trial expiration.',
     source: 'Publicly available user reports'
   },
   faqs: [
     {
       q: 'Is Speechify good for content creators?',
-      a: 'Speechify was primarily designed as a personal reading and productivity app — helping users listen to documents, articles, and books. While it has some voice generation features, it is not purpose-built for content creators who need studio-quality voiceovers, voice cloning, or high-volume audio production. FlashTTS is specifically designed for YouTubers, Podcasters, and Agencies who create audio content at scale.'
+      a: 'Speechify was primarily designed as a personal reading and productivity app - helping users listen to documents, articles, and books. While it has some voice generation features, it is not purpose-built for content creators who need studio-quality voiceovers, voice cloning, or high-volume audio production. FlashTTS is specifically designed for YouTubers, Podcasters, and Agencies who create audio content at scale.'
     },
     {
       q: 'Can Speechify clone your voice?',
-      a: 'Speechify does not offer voice cloning as a standard feature for content creators. FlashTTS includes voice cloning on all paid plans starting from $9/month — allowing you to clone your voice in under 60 seconds and generate unlimited content with it.'
+      a: 'Speechify does not offer voice cloning as a standard feature for content creators. FlashTTS includes voice cloning on all paid plans starting from $9/month - allowing you to clone your voice in under 60 seconds and generate unlimited content with it.'
     },
     {
       q: 'Is FlashTTS cheaper than Speechify?',
-      a: 'FlashTTS starts at $9/month vs Speechify\'s $11.58/month (annual) or $29/month (monthly). But more importantly, FlashTTS is built for content creation — giving you studio-quality voiceovers, voice cloning, and commercial rights. Speechify\'s pricing is for a reading app, not a production tool.'
+      a: 'FlashTTS starts at $9/month vs Speechify\'s $11.58/month (annual) or $29/month (monthly). But more importantly, FlashTTS is built for content creation - giving you studio-quality voiceovers, voice cloning, and commercial rights. Speechify\'s pricing is for a reading app, not a production tool.'
     },
     {
       q: 'What is the best Speechify alternative for YouTubers?',
@@ -138,7 +138,7 @@ export const speechifyData: ComparisonData = {
     },
     {
       q: 'Does FlashTTS work for audiobooks like Speechify?',
-      a: 'Yes — FlashTTS has a dedicated Audiobook Studio that allows creators to generate long-form narration at scale. Unlike Speechify which reads existing content for personal listening, FlashTTS generates original studio-quality audio you can publish and sell commercially.'
+      a: 'Yes - FlashTTS has a dedicated Audiobook Studio that allows creators to generate long-form narration at scale. Unlike Speechify which reads existing content for personal listening, FlashTTS generates original studio-quality audio you can publish and sell commercially.'
     }
   ]
 };

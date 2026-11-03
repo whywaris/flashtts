@@ -1,4 +1,4 @@
-const ENDPOINT = () => process.env.RUNPOD_ENDPOINT_ID!
+﻿const ENDPOINT = () => process.env.RUNPOD_ENDPOINT_ID!
 const API_KEY   = () => process.env.RUNPOD_API_KEY!
 
 export async function submitRunPodJob(input: Record<string, unknown>): Promise<string> {
@@ -50,7 +50,7 @@ export async function pollRunPodJob(jobId: string, timeoutMs = 120_000): Promise
       throw new Error(data.error || 'RunPod job failed')
     }
 
-    // IN_QUEUE | IN_PROGRESS — keep polling
+    // IN_QUEUE | IN_PROGRESS - keep polling
   }
 
   throw new Error('Audio generation timed out after 120 seconds. Please try again.')

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { requireAdmin } from '@/lib/admin-guard'
 import { createClient } from '@/utils/supabase/server'
@@ -26,7 +26,7 @@ function buildHtml(subject: string, message: string): string {
       <h2 style="color: #f5c518; font-family: 'Syne', sans-serif; font-size: 24px; margin-bottom: 20px;">${safeSubject}</h2>
       <p style="font-size: 16px; line-height: 1.6; color: rgba(255,255,255,0.8); white-space: pre-wrap;">${safeMessage}</p>
       <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 12px; color: #7a7a9a;">
-        <p>FlashTTS Team — The Fastest AI Voice Platform</p>
+        <p>FlashTTS Team - The Fastest AI Voice Platform</p>
       </div>
     </div>
   `
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       } else if (audience === 'Free Tier Only') {
         query = query.in('plan', ['free', 'Free'])
       }
-      // 'All Users' — no extra filter
+      // 'All Users' - no extra filter
 
       const { data: profiles, error: fetchErr } = await query
       if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 })

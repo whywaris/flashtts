@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 
 export async function GET(request: NextRequest) {
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!customerId) {
-      // No LS customer found — send back to billing with a message
+      // No LS customer found - send back to billing with a message
       return NextResponse.redirect(
         new URL('/dashboard/billing?error=no_subscription', request.url)
       );

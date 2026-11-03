@@ -1,4 +1,4 @@
-import { ComparisonData } from './elevenlabs';
+﻿import { ComparisonData } from './elevenlabs';
 
 export const naturalreaderData: ComparisonData = {
   competitorName: 'NaturalReader',
@@ -8,38 +8,38 @@ export const naturalreaderData: ComparisonData = {
   hero: {
     badge: 'HONEST COMPARISON',
     title: 'FlashTTS vs NaturalReader: Built for Creators, Not Just Readers',
-    subheadline: "NaturalReader's personal plans don't allow commercial use — meaning you can't legally monetize the audio you generate. FlashTTS includes full commercial rights on all paid plans, no daily limits, and real voice cloning from just $9/month."
+    subheadline: "NaturalReader's personal plans don't allow commercial use - meaning you can't legally monetize the audio you generate. FlashTTS includes full commercial rights on all paid plans, no daily limits, and real voice cloning from just $9/month."
   },
   verdictCards: [
     {
       icon: 'shield',
       title: 'Commercial Rights Included',
-      text: 'FlashTTS includes full commercial rights on all paid plans. NaturalReader personal plans are strictly personal use only — no monetization allowed.',
+      text: 'FlashTTS includes full commercial rights on all paid plans. NaturalReader personal plans are strictly personal use only - no monetization allowed.',
       badge: 'FlashTTS Wins',
       badgeColor: 'green'
     },
     {
       icon: 'infinity',
       title: 'No Daily Cutoffs',
-      text: 'NaturalReader blocks users mid-project with daily character limits. FlashTTS has zero daily limits — generate as much as you need.',
+      text: 'NaturalReader blocks users mid-project with daily character limits. FlashTTS has zero daily limits - generate as much as you need.',
       badge: 'FlashTTS Wins',
       badgeColor: 'green'
     },
     {
       icon: 'dollar',
       title: '57% Cheaper',
-      text: 'FlashTTS starts at $9/mo with commercial rights. NaturalReader Plus starts at $20.90/mo — personal use only.',
+      text: 'FlashTTS starts at $9/mo with commercial rights. NaturalReader Plus starts at $20.90/mo - personal use only.',
       badge: 'FlashTTS Wins',
       badgeColor: 'green'
     }
   ],
   warningSection: {
     title: 'NaturalReader Personal Plans = No Commercial Use',
-    text: "NaturalReader's personal plans ($9.99–$20.90/mo) explicitly state that downloaded MP3s are for personal use only. That means you cannot legally use them for YouTube videos, podcasts, client work, TikTok content, or any monetized platform. To get commercial rights, you need their separate Commercial plan — which starts significantly higher. FlashTTS includes full commercial rights on every paid plan from day one.",
+    text: "NaturalReader's personal plans ($9.99–$20.90/mo) explicitly state that downloaded MP3s are for personal use only. That means you cannot legally use them for YouTube videos, podcasts, client work, TikTok content, or any monetized platform. To get commercial rights, you need their separate Commercial plan - which starts significantly higher. FlashTTS includes full commercial rights on every paid plan from day one.",
     source: 'NaturalReader Pricing terms',
     comparisonCallout: {
       leftLabel: 'NaturalReader Personal Plus $20.90/mo',
-      leftText: 'Personal use only — cannot monetize',
+      leftText: 'Personal use only - cannot monetize',
       rightLabel: 'FlashTTS Starter $9/mo',
       rightText: 'Full commercial rights included'
     }
@@ -51,7 +51,7 @@ export const naturalreaderData: ComparisonData = {
       {
         icon: 'stop',
         title: 'Blocked Mid-Project',
-        text: 'NaturalReader enforces daily character limits. Multiple users report being blocked after using significantly fewer characters than their plan allows — stopping production mid-project.'
+        text: 'NaturalReader enforces daily character limits. Multiple users report being blocked after using significantly fewer characters than their plan allows - stopping production mid-project.'
       },
       {
         icon: 'bell-off',
@@ -61,7 +61,7 @@ export const naturalreaderData: ComparisonData = {
       {
         icon: 'check-circle',
         title: 'FlashTTS Has No Daily Limits',
-        text: 'FlashTTS enforces only a monthly character limit — no daily restrictions. Use all your credits whenever you need them, not when NaturalReader allows you.'
+        text: 'FlashTTS enforces only a monthly character limit - no daily restrictions. Use all your credits whenever you need them, not when NaturalReader allows you.'
       }
     ]
   },
@@ -72,7 +72,7 @@ export const naturalreaderData: ComparisonData = {
       { feature: 'Plus / Creator Price', flashTts: '$19/mo', competitor: '$20.90/mo', win: 'flash' },
       { feature: 'Pro Price', flashTts: '$39/mo', competitor: '$25.90/mo', win: 'tie' },
       { feature: 'Commercial Rights', flashTts: 'All paid plans', competitor: 'Commercial plan only', win: 'flash' },
-      { feature: 'Daily Limits', flashTts: 'None', competitor: 'Yes — blocks users', win: 'flash' },
+      { feature: 'Daily Limits', flashTts: 'None', competitor: 'Yes - blocks users', win: 'flash' },
       { feature: 'Voice Cloning', flashTts: 'All paid plans', competitor: 'Commercial plan only', win: 'flash' },
       { feature: 'Voice Quality', flashTts: 'Studio-grade AI', competitor: 'Robotic on basic plans', win: 'flash' },
       { feature: 'Languages', flashTts: '19 languages', competitor: '28 languages', win: 'competitor' },
@@ -132,23 +132,23 @@ export const naturalreaderData: ComparisonData = {
   faqs: [
     {
       q: 'Can you use NaturalReader for commercial use?',
-      a: 'NaturalReader’s personal plans — including Plus at $20.90/month — explicitly restrict downloaded MP3s to personal use only. You cannot legally use this audio for YouTube videos, podcasts, client projects, or any monetized platform on these plans. Commercial use requires their separate Commercial plan. FlashTTS includes full commercial rights on all paid plans starting from $9/month.'
+      a: 'NaturalReader’s personal plans - including Plus at $20.90/month - explicitly restrict downloaded MP3s to personal use only. You cannot legally use this audio for YouTube videos, podcasts, client projects, or any monetized platform on these plans. Commercial use requires their separate Commercial plan. FlashTTS includes full commercial rights on all paid plans starting from $9/month.'
     },
     {
       q: 'Does NaturalReader have daily character limits?',
-      a: 'Yes — NaturalReader enforces daily character limits in addition to monthly limits. Multiple verified users report being blocked mid-project after using fewer characters than their plan allows. FlashTTS has no daily limits — only a monthly character allocation that you can use at any time without interruption.'
+      a: 'Yes - NaturalReader enforces daily character limits in addition to monthly limits. Multiple verified users report being blocked mid-project after using fewer characters than their plan allows. FlashTTS has no daily limits - only a monthly character allocation that you can use at any time without interruption.'
     },
     {
       q: 'Is FlashTTS cheaper than NaturalReader?',
-      a: 'For content creators who need commercial rights, FlashTTS is significantly better value. NaturalReader’s Plus plan costs $20.90/month but only allows personal use. FlashTTS Starter costs $9/month and includes full commercial rights, voice cloning, and no daily limits — making it 57% cheaper for the same or better use case.'
+      a: 'For content creators who need commercial rights, FlashTTS is significantly better value. NaturalReader’s Plus plan costs $20.90/month but only allows personal use. FlashTTS Starter costs $9/month and includes full commercial rights, voice cloning, and no daily limits - making it 57% cheaper for the same or better use case.'
     },
     {
       q: 'What is the best NaturalReader alternative for content creators?',
-      a: 'For content creators who need commercial audio rights, FlashTTS is the strongest NaturalReader alternative. It costs $9/month, includes full commercial rights on all paid plans, has no daily character limits, supports 19 languages, and includes voice cloning — features that NaturalReader only offers on much more expensive commercial plans.'
+      a: 'For content creators who need commercial audio rights, FlashTTS is the strongest NaturalReader alternative. It costs $9/month, includes full commercial rights on all paid plans, has no daily character limits, supports 19 languages, and includes voice cloning - features that NaturalReader only offers on much more expensive commercial plans.'
     },
     {
       q: 'Does NaturalReader include voice cloning?',
-      a: 'Voice cloning on NaturalReader is only available on their Commercial plan, which is significantly more expensive than their personal plans. FlashTTS includes voice cloning on all paid plans starting from $9/month — no separate commercial plan required.'
+      a: 'Voice cloning on NaturalReader is only available on their Commercial plan, which is significantly more expensive than their personal plans. FlashTTS includes voice cloning on all paid plans starting from $9/month - no separate commercial plan required.'
     }
   ]
 };

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: speechifyData.metaTitle,
     description: speechifyData.metaDescription,
-    url: `https://flashtts.com/vs/${speechifyData.slug}`,
+    url: `https://www.flashtts.com/vs/${speechifyData.slug}`,
     type: 'website',
   },
   twitter: {
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     description: speechifyData.metaDescription,
   },
   alternates: {
-    canonical: `https://flashtts.com/vs/${speechifyData.slug}`,
+    canonical: `https://www.flashtts.com/vs/${speechifyData.slug}`,
   },
 };
 

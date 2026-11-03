@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: murfData.metaTitle,
     description: murfData.metaDescription,
-    url: `https://flashtts.com/vs/${murfData.slug}`,
+    url: `https://www.flashtts.com/vs/${murfData.slug}`,
     type: 'website',
   },
   twitter: {
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     description: murfData.metaDescription,
   },
   alternates: {
-    canonical: `https://flashtts.com/vs/${murfData.slug}`,
+    canonical: `https://www.flashtts.com/vs/${murfData.slug}`,
   },
 };
 

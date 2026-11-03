@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -137,7 +137,7 @@ export default function VoiceCloneTrial() {
       )}
 
       <div style={{ marginTop: '20px', fontSize: '0.75rem', color: 'var(--muted)', textAlign: 'center' }}>
-        Interactive demo only — not real voice cloning. Full cloning available after signup.
+        Interactive demo only - not real voice cloning. Full cloning available after signup.
       </div>
     </div>
   );

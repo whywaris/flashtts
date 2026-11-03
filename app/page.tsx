@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -29,15 +29,15 @@ const staggerContainer = {
 const FAQS = [
   {
     q: 'Do I get full commercial rights to the audio?',
-    a: 'Yes — every generation on paid plans includes 100% royalty-free commercial rights. Use it on YouTube, TikTok, Podcasts, client work, or paid ads without ever paying royalties or worrying about copyright strikes.'
+    a: 'Yes - every generation on paid plans includes 100% royalty-free commercial rights. Use it on YouTube, TikTok, Podcasts, client work, or paid ads without ever paying royalties or worrying about copyright strikes.'
   },
   {
     q: 'How does FlashTTS compare to ElevenLabs?',
-    a: 'FlashTTS gives you 6.5x more credits than ElevenLabs at the same price point. Our Starter plan includes 200,000 characters for $9/month — ElevenLabs charges $6 for only 30,000. Same studio quality, dramatically more content.'
+    a: 'FlashTTS gives you 6.5x more credits than ElevenLabs at the same price point. Our Starter plan includes 200,000 characters for $9/month - ElevenLabs charges $6 for only 30,000. Same studio quality, dramatically more content.'
   },
   {
     q: 'Can I clone my own voice exactly?',
-    a: 'Absolutely. Upload a clean 10-30 second audio sample of your voice and our engine creates an ultra-realistic clone. You can then generate thousands of words in your exact voice — instantly, without ever recording again.'
+    a: 'Absolutely. Upload a clean 10-30 second audio sample of your voice and our engine creates an ultra-realistic clone. You can then generate thousands of words in your exact voice - instantly, without ever recording again.'
   },
   {
     q: 'Will YouTube or TikTok detect my audio as AI?',
@@ -45,34 +45,34 @@ const FAQS = [
   },
   {
     q: 'What happens when I run out of credits?',
-    a: 'Unlike other platforms, we give you so many credits that running out mid-month is rarely a concern. If you do hit your limit, you can upgrade your plan instantly — no waiting, no delays. Your new credits are available immediately.'
+    a: 'Unlike other platforms, we give you so many credits that running out mid-month is rarely a concern. If you do hit your limit, you can upgrade your plan instantly - no waiting, no delays. Your new credits are available immediately.'
   },
   {
     q: 'Which languages are supported?',
-    a: 'FlashTTS supports 19 languages including English, Arabic, Hindi, Spanish, French, German, Japanese, Korean, Portuguese, Turkish, Italian, Dutch, Polish, Russian, Swedish, Norwegian, Finnish, Danish, and Greek — with native-sounding voices for each.'
+    a: 'FlashTTS supports 19 languages including English, Arabic, Hindi, Spanish, French, German, Japanese, Korean, Portuguese, Turkish, Italian, Dutch, Polish, Russian, Swedish, Norwegian, Finnish, Danish, and Greek - with native-sounding voices for each.'
   },
   {
     q: 'Can I use FlashTTS for audiobooks?',
-    a: 'Yes — FlashTTS has a dedicated Audiobook Studio. Paste your entire manuscript, auto-detect chapters, select a voice, and generate a complete audiobook in MP3 format. No clip length limits on paid plans.'
+    a: 'Yes - FlashTTS has a dedicated Audiobook Studio. Paste your entire manuscript, auto-detect chapters, select a voice, and generate a complete audiobook in MP3 format. No clip length limits on paid plans.'
   },
   {
     q: 'Why is this better than hiring a voice actor?',
-    a: 'Speed, cost, and flexibility. A professional voice actor charges $50-150+ per finished minute and takes 3-7 days to deliver. FlashTTS generates the same studio-quality audio in under 15 seconds for a fraction of the cost — and you can make unlimited retakes instantly.'
+    a: 'Speed, cost, and flexibility. A professional voice actor charges $50-150+ per finished minute and takes 3-7 days to deliver. FlashTTS generates the same studio-quality audio in under 15 seconds for a fraction of the cost - and you can make unlimited retakes instantly.'
   },
   {
     q: 'Is there a free plan?',
-    a: 'Yes — FlashTTS offers a free plan with 10,000 characters per month. No credit card required. You can test voices, generate real audio, and explore the platform before committing to any paid plan.'
+    a: 'Yes - FlashTTS offers a free plan with 10,000 characters per month. No credit card required. You can test voices, generate real audio, and explore the platform before committing to any paid plan.'
   },
   {
     q: 'What happens if I need to change my script later?',
-    a: 'Just paste your updated script and regenerate — no begging actors for retakes, no scheduling delays, no extra charges. Your script changes are live in seconds.'
+    a: 'Just paste your updated script and regenerate - no begging actors for retakes, no scheduling delays, no extra charges. Your script changes are live in seconds.'
   },
 ];
 
 // ── Testimonials ──
 const TESTIMONIALS = [
   {
-    text: "I run 4 faceless YouTube channels. Before FlashTTS, I was spending $1,200/month on voice actors and editors. Now I generate everything myself in under an hour. The voices are completely undetectable — my audience has no idea.",
+    text: "I run 4 faceless YouTube channels. Before FlashTTS, I was spending $1,200/month on voice actors and editors. Now I generate everything myself in under an hour. The voices are completely undetectable - my audience has no idea.",
     name: "David Chen",
     role: "Faceless Channel Owner",
     stat: "4 channels · 1.2M subscribers",
@@ -82,7 +82,7 @@ const TESTIMONIALS = [
     verified: true
   },
   {
-    text: "We produce 300+ TikTok videos per week for our agency clients. FlashTTS is the only tool that keeps up with our volume. The emotional voices are insane — sad, excited, authoritative — all in one click. Our client retention went up 40% after switching.",
+    text: "We produce 300+ TikTok videos per week for our agency clients. FlashTTS is the only tool that keeps up with our volume. The emotional voices are insane - sad, excited, authoritative - all in one click. Our client retention went up 40% after switching.",
     name: "Sarah Jenkins",
     role: "Content Agency Owner",
     stat: "Agency · 300+ videos/week",
@@ -102,7 +102,7 @@ const TESTIMONIALS = [
     verified: true
   },
   {
-    text: "I was paying ElevenLabs $99/month and still running out of credits halfway through the month. FlashTTS gave me 10x more credits for $39. Literally the same quality — I compared them side by side. No brainer switch.",
+    text: "I was paying ElevenLabs $99/month and still running out of credits halfway through the month. FlashTTS gave me 10x more credits for $39. Literally the same quality - I compared them side by side. No brainer switch.",
     name: "Aisha Rahman",
     role: "YouTube Educator",
     stat: "Education channel · 220K subs",
@@ -112,7 +112,7 @@ const TESTIMONIALS = [
     verified: true
   },
   {
-    text: "I converted my 80,000 word business book into a full audiobook in one afternoon. The Audiobook Studio is genuinely impressive — auto-detected all 12 chapters and generated everything without a single error.",
+    text: "I converted my 80,000 word business book into a full audiobook in one afternoon. The Audiobook Studio is genuinely impressive - auto-detected all 12 chapters and generated everything without a single error.",
     name: "James Whitfield",
     role: "Author & Entrepreneur",
     stat: "Published author · 3 books",
@@ -122,7 +122,7 @@ const TESTIMONIALS = [
     verified: true
   },
   {
-    text: "Our Urdu content channel went from 2 videos a week to 14. FlashTTS was the only platform with proper Urdu support. The voices sound completely native — our Pakistani audience can't tell the difference.",
+    text: "Our Urdu content channel went from 2 videos a week to 14. FlashTTS was the only platform with proper Urdu support. The voices sound completely native - our Pakistani audience can't tell the difference.",
     name: "Bilal Mahmood",
     role: "Urdu Content Creator",
     stat: "Urdu channel · 450K subscribers",
@@ -179,32 +179,32 @@ export default function HomePage() {
             "@graph": [
               {
                 "@type": "WebSite",
-                "@id": "https://flashtts.com/#website",
-                "url": "https://flashtts.com",
+                "@id": "https://www.flashtts.com/#website",
+                "url": "https://www.flashtts.com",
                 "name": "FlashTTS",
                 "description": "AI Voice Generator with 10x more credits than ElevenLabs",
                 "publisher": {
-                  "@id": "https://flashtts.com/#organization"
+                  "@id": "https://www.flashtts.com/#organization"
                 },
                 "potentialAction": {
                   "@type": "SearchAction",
                   "target": {
                     "@type": "EntryPoint",
-                    "urlTemplate": "https://flashtts.com/search?q={search_term_string}"
+                    "urlTemplate": "https://www.flashtts.com/search?q={search_term_string}"
                   },
                   "query-input": "required name=search_term_string"
                 }
               },
               {
                 "@type": "Organization",
-                "@id": "https://flashtts.com/#organization",
+                "@id": "https://www.flashtts.com/#organization",
                 "name": "FlashTTS",
-                "url": "https://flashtts.com",
+                "url": "https://www.flashtts.com",
                 "logo": {
                   "@type": "ImageObject",
-                  "url": "https://flashtts.com/logo.png",
-                  "width": 200,
-                  "height": 60
+                  "url": "https://www.flashtts.com/logo.png",
+                  "width": 512,
+                  "height": 512
                 },
                 "sameAs": [
                   "https://twitter.com/flashtts",
@@ -213,7 +213,7 @@ export default function HomePage() {
                 "contactPoint": {
                   "@type": "ContactPoint",
                   "contactType": "customer support",
-                  "url": "https://flashtts.com/contact",
+                  "url": "https://www.flashtts.com/contact",
                   "availableLanguage": ["English"]
                 }
               },
@@ -222,7 +222,7 @@ export default function HomePage() {
                 "name": "FlashTTS",
                 "applicationCategory": "MultimediaApplication",
                 "operatingSystem": "Web",
-                "url": "https://flashtts.com",
+                "url": "https://www.flashtts.com",
                 "description": "AI voice generator with 1000+ voices in 19 languages. 10x more credits than ElevenLabs. Voice cloning and audiobook studio included.",
                 "offers": [
                   {
@@ -286,7 +286,7 @@ export default function HomePage() {
                     "name": "Do I get full commercial rights to the audio?",
                     "acceptedAnswer": {
                       "@type": "Answer",
-                      "text": "Yes — every generation on paid plans includes 100% royalty-free commercial rights."
+                      "text": "Yes - every generation on paid plans includes 100% royalty-free commercial rights."
                     }
                   },
                   {
@@ -807,7 +807,7 @@ export default function HomePage() {
                 lineHeight: 1.7,
                 fontFamily: 'DM Sans, sans-serif',
               }}>
-                Start free — no credit card needed.
+                Start free - no credit card needed.
                 Upgrade when you're ready to scale.
               </p>
 
@@ -842,7 +842,7 @@ export default function HomePage() {
                   }}
                   className="hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(232,82,42,0.5)] sm:w-auto"
                 >
-                  Start Free — No Credit Card
+                  Start Free - No Credit Card
                   <ArrowRight size={18} />
                 </Link>
 

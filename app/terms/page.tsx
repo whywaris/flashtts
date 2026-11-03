@@ -1,9 +1,13 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import LegalLayout from '@/components/legal/LegalLayout';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Terms of Service | FlashTTS User Agreement',
   description: 'Review the rules and guidelines for using the FlashTTS platform and services.',
+  alternates: {
+    canonical: 'https://www.flashtts.com/terms',
+  },
 };
 
 export default function TermsPage() {

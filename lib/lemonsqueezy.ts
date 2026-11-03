@@ -19,7 +19,7 @@ export async function createCheckout(
   const storeId = process.env.LEMONSQUEEZY_STORE_ID;
   if (!storeId) throw new Error('Missing LEMONSQUEEZY_STORE_ID');
 
-  const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://flashtts.com';
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.flashtts.com';
 
   const res = await fetch(`${BASE_URL}/checkouts`, {
     method: 'POST',

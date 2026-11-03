@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+﻿import { Suspense } from 'react'
 import Link from 'next/link'
 import { Users, DollarSign, Zap, UserCheck, UserX, ChevronRight, FileText, Mail, Shield } from 'lucide-react'
 import { fetchDashboardData, type DashboardData } from './actions'
@@ -169,7 +169,7 @@ async function DashboardContent() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="mb-5">
             <h3 className="text-base font-semibold text-gray-900">User Growth</h3>
-            <p className="text-xs text-gray-400 mt-0.5">New signups — last 30 days</p>
+            <p className="text-xs text-gray-400 mt-0.5">New signups - last 30 days</p>
           </div>
           <GrowthChart data={growth} />
         </div>

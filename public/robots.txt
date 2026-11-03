@@ -1,5 +1,5 @@
 # FlashTTS - robots.txt
-# https://flashtts.com
+# https://www.flashtts.com
 
 # All crawlers
 User-agent: *
@@ -10,7 +10,7 @@ Allow: /blog
 Allow: /pricing
 Allow: /about
 Allow: /contact
-Allow: /vs/
+Allow: /vs
 
 # Block private pages
 Disallow: /dashboard/
@@ -27,4 +27,4 @@ Disallow: /*?plan=
 Disallow: /*?utm_
 
 # Sitemaps
-Sitemap: https://flashtts.com/sitemap.xml
+Sitemap: https://www.flashtts.com/sitemap.xml

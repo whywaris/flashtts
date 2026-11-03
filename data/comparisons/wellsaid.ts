@@ -1,4 +1,4 @@
-import { ComparisonData } from './elevenlabs';
+﻿import { ComparisonData } from './elevenlabs';
 
 export const wellsaidData: ComparisonData = {
   competitorName: 'WellSaid Labs',
@@ -8,20 +8,20 @@ export const wellsaidData: ComparisonData = {
   hero: {
     badge: 'HONEST COMPARISON',
     title: 'FlashTTS vs WellSaid Labs: Same Quality, 81% Less Cost',
-    subheadline: "WellSaid Labs charges $49/month for English-only voices — with no voice cloning, no free plan, and a 5,000 character clip limit. FlashTTS gives you 200,000 characters, 19 languages, and voice cloning for just $9/month."
+    subheadline: "WellSaid Labs charges $49/month for English-only voices - with no voice cloning, no free plan, and a 5,000 character clip limit. FlashTTS gives you 200,000 characters, 19 languages, and voice cloning for just $9/month."
   },
   verdictCards: [
     {
       icon: 'dollar',
       title: '81% Cheaper',
-      text: 'FlashTTS starts at $9/mo. WellSaid Labs starts at $49/mo. Same studio quality — fraction of cost.',
+      text: 'FlashTTS starts at $9/mo. WellSaid Labs starts at $49/mo. Same studio quality - fraction of cost.',
       badge: 'FlashTTS Wins',
       badgeColor: 'green'
     },
     {
       icon: 'lightning', // Multi-language maps to lightning/zap
       title: '19 vs 1 Language',
-      text: 'FlashTTS supports 19 languages. WellSaid Labs is English only — limiting your global reach.',
+      text: 'FlashTTS supports 19 languages. WellSaid Labs is English only - limiting your global reach.',
       badge: 'FlashTTS Wins',
       badgeColor: 'green'
     },
@@ -52,7 +52,7 @@ export const wellsaidData: ComparisonData = {
   },
   warningSection: {
     title: 'Every Clip Capped at 5,000 Characters',
-    text: 'WellSaid Labs limits every single audio clip to 5,000 characters on their Maker plan. A single blog post intro can exceed that. Long-form creators — podcasters, audiobook producers, course creators — have to manually split every script into dozens of clips, then stitch them together. FlashTTS has no clip length limits on any paid plan.',
+    text: 'WellSaid Labs limits every single audio clip to 5,000 characters on their Maker plan. A single blog post intro can exceed that. Long-form creators - podcasters, audiobook producers, course creators - have to manually split every script into dozens of clips, then stitch them together. FlashTTS has no clip length limits on any paid plan.',
     source: 'WellSaid Labs Maker Plan terms',
     mathCard: {
       title: 'A 10-minute YouTube script = ~8,000 chars',
@@ -62,7 +62,7 @@ export const wellsaidData: ComparisonData = {
   },
   pricingBreakdown: {
     heading: 'The Real Cost Difference',
-    subtext: "Switch to FlashTTS — more languages, more features, less cost.",
+    subtext: "Switch to FlashTTS - more languages, more features, less cost.",
     creators: [
       {
         type: 'Solo YouTube Creator',
@@ -110,23 +110,23 @@ export const wellsaidData: ComparisonData = {
   faqs: [
     {
       q: 'Is FlashTTS cheaper than WellSaid Labs?',
-      a: 'Yes — significantly. FlashTTS starts at $9/month with 200,000 characters, 19 language support, and voice cloning included. WellSaid Labs starts at $49/month for English-only voices, no voice cloning, and a 5,000 character clip limit. That makes FlashTTS 81% cheaper at entry level.'
+      a: 'Yes - significantly. FlashTTS starts at $9/month with 200,000 characters, 19 language support, and voice cloning included. WellSaid Labs starts at $49/month for English-only voices, no voice cloning, and a 5,000 character clip limit. That makes FlashTTS 81% cheaper at entry level.'
     },
     {
       q: 'Does WellSaid Labs support multiple languages?',
-      a: 'No — WellSaid Labs only supports English. This makes it unsuitable for creators who need to produce content in Spanish, Hindi, Arabic, French, or any other language. FlashTTS supports 19 languages on all paid plans, making it the stronger choice for global content creators.'
+      a: 'No - WellSaid Labs only supports English. This makes it unsuitable for creators who need to produce content in Spanish, Hindi, Arabic, French, or any other language. FlashTTS supports 19 languages on all paid plans, making it the stronger choice for global content creators.'
     },
     {
       q: 'Does WellSaid Labs include voice cloning?',
-      a: 'No — WellSaid Labs does not offer voice cloning. They provide pre-built voice avatars which you cannot customize with your own voice. FlashTTS includes voice cloning on all paid plans starting from $9/month, allowing you to clone your voice in under 60 seconds.'
+      a: 'No - WellSaid Labs does not offer voice cloning. They provide pre-built voice avatars which you cannot customize with your own voice. FlashTTS includes voice cloning on all paid plans starting from $9/month, allowing you to clone your voice in under 60 seconds.'
     },
     {
       q: 'What is the best WellSaid Labs alternative for content creators?',
-      a: 'For content creators who need affordable, multilingual AI voiceovers with voice cloning, FlashTTS is the strongest WellSaid Labs alternative. It offers 200,000 characters for $9/month, supports 19 languages, includes voice cloning, has no clip length limits, and starts with a free tier — no credit card required.'
+      a: 'For content creators who need affordable, multilingual AI voiceovers with voice cloning, FlashTTS is the strongest WellSaid Labs alternative. It offers 200,000 characters for $9/month, supports 19 languages, includes voice cloning, has no clip length limits, and starts with a free tier - no credit card required.'
     },
     {
       q: 'Is there a free plan on FlashTTS unlike WellSaid Labs?',
-      a: 'Yes. FlashTTS offers a permanent free tier with 10,000 characters per month — no credit card required. WellSaid Labs only offers a 7-day trial with limited voice access, after which you must upgrade to a paid plan starting at $49/month.'
+      a: 'Yes. FlashTTS offers a permanent free tier with 10,000 characters per month - no credit card required. WellSaid Labs only offers a 7-day trial with limited voice access, after which you must upgrade to a paid plan starting at $49/month.'
     }
   ]
 };

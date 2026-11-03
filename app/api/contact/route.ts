@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // ✅ Sanitize — prevent XSS/injection
+    // ✅ Sanitize - prevent XSS/injection
     function escapeHtml(str: string): string {
       return str
         .replace(/&/g, '&amp;')
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       from: 'FlashTTS Contact <noreply@flashtts.com>',
       to: process.env.OWNER_NOTIFICATION_EMAIL!,
       replyTo: safeEmail,
-      subject: `📩 Contact: ${safeSubject} — from ${safeName}`,
+      subject: `📩 Contact: ${safeSubject} - from ${safeName}`,
       html: `
         <div style="font-family: sans-serif;
           max-width: 600px; margin: 0 auto;
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
     await resend.emails.send({
       from: 'FlashTTS <noreply@flashtts.com>',
       to: safeEmail,
-      subject: "We received your message — FlashTTS",
+      subject: "We received your message - FlashTTS",
       html: `
         <div style="font-family: sans-serif;
           max-width: 600px; margin: 0 auto;
@@ -139,14 +139,14 @@ export async function POST(req: NextRequest) {
           </div>
 
           <p style="font-size: 14px; color: #666;">
-            — The FlashTTS Team
+            - The FlashTTS Team
           </p>
 
           <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
 
           <p style="font-size: 12px; color: #999;">
             flashtts.com · 
-            <a href="https://flashtts.com" style="color: #E8522A;">
+            <a href="https://www.flashtts.com" style="color: #E8522A;">
               Visit Website
             </a>
           </p>

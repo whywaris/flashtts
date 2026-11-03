@@ -21,13 +21,27 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
     async function checkAdmin() {
       const supabase = createClient()
       const { data: { user: userRes } } = await supabase.auth.getUser()
-      if (!userRes) { router.push('/login'); return; }
+      if (!userRes) {
+        const loginUrl = window.location.hostname.startsWith('admin.')
+          ? `https://www.flashtts.com/login?next=${encodeURIComponent(window.location.href)}`
+          : `/login?next=${encodeURIComponent(window.location.pathname)}`
+        window.location.href = loginUrl
+        return
+      }
       setUser(userRes)
+
+      const userEmail = (userRes.email || '').toLowerCase().trim()
+      const ADMIN_EMAILS = [
+        'primezillayt01@gmail.com',
+        'akbarhun0@gmail.com',
+      ]
 
       const { data: profileRes } = await supabase.from('profiles').select('*').eq('id', userRes.id).single()
       setProfile(profileRes)
 
-      if (profileRes?.role !== 'admin') {
+      const isUserAdmin = ADMIN_EMAILS.includes(userEmail) || profileRes?.role === 'admin'
+
+      if (!isUserAdmin) {
         setIsAdmin(false)
         setLoading(false)
         return

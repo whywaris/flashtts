@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -25,12 +25,12 @@ const PLAN_BADGE: Record<string, { bg: string; color: string; label: string }> =
 };
 
 function formatNumber(n: number | null | undefined) {
-  if (n == null) return '—';
+  if (n == null) return '-';
   return n.toLocaleString();
 }
 
 function formatDate(iso: string | null | undefined) {
-  if (!iso) return '—';
+  if (!iso) return '-';
   return new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 

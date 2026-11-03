@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
@@ -209,7 +209,7 @@ export default function AnnouncementsPage() {
                 }} />
               </div>
               <span style={{ fontSize: '13px', color: '#374151', fontWeight: 600 }}>
-                {form.is_active ? 'Active — visible to users' : 'Inactive — hidden from users'}
+                {form.is_active ? 'Active - visible to users' : 'Inactive - hidden from users'}
               </span>
             </div>
 

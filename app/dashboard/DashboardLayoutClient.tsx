@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
     LayoutDashboard, FileText, Mic, Bookmark,
     Settings, CreditCard, Zap, LogOut, Menu,
-    Library, MessageSquare, Sun, Moon,
+    Library, MessageSquare, Sun, Moon, Shield,
 } from 'lucide-react';
 import AnnouncementBanner from '@/components/AnnouncementBanner';
 import { createClient } from '@/utils/supabase/client';
@@ -18,6 +18,7 @@ interface Profile {
     plan?: string | null;
     credits_used?: number;
     credits_limit?: number;
+    role?: string | null;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -238,6 +239,19 @@ function Sidebar({ profile, email, onSignOut, open, onClose }: {
                             />
                         ))}
                     </div>
+
+                    {/* Admin (Only visible to verified admins) */}
+                    {(profile?.role === 'admin' || email === 'primezillayt01@gmail.com' || email === 'akbarhun0@gmail.com') && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '6px' }}>
+                            <GroupLabel>Administration</GroupLabel>
+                            <NavItem
+                                href="/admin"
+                                icon={Shield}
+                                label="Admin Panel"
+                                active={pathname.startsWith('/admin')}
+                            />
+                        </div>
+                    )}
                 </nav>
 
                 {/* ── User Card ── */}
@@ -426,7 +440,7 @@ export default function DashboardLayoutClient({ children }: { children: React.Re
 
             const { data } = await supabase
                 .from('profiles')
-                .select('id, full_name, plan, credits_used, credits_limit')
+                .select('id, full_name, plan, credits_used, credits_limit, role')
                 .eq('id', user.id)
                 .single();
 

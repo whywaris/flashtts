@@ -16,7 +16,16 @@ function getTuningParams(textLanguage: string, voiceLanguage: string = 'en') {
   return { cfg_weight: 0.4, exaggeration: 0.5 };
 }
 
-// ─── Character limits per plan ────────────────────────────────────────────────
+// ─── Per-request character limits per plan ────────────────────────────────────
+const PLAN_CHAR_LIMITS: Record<string, number> = {
+  free:    3000,
+  starter: 5000,
+  creator: 10000,
+  pro:     25000,
+  studio:  50000,
+};
+
+// ─── Monthly credit pool limits per plan ─────────────────────────────────────
 const PLAN_LIMITS: Record<string, number> = {
   free: 10000,
   starter: 200000,
@@ -24,6 +33,34 @@ const PLAN_LIMITS: Record<string, number> = {
   pro: 1000000,
   studio: 3000000,
 };
+
+// ─── Split text into sentence-aware chunks ────────────────────────────────────
+function splitIntoChunks(text: string, maxChunkSize: number = 2800): string[] {
+  const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+  const chunks: string[] = [];
+  let current = '';
+  for (const sentence of sentences) {
+    if ((current + sentence).length > maxChunkSize) {
+      if (current.trim()) chunks.push(current.trim());
+      current = sentence;
+    } else {
+      current += sentence;
+    }
+  }
+  if (current.trim()) chunks.push(current.trim());
+  return chunks;
+}
+
+// ─── Concatenate WAV buffers (standard 44-byte PCM header) ───────────────────
+function concatenateWavBuffers(buffers: Buffer[]): Buffer {
+  const HEADER_SIZE = 44;
+  const audioData = buffers.map(b => b.slice(HEADER_SIZE));
+  const totalDataLength = audioData.reduce((sum, b) => sum + b.length, 0);
+  const header = Buffer.from(buffers[0].slice(0, HEADER_SIZE));
+  header.writeUInt32LE(totalDataLength + HEADER_SIZE - 8, 4);
+  header.writeUInt32LE(totalDataLength, 40);
+  return Buffer.concat([header, ...audioData]);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,6 +82,7 @@ export async function POST(req: NextRequest) {
     const plan = profile?.plan || 'free';
     const creditsUsed = profile?.credits_used || 0;
     const limit = PLAN_LIMITS[plan] || PLAN_LIMITS.free;
+    const charLimit = PLAN_CHAR_LIMITS[plan] ?? 3000;
 
     // ─── Parse request ────────────────────────────────────────────────────
     const body = await req.json();

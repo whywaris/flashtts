@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { Twitter, Youtube, Linkedin, Facebook } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -12,36 +11,16 @@ export default function Footer() {
           {/* COLUMN 1: BRAND */}
           <div className="md:col-span-4 flex flex-col items-center md:items-start text-center md:text-left">
             <Link href="/" className="flex items-center gap-2 group mb-6">
-              <div className="w-8 h-8 rounded-lg bg-[#E8522A] flex items-center justify-center text-white font-extrabold text-[16px] shadow-lg shadow-[#E8522A]/20 transition-transform group-hover:scale-105">
+              <div aria-hidden="true" className="w-8 h-8 rounded-lg bg-[#E8522A] flex items-center justify-center text-white font-extrabold text-[16px] shadow-lg shadow-[#E8522A]/20 transition-transform group-hover:scale-105">
                 F
               </div>
               <span className="font-['Syne'] font-[800] text-[20px] text-slate-900 tracking-tight">
                 FlashTTS
               </span>
             </Link>
-            <p className="text-[14px] text-slate-500 leading-relaxed max-w-[320px] mb-8">
+            <p className="text-[14px] text-slate-500 leading-relaxed max-w-[320px]">
               Stop paying for voice actors. Generate studio-quality audio in seconds. Built for creators who publish daily.
             </p>
-            
-            {/* SOCIAL ICONS */}
-            <div className="flex items-center gap-3">
-              {[
-                { Icon: Twitter, href: 'https://x.com/flashtts' },
-                { Icon: Youtube, href: 'https://youtube.com/@flashtts' },
-                { Icon: Linkedin, href: 'https://linkedin.com/company/flashtts' },
-                { Icon: Facebook, href: 'https://facebook.com/flashtts' },
-              ].map(({ Icon, href }, i) => (
-                <Link 
-                  key={i} 
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 transition-all duration-200 hover:bg-[#E8522A] hover:text-white"
-                >
-                  <Icon size={18} />
-                </Link>
-              ))}
-            </div>
           </div>
 
           {/* COLUMN 2: PRODUCT */}
@@ -51,9 +30,9 @@ export default function Footer() {
               <li><Link href="/text-to-speech" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Text to Speech</Link></li>
               <li><Link href="/voice-cloning" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Voice Cloning</Link></li>
               <li><Link href="/audiobook" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Audiobooks</Link></li>
+              <li><Link href="/tools" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Tools</Link></li>
               <li><Link href="/pricing" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Pricing</Link></li>
               <li><Link href="/blog" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Blog</Link></li>
-              <li><Link href="/tools" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Tools</Link></li>
             </ul>
           </div>
 
@@ -87,7 +66,7 @@ export default function Footer() {
         {/* BOTTOM BAR */}
         <div className="py-10 border-t border-black/5 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
           <p className="text-[13px] text-slate-400 font-medium">
-            © 2025 FlashTTS. All rights reserved.
+            © {new Date().getFullYear()} FlashTTS. All rights reserved.
           </p>
           <p className="text-[13px] text-slate-400 font-medium italic">
             Made for creators who never stop publishing.

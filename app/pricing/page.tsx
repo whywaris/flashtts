@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -147,7 +147,7 @@ export default function PricingPage() {
               Simple, <span className="text-[#E8522A]">Scale-Ready</span> Pricing.
             </h1>
             <p className="text-[17px] sm:text-[19px] text-slate-500 max-w-[550px] mx-auto leading-relaxed mb-8">
-              Start free — upgrade when you're ready. Every plan includes commercial rights and zero watermarks.
+              Start free - upgrade when you're ready. Every plan includes commercial rights and zero watermarks.
             </p>
           </motion.div>
 

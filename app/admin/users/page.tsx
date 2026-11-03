@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState, useRef } from 'react'
 import { Search, Mail, X, CheckCircle2, AlertCircle } from 'lucide-react'
@@ -242,7 +242,7 @@ export default function UsersManager() {
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
 
-                    {/* Col 1 — User */}
+                    {/* Col 1 - User */}
                     <td style={{ padding: '14px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#f3f4f6', border: '1px solid #e5e5e5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '13px', color: '#111', flexShrink: 0 }}>
@@ -259,7 +259,7 @@ export default function UsersManager() {
                       </div>
                     </td>
 
-                    {/* Col 2 — Plan dropdown + Save */}
+                    {/* Col 2 - Plan dropdown + Save */}
                     <td style={{ padding: '14px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <select
@@ -290,7 +290,7 @@ export default function UsersManager() {
                       </div>
                     </td>
 
-                    {/* Col 3 — Credit limit input */}
+                    {/* Col 3 - Credit limit input */}
                     <td style={{ padding: '14px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <input
@@ -312,12 +312,12 @@ export default function UsersManager() {
                       </div>
                     </td>
 
-                    {/* Col 4 — Joined */}
+                    {/* Col 4 - Joined */}
                     <td style={{ padding: '14px 16px', fontSize: '12px', color: '#374151', whiteSpace: 'nowrap' }}>
                       {new Date(user.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </td>
 
-                    {/* Col 5 — Status badge */}
+                    {/* Col 5 - Status badge */}
                     <td style={{ padding: '14px 16px' }}>
                       {user.is_banned ? (
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '3px 10px', borderRadius: '20px', fontSize: '10px', fontWeight: 700, background: '#fee2e2', color: '#991b1b', border: '1px solid #fecaca' }}>
@@ -330,7 +330,7 @@ export default function UsersManager() {
                       )}
                     </td>
 
-                    {/* Col 6 — Actions */}
+                    {/* Col 6 - Actions */}
                     <td style={{ padding: '14px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <Link

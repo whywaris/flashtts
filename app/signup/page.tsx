@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
@@ -83,7 +83,7 @@ export default function SignupPage() {
                 </Link>
 
                 <h1 className="text-3xl font-black font-['Instrument Serif'] text-[#0a0a0f] mb-2 tracking-tight">Create account</h1>
-                <p className="text-[#6b6878] font-medium mb-8">Start free — 10,000 characters every month.</p>
+                <p className="text-[#6b6878] font-medium mb-8">Start free - 10,000 characters every month.</p>
 
                 <button type="button" onClick={handleGoogleLogin} className="w-full py-4 bg-white border border-[#e5e0d8] rounded-2xl font-bold text-sm text-[#0a0a0f] hover:bg-[#fafaf8] transition-all flex items-center justify-center gap-3">
                     <svg width="20" height="20" viewBox="0 0 48 48">

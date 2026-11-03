@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -174,7 +174,7 @@ export default function DashboardPage() {
                 </p>
                 <p style={{ fontSize: '12px', color: 'var(--muted)', margin: '6px 0 0', fontWeight: 500 }}>
                   {stat.label}{' '}
-                  <span style={{ opacity: 0.6 }}>— {stat.sub}</span>
+                  <span style={{ opacity: 0.6 }}>- {stat.sub}</span>
                 </p>
               </div>
             </div>

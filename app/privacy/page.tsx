@@ -1,9 +1,13 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import LegalLayout from '@/components/legal/LegalLayout';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Privacy Policy | FlashTTS Data Protection',
   description: 'Understand how FlashTTS collects, uses, and protects your personal information.',
+  alternates: {
+    canonical: 'https://www.flashtts.com/privacy',
+  },
 };
 
 export default function PrivacyPage() {
@@ -19,7 +23,7 @@ export default function PrivacyPage() {
         <p>
           FlashTTS ("we", "our", or "us") is committed to protecting your privacy. 
           This Privacy Policy explains how we collect, use, and share information 
-          about you when you use our services at flashtts.com.
+          about you when you use our services at https://www.flashtts.com.
         </p>
 
         <h2>Information We Collect</h2>
@@ -27,7 +31,7 @@ export default function PrivacyPage() {
         <h3>Information You Provide</h3>
         <ul>
           <li><strong>Account Information</strong>: Name, email address, and encrypted passwords.</li>
-          <li><strong>Payment Information</strong>: Processed securely via Stripe. We never store your full credit card details on our servers.</li>
+          <li><strong>Payment Information</strong>: Processed securely via Lemon Squeezy, our Merchant of Record and payment gateway. We never store your full credit card details on our servers.</li>
           <li><strong>Profile Information</strong>: Usernames, avatars, and preference settings.</li>
           <li><strong>Content You Create</strong>: Text inputs for TTS, voice recordings for cloning, and generated audio assets.</li>
         </ul>
@@ -38,6 +42,21 @@ export default function PrivacyPage() {
           <li><strong>Device Information</strong>: Browser type, operating system, and IP address for security auditing.</li>
           <li><strong>Cookies</strong>: Essential cookies for authentication and optional analytics cookies to improve our platform.</li>
         </ul>
+
+        <h2>Third-Party Advertising & Cookies</h2>
+        <p>
+          We use third-party advertising companies, including Google AdSense, to serve ads when you visit our website. These companies may use cookies, web beacons, and other tracking technologies to collect information about your visits to this and other websites in order to provide personalized advertisements about goods and services of interest to you.
+        </p>
+        <p>
+          Google&apos;s use of advertising cookies enables it and its partners to serve ads based on your visit to FlashTTS and/or other sites on the Internet. Users may opt out of personalized advertising by visiting{' '}
+          <a href="https://adssettings.google.com/" target="_blank" rel="noopener noreferrer">
+            Google Ads Settings
+          </a>{' '}
+          or{' '}
+          <a href="https://www.aboutads.info/" target="_blank" rel="noopener noreferrer">
+            aboutads.info
+          </a>.
+        </p>
 
         <h2>How We Use Your Information</h2>
         <p>We use your information to:</p>
@@ -57,7 +76,7 @@ export default function PrivacyPage() {
         </p>
         <ul>
           <li><strong>Supabase</strong>: For secure database and authentication services.</li>
-          <li><strong>Stripe</strong>: For encrypted payment processing.</li>
+          <li><strong>Lemon Squeezy</strong>: As our Merchant of Record and payment processor for PCI-compliant billing and subscription management.</li>
           <li><strong>Resend</strong>: For reliable transactional email delivery.</li>
           <li><strong>Cloudflare</strong>: For secure asset storage and performance optimization.</li>
         </ul>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React, { useState, useRef } from 'react'
 import Link from 'next/link'
@@ -155,12 +155,12 @@ export default function VoiceCloningPageClient({ faqs }: { faqs: { q: string, a:
               INSTANT VOICE CLONING
             </div>
             <h1 style={{ fontSize: 'clamp(40px, 5vw, 64px)', fontWeight: 800, color: colors.text, lineHeight: 1.1, margin: '0 0 24px', letterSpacing: '-0.02em', fontFamily: 'Syne, sans-serif' }}>
-              AI Voice Cloning —<br />
+              AI Voice Cloning -<br />
               Clone Any Voice<br />
               <span style={{ color: colors.accent }}>in 3 Seconds.</span>
             </h1>
             <p style={{ fontSize: 'clamp(16px, 2vw, 20px)', color: colors.muted, margin: '0 0 40px', lineHeight: 1.6, maxWidth: '540px' }}>
-              Upload a 10-second audio sample or record live. FlashTTS clones any voice instantly — use it for TTS, audiobooks, dubbing, and more.
+              Upload a 10-second audio sample or record live. FlashTTS clones any voice instantly - use it for TTS, audiobooks, dubbing, and more.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '32px' }}>
               {/* Added min-width and text-align to buttons to make them uniform */}
@@ -294,7 +294,7 @@ export default function VoiceCloningPageClient({ faqs }: { faqs: { q: string, a:
               )}
 
               <p style={{ textAlign: 'center', color: colors.muted, fontSize: '12px', margin: '20px 0 0', fontWeight: 500 }}>
-                Interactive demo — Full cloning available after signup
+                Interactive demo - Full cloning available after signup
               </p>
 
             </div>
@@ -471,7 +471,7 @@ export default function VoiceCloningPageClient({ faqs }: { faqs: { q: string, a:
                 <p style={{ fontSize: '16px', color: colors.text, fontStyle: 'italic', margin: '24px 0 32px', lineHeight: 1.6, position: 'relative', zIndex: 1 }}>"{t.q}"</p>
                 <div>
                   <div style={{ fontSize: '14px', marginBottom: '8px' }}>{t.r}</div>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: colors.text }}>— {t.a}</div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: colors.text }}>- {t.a}</div>
                 </div>
               </div>
             ))}

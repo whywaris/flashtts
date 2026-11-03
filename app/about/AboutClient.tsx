@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -13,7 +13,10 @@ import {
   ArrowRight,
   TrendingUp,
   Users,
-  MessageSquare
+  MessageSquare,
+  Github,
+  Linkedin,
+  Twitter
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -63,7 +66,7 @@ export default function AboutClient() {
               className="text-[17px] md:text-[19px] text-slate-600 max-w-[600px] mx-auto leading-relaxed"
             >
               Every month, the same problem. Great content 
-              idea. Perfect script. Then — credits gone. 
+              idea. Perfect script. Then - credits gone. 
               Upgrade or wait. We got tired of it. So we 
               built the platform we actually wanted to use.
             </motion.p>
@@ -138,7 +141,7 @@ export default function AboutClient() {
                 Voice actors charge $50+ per minute. 
                 AI voice platforms charge premium prices 
                 for limited credits that run out mid-month. 
-                Creators were stuck — either spend a fortune 
+                Creators were stuck - either spend a fortune 
                 or compromise on quality.
               </p>
               <p>
@@ -184,7 +187,7 @@ export default function AboutClient() {
               as a production studio in New York. Where 
               a first-time podcaster sounds as good as 
               a 10-year veteran. Where publishing daily 
-              is limited by your ideas — not your budget.
+              is limited by your ideas - not your budget.
             </motion.p>
             <motion.div variants={fadeUp}>
               <Link 
@@ -217,7 +220,7 @@ export default function AboutClient() {
               { 
                 icon: <Target size={32} />, 
                 title: "Creators First", 
-                text: "Every feature we build starts with one question — does this help a creator publish more, faster? If the answer is no, we don't build it.",
+                text: "Every feature we build starts with one question - does this help a creator publish more, faster? If the answer is no, we don't build it.",
                 color: "text-emerald-500",
                 bg: "bg-emerald-50",
                 border: "border-emerald-200"
@@ -284,7 +287,7 @@ export default function AboutClient() {
               {
                 label: "The Idea",
                 title: "What if credits never ran out?",
-                text: "We started building a platform around one simple idea — give creators so many credits that running out is never a concern again."
+                text: "We started building a platform around one simple idea - give creators so many credits that running out is never a concern again."
               },
               {
                 label: "The Build",
@@ -342,6 +345,105 @@ export default function AboutClient() {
         </div>
       </section>
 
+      {/* ── SECTION: FOUNDER & LEADERSHIP (E-E-A-T) ── */}
+      <section className="py-24 px-4 sm:px-6">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="text-center max-w-[700px] mx-auto mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-[#E8522A]/20 bg-[#E8522A]/5 text-[#E8522A] font-bold text-[12px] uppercase tracking-widest mb-4">
+              <Users size={14} fill="currentColor" /> LEADERSHIP & ENGINEERING
+            </div>
+            <h2 className="font-['Syne'] font-extrabold text-[32px] md:text-[44px] text-slate-900 leading-tight mb-4">
+              The People Behind FlashTTS
+            </h2>
+            <p className="text-[16px] text-slate-600 leading-relaxed font-medium">
+              We are an independent team of audio engineers, machine learning practitioners, and content creators dedicated to transparent voice AI.
+            </p>
+          </div>
+
+          <motion.div 
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+            className="max-w-[850px] mx-auto bg-white rounded-3xl p-8 sm:p-12 border border-[#e2dfdb] shadow-xl shadow-black/5"
+          >
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+              {/* Founder Avatar */}
+              <div className="relative shrink-0">
+                <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-gradient-to-br from-[#E8522A] to-[#ff7347] flex items-center justify-center text-white font-['Syne'] font-extrabold text-3xl sm:text-4xl shadow-xl shadow-[#E8522A]/25 border-4 border-white">
+                  AL
+                </div>
+                <div className="absolute -bottom-2 -right-2 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-white">
+                  Founder
+                </div>
+              </div>
+
+              {/* Bio & Details */}
+              <div className="flex-1 text-center md:text-left">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
+                  <div>
+                    <h3 className="font-['Syne'] font-extrabold text-[24px] sm:text-[28px] text-slate-900">
+                      Avis Littel
+                    </h3>
+                    <p className="text-[13px] font-bold text-[#E8522A] uppercase tracking-wider">
+                      Founder & Lead Engineer
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-center md:justify-end gap-2.5">
+                    <Link
+                      href="https://github.com/flashtts"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-[#E8522A] hover:text-white transition-colors"
+                      aria-label="GitHub profile"
+                    >
+                      <Github size={16} />
+                    </Link>
+                    <Link
+                      href="https://linkedin.com/company/flashtts"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-[#E8522A] hover:text-white transition-colors"
+                      aria-label="LinkedIn profile"
+                    >
+                      <Linkedin size={16} />
+                    </Link>
+                    <Link
+                      href="https://x.com/flashtts"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-[#E8522A] hover:text-white transition-colors"
+                      aria-label="X profile"
+                    >
+                      <Twitter size={16} />
+                    </Link>
+                  </div>
+                </div>
+
+                <p className="text-[15px] text-slate-600 leading-relaxed mb-6 font-medium">
+                  Avis is a speech synthesis engineer and audio systems architect with 8+ years of experience in neural TTS pipelines, voice cloning models, and low-latency audio processing. After spending thousands of dollars on restrictive legacy voice APIs that kept running out of credits mid-project, he founded FlashTTS to provide creators with 10x more voice generation capacity, unmetered cloning, and honest pricing.
+                </p>
+
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-4 border-t border-slate-100 text-xs font-semibold text-slate-600">
+                  <span className="bg-slate-50 px-3 py-1 rounded-full border border-slate-200">
+                    Neural TTS Architectures
+                  </span>
+                  <span className="bg-slate-50 px-3 py-1 rounded-full border border-slate-200">
+                    Voice Cloning & DSP
+                  </span>
+                  <span className="bg-slate-50 px-3 py-1 rounded-full border border-slate-200">
+                    Low-Latency Audio
+                  </span>
+                  <span className="bg-slate-50 px-3 py-1 rounded-full border border-slate-200">
+                    Creator Economics
+                  </span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ── SECTION 7: FINAL CTA ── */}
       <section className="py-24 px-4 sm:px-6">
         <div className="max-w-[1200px] mx-auto bg-[#E8522A] rounded-[40px] px-6 py-20 sm:p-24 text-center relative overflow-hidden shadow-2xl">
@@ -356,7 +458,7 @@ export default function AboutClient() {
               href="/signup" 
               className="inline-flex py-5 px-10 bg-slate-900 hover:bg-black text-white rounded-xl font-['Syne'] font-bold text-[18px] items-center justify-center gap-3 transition-transform hover:-translate-y-1 shadow-xl"
             >
-              Start Free — No Credit Card <ArrowRight size={20} />
+              Start Free - No Credit Card <ArrowRight size={20} />
             </Link>
             <p className="mt-8 text-[13px] font-bold text-white/60">
               Free forever plan · No credit card · Cancel anytime

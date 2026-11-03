@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -21,7 +21,7 @@ const PLAN_LIMITS: Record<string, number> = {
 const SAMPLE_TEXTS = [
   "He smiled, remembering the comfort of his grandmother's words, a simple truth that stayed with him through every long, quiet journey.",
   "The city never sleeps. Lights flicker, voices echo, and somewhere beneath it all, a story is waiting to be told.",
-  "She took a deep breath, closed her eyes, and stepped forward — into the unknown — and it was exactly where she needed to be.",
+  "She took a deep breath, closed her eyes, and stepped forward - into the unknown - and it was exactly where she needed to be.",
 ];
 
 const LABEL_OPTS = ['Joyful', 'Calm', 'Energetic', 'Serious', 'Podcast', 'Gaming & Fiction', 'Narration', 'Corporate', 'Warm'];
@@ -452,7 +452,7 @@ export default function VoiceCloningPage() {
       <StepBar step={step} />
 
       {/* ══════════════════════════════════════════════════════════════════════
-          STEP 1 — Add Voice
+          STEP 1 - Add Voice
       ══════════════════════════════════════════════════════════════════════ */}
       {step === 1 && (
         <div>
@@ -464,7 +464,7 @@ export default function VoiceCloningPage() {
               justifyContent: 'space-between', gap: '10px',
             }}>
               <span style={{ fontSize: '13px', color: '#f87171' }}>
-                Voice limit reached ({savedCount}/{voiceLimit}) — upgrade your plan
+                Voice limit reached ({savedCount}/{voiceLimit}) - upgrade your plan
               </span>
               <a href="/dashboard/billing" style={{ fontSize: '12px', fontWeight: 700, color: ACCENT, textDecoration: 'none' }}>
                 Upgrade →
@@ -583,7 +583,7 @@ export default function VoiceCloningPage() {
 
                 <div>
                   <p style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)', margin: '0 0 7px' }}>
-                    {recording ? `Recording — ${fmtTime(recSeconds)}` : 'Record Audio'}
+                    {recording ? `Recording - ${fmtTime(recSeconds)}` : 'Record Audio'}
                   </p>
                   <p style={{ fontSize: '12px', color: 'var(--muted)', margin: 0 }}>
                     Single speaker only
@@ -691,7 +691,7 @@ export default function VoiceCloningPage() {
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-          STEP 2 — Preview
+          STEP 2 - Preview
       ══════════════════════════════════════════════════════════════════════ */}
       {step === 2 && (
         <div style={{ maxWidth: '660px', margin: '0 auto' }}>
@@ -761,7 +761,7 @@ export default function VoiceCloningPage() {
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-          STEP 3 — Save
+          STEP 3 - Save
       ══════════════════════════════════════════════════════════════════════ */}
       {step === 3 && (
         <div style={{ maxWidth: '680px', margin: '0 auto' }}>
@@ -883,7 +883,7 @@ export default function VoiceCloningPage() {
               <textarea
                 value={description}
                 onChange={e => setDescription(e.target.value.slice(0, 1000))}
-                placeholder="Describe your voice — tone, use-case, style..."
+                placeholder="Describe your voice - tone, use-case, style..."
                 style={{
                   width: '100%', boxSizing: 'border-box',
                   padding: '14px 16px 32px',

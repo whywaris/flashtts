@@ -1,9 +1,13 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import LegalLayout from '@/components/legal/LegalLayout';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Refund Policy | FlashTTS Satisfaction Guarantee',
   description: 'Learn about our 7-day money-back guarantee and subscription refund terms.',
+  alternates: {
+    canonical: 'https://www.flashtts.com/refund',
+  },
 };
 
 export default function RefundPage() {
@@ -25,7 +29,7 @@ export default function RefundPage() {
         <p>
           New subscribers on any paid plan (Starter, Creator, Pro, Agency) are 
           eligible for a full refund within <strong>7 days</strong> of their 
-          first payment — no questions asked.
+          first payment - no questions asked.
         </p>
 
         <h3>How to request a refund:</h3>

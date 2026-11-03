@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import React from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
@@ -7,9 +7,9 @@ import VoiceCloneTrial from '@/components/VoiceCloneTrial';
 import homeStyles from '../page.module.css';
 
 export const metadata: Metadata = {
-  title: 'AI Voice Cloning — Clone Any Voice in Seconds | FlashTTS',
+  title: 'AI Voice Cloning - Clone Any Voice in Seconds | FlashTTS',
   description:
-    'Clone any voice instantly with FlashTTS AI voice cloning. Create a perfect digital replica of your voice for TTS, podcasts, audiobooks & content creation. Free to start — no signup required.',
+    'Clone any voice instantly with FlashTTS AI voice cloning. Create a perfect digital replica of your voice for TTS, podcasts, audiobooks & content creation. Free to start - no signup required.',
   keywords: [
     'ai voice cloning', 'voice cloning', 'voice cloning ai', 'free voice cloning',
     'ai voice cloning free', 'best ai voice cloning', 'instant voice cloning',
@@ -20,18 +20,18 @@ export const metadata: Metadata = {
     'ai voice cloning online free', 'voice cloning free ai',
   ].join(', '),
   openGraph: {
-    title: 'AI Voice Cloning — Clone Any Voice in Seconds | FlashTTS',
-    description: 'Clone any voice instantly with FlashTTS. Record 30 seconds — no signup required.',
+    title: 'AI Voice Cloning - Clone Any Voice in Seconds | FlashTTS',
+    description: 'Clone any voice instantly with FlashTTS. Record 30 seconds - no signup required.',
     type: 'website',
-    url: 'https://flashtts.com/voice-cloning',
+    url: 'https://www.flashtts.com/voice-cloning',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'AI Voice Cloning — Clone Any Voice | FlashTTS',
-    description: 'Clone any voice in seconds with AI. Free — no signup required.',
+    title: 'AI Voice Cloning - Clone Any Voice | FlashTTS',
+    description: 'Clone any voice in seconds with AI. Free - no signup required.',
   },
   alternates: {
-    canonical: 'https://flashtts.com/voice-cloning',
+    canonical: 'https://www.flashtts.com/voice-cloning',
   },
 };
 
@@ -50,7 +50,7 @@ export default function VoiceCloningPage() {
             <h1>Your voice,<br /><em>digitized</em><br />in seconds.</h1>
             <p className={homeStyles.heroSub}>
               FlashTTS uses state-of-the-art AI to create a perfect digital replica of your voice. 
-              Upload a snippet or record live — use your clone for any content.
+              Upload a snippet or record live - use your clone for any content.
             </p>
             <div className={homeStyles.heroActions}>
               <Link href="/signup" className={homeStyles.btnHeroCta}>Start Cloning Free</Link>

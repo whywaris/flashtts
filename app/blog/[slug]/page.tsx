@@ -10,6 +10,7 @@ import Footer from '@/components/layout/Footer';
 import ReadingProgress from '../../components/blog/ReadingProgress';
 import TableOfContents from '../../components/blog/TableOfContents';
 import ShareButtons from '../../components/blog/ShareButtons';
+import AdUnit from '@/components/ads/AdUnit';
 import { 
   Clock, Calendar, User, 
   Twitter, Linkedin, Github, 
@@ -35,7 +36,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     openGraph: {
       title: post.meta_title || post.title,
       description: post.meta_description || post.excerpt,
-      images: post.cover_image ? [post.cover_image] : [],
+      images: post.cover_image ? [post.cover_image] : ['/og-image.png'],
       type: 'article',
     },
   };
@@ -100,7 +101,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     year: 'numeric' 
   });
 
-  const fullUrl = `https://flashtts.com/blog/${slug}`;
+  const fullUrl = `https://www.flashtts.com/blog/${slug}`;
 
   return (
     <div className="bg-[#faf8f3] text-[#0a0a0f] font-['Geist',sans-serif] selection:bg-[#ff4d1c] selection:text-white min-h-screen">
@@ -116,19 +117,21 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             "@type": "BlogPosting",
             "headline": post.title,
             "description": post.excerpt,
-            "image": post.cover_image,
+            "image": post.cover_image || "https://www.flashtts.com/og-image.png",
             "datePublished": post.published_at,
             "dateModified": post.updated_at,
             "author": {
-              "@type": "Organization",
-              "name": "FlashTTS"
+              "@type": "Person",
+              "name": "Avis Littel",
+              "jobTitle": "Founder & Lead Engineer",
+              "url": "https://www.flashtts.com/about"
             },
             "publisher": {
               "@type": "Organization",
               "name": "FlashTTS",
               "logo": {
                 "@type": "ImageObject",
-                "url": "https://flashtts.com/logo.png"
+                "url": "https://www.flashtts.com/logo.png"
               }
             }
           })
@@ -163,11 +166,14 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
           <div className="flex flex-wrap items-center justify-between gap-6 py-6 border-y border-[rgba(10,10,15,0.08)]">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-[#ff4d1c] text-white flex items-center justify-center font-black text-xs">
-                FT
+              <div className="w-10 h-10 rounded-full bg-[#E8522A] text-white flex items-center justify-center font-black text-xs shadow-md shadow-[#E8522A]/20">
+                AL
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-black text-[#0a0a0f]">FlashTTS Team</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-black text-[#0a0a0f]">Avis Littel</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8522A] bg-[#E8522A]/10 px-2 py-0.5 rounded-full">Founder</span>
+                </div>
                 <div className="flex items-center gap-4 text-[11px] font-bold text-[rgba(10,10,15,0.4)] uppercase tracking-wider">
                   <span className="flex items-center gap-1.5"><Calendar size={13} strokeWidth={2.5} className="text-[#ff4d1c]" /> {publishDate}</span>
                   <span className="flex items-center gap-1.5"><Clock size={13} strokeWidth={2.5} className="text-[#ff4d1c]" /> {calculateReadTime(post.content || '')} min read</span>
@@ -222,6 +228,44 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 }) }} />
               </article>
 
+              {/* In-Article / Post-Content Ad Unit */}
+              <AdUnit label="Advertisement" className="my-10" />
+
+              {/* Author Bio Box (E-E-A-T) */}
+              <div className="mt-14 p-6 sm:p-8 bg-white rounded-2xl border border-[rgba(10,10,15,0.08)] shadow-sm">
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#E8522A] to-[#ff7347] flex items-center justify-center text-white font-['Syne'] font-extrabold text-xl shadow-lg shadow-[#E8522A]/20 shrink-0">
+                    AL
+                  </div>
+                  <div className="flex-1 text-center sm:text-left">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                      <div>
+                        <h4 className="font-['Syne'] font-extrabold text-lg text-[#0a0a0f]">
+                          Avis Littel
+                        </h4>
+                        <p className="text-xs font-bold text-[#E8522A] uppercase tracking-wider">
+                          Founder & Lead Audio Engineer
+                        </p>
+                      </div>
+                      <Link 
+                        href="/about" 
+                        className="text-xs font-bold text-slate-500 hover:text-[#E8522A] transition-colors"
+                      >
+                        About the Founder →
+                      </Link>
+                    </div>
+                    <p className="text-sm text-[#6b6878] leading-relaxed mb-4">
+                      Avis is a speech synthesis engineer and audio systems architect with 8+ years developing neural TTS pipelines, voice cloning models, and low-latency audio processing. He writes about neural voice synthesis, text-to-speech technology, and audio engineering.
+                    </p>
+                    <div className="flex items-center justify-center sm:justify-start gap-2.5">
+                      <SocialIcon href="https://github.com/flashtts" icon={Github} />
+                      <SocialIcon href="https://www.linkedin.com/company/flashtts" icon={Linkedin} />
+                      <SocialIcon href="https://x.com/flashtts" icon={Twitter} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Related Posts Section */}
               {relatedPosts && relatedPosts.length > 0 && (
                 <div className="mt-24 pt-16 border-t border-[rgba(10,10,15,0.08)]">
@@ -264,20 +308,29 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             <aside className="lg:w-[260px] flex-shrink-0 flex flex-col gap-6">
                <div className="sticky top-[100px] flex flex-col gap-6">
                   
-                  {/* Author Card */}
+                  {/* Author Card (E-E-A-T) */}
                   <div className="bg-white rounded-2xl border border-[rgba(10,10,15,0.08)] p-6 shadow-sm">
-                    <div className="w-14 h-14 rounded-full bg-[#ff4d1c] text-white flex items-center justify-center font-black text-lg mb-4">
-                      FT
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#E8522A] to-[#ff7347] text-white flex items-center justify-center font-['Syne'] font-black text-lg mb-4 shadow-md shadow-[#E8522A]/20">
+                      AL
                     </div>
-                    <h4 className="font-bold font-['Instrument_Serif'] text-[#0a0a0f] text-lg mb-1">FlashTTS Team</h4>
-                    <p className="text-[13px] text-[#6b6878] mb-5 leading-relaxed">
-                      AI voice and audio technology experts. Building the future of text-to-speech.
+                    <h4 className="font-bold font-['Instrument_Serif'] text-[#0a0a0f] text-lg">Avis Littel</h4>
+                    <p className="text-xs font-bold text-[#E8522A] uppercase tracking-wider mb-2">
+                      Founder & Lead Engineer
                     </p>
-                    <div className="flex gap-2.5">
+                    <p className="text-[13px] text-[#6b6878] mb-4 leading-relaxed">
+                      Speech synthesis researcher & audio systems architect building unmetered voice AI for creators.
+                    </p>
+                    <div className="flex gap-2.5 mb-4">
                       <SocialIcon href="https://x.com/flashtts" icon={Twitter} />
                       <SocialIcon href="https://www.linkedin.com/company/flashtts" icon={Linkedin} />
                       <SocialIcon href="https://github.com/flashtts" icon={Github} />
                     </div>
+                    <Link
+                      href="/about"
+                      className="block text-center py-2 px-3 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 hover:border-[#E8522A] hover:text-[#E8522A] transition-colors"
+                    >
+                      View Founder Bio
+                    </Link>
                   </div>
 
                   {/* Share Card */}

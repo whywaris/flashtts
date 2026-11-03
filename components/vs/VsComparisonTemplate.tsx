@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import AdUnit from '@/components/ads/AdUnit';
 import { ComparisonData } from '@/data/comparisons/elevenlabs';
 
 const fadeUp = {
@@ -55,19 +56,19 @@ export default function VsComparisonTemplate({ data }: Props) {
         "@type": "ListItem",
         "position": 1,
         "name": "Home",
-        "item": "https://flashtts.com"
+        "item": "https://www.flashtts.com"
       },
       {
         "@type": "ListItem",
         "position": 2,
         "name": "Comparisons",
-        "item": "https://flashtts.com/vs"
+        "item": "https://www.flashtts.com/vs"
       },
       {
         "@type": "ListItem",
         "position": 3,
         "name": `FlashTTS vs ${data.competitorName}`,
-        "item": `https://flashtts.com/vs/${data.slug}`
+        "item": `https://www.flashtts.com/vs/${data.slug}`
       }
     ]
   };
@@ -356,7 +357,7 @@ export default function VsComparisonTemplate({ data }: Props) {
                 {data.warningSection.quote && (
                   <div className="bg-white/60 border border-amber-100 p-8 rounded-[24px] mb-8 relative italic font-medium text-slate-600 after:content-[''] after:absolute after:left-10 after:top-[-10px] after:w-5 after:h-5 after:bg-white/60 after:border-t after:border-l after:border-amber-100 after:rotate-45">
                     "{data.warningSection.quote}"
-                    <div className="mt-4 text-[13px] font-bold text-slate-400 uppercase tracking-widest not-italic">— {data.warningSection.quoteSource}</div>
+                    <div className="mt-4 text-[13px] font-bold text-slate-400 uppercase tracking-widest not-italic">- {data.warningSection.quoteSource}</div>
                   </div>
                 )}
 
@@ -439,6 +440,11 @@ export default function VsComparisonTemplate({ data }: Props) {
         </div>
       </section>
 
+      {/* Ad Placement Container */}
+      <div className="max-w-[1000px] mx-auto px-4 mb-20">
+        <AdUnit label="Advertisement" />
+      </div>
+
       {/* ── 7. FINAL CTA ── */}
       <section className="pb-32 px-4 sm:px-6">
         <div className="max-w-[1200px] mx-auto bg-[#E8522A] rounded-[40px] px-6 py-20 sm:p-24 text-center relative overflow-hidden shadow-2xl">
@@ -447,12 +453,22 @@ export default function VsComparisonTemplate({ data }: Props) {
             <h2 className="font-['Syne'] font-extrabold text-[40px] sm:text-[56px] text-white tracking-tight leading-[1.1] mb-6">Ready to Stop Running Out of Credits?</h2>
             <p className="text-[18px] text-white/80 max-w-[500px] mx-auto mb-10">Join thousands of creators who switched to FlashTTS for more audio, less cost.</p>
             <Link href="/signup" className="inline-flex py-5 px-10 bg-slate-900 hover:bg-black text-white rounded-xl font-['Syne'] font-bold text-[18px] items-center justify-center gap-3 transition-transform hover:-translate-y-1 shadow-xl">
-              Start Free — No Credit Card →
+              Start Free - No Credit Card →
             </Link>
             <p className="mt-6 text-[13px] font-bold text-white/60">Free forever plan · No credit card · Cancel anytime</p>
           </div>
         </div>
       </section>
+
+      {/* ── TRADEMARK DISCLAIMER ── */}
+      <div className="max-w-[1200px] mx-auto px-6 py-6 text-center text-[12px] text-slate-400">
+        <p>
+          Disclaimer: ElevenLabs, Murf AI, Speechify, LOVO, WellSaid Labs, and NaturalReader are trademarks
+          of their respective owners. FlashTTS is an independent platform and is not affiliated with,
+          sponsored by, or endorsed by any of these companies. Comparison data is gathered from
+          publicly available information as of 2026.
+        </p>
+      </div>
 
       <Footer />
     </div>

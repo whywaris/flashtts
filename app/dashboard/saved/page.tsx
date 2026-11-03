@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -162,7 +162,7 @@ export default function SavedVoicesPage() {
       <div style={{ marginBottom: 20, padding: '14px 16px', background: isAtLimit ? 'rgba(239,68,68,0.06)' : T.card, border: `1px solid ${isAtLimit ? 'rgba(239,68,68,0.2)' : T.border}`, borderRadius: 12 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <span style={{ fontSize: 12, color: T.muted, fontWeight: 600 }}>
-            Voice Slots — <span style={{ textTransform: 'capitalize', color: T.accent }}>{userPlan}</span> Plan
+            Voice Slots - <span style={{ textTransform: 'capitalize', color: T.accent }}>{userPlan}</span> Plan
           </span>
           <span style={{ fontSize: 12, fontWeight: 700, color: isAtLimit ? '#ef4444' : T.text }}>{voices.length} / {voiceLimit}</span>
         </div>
@@ -171,7 +171,7 @@ export default function SavedVoicesPage() {
         </div>
         {isAtLimit && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-            <span style={{ fontSize: 12, color: '#ef4444' }}>Limit reached — delete a voice or upgrade</span>
+            <span style={{ fontSize: 12, color: '#ef4444' }}>Limit reached - delete a voice or upgrade</span>
             <a href="/dashboard/billing" style={{ fontSize: 12, fontWeight: 700, color: T.accent, textDecoration: 'none' }}>Upgrade →</a>
           </div>
         )}
@@ -215,7 +215,7 @@ export default function SavedVoicesPage() {
                   position: 'relative', opacity: isRemoving ? 0.5 : 1, transition: 'all 0.2s',
                 }}
               >
-                {/* Delete button — top-right */}
+                {/* Delete button - top-right */}
                 <button
                   onClick={() => handleRemove(v)}
                   disabled={isRemoving}

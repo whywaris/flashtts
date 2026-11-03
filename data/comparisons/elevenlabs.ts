@@ -1,4 +1,4 @@
-export interface ComparisonData {
+﻿export interface ComparisonData {
   competitorName: string;
   slug: string;
   metaTitle: string;
@@ -81,11 +81,11 @@ export const elevenLabsData: ComparisonData = {
   competitorName: 'ElevenLabs',
   slug: 'elevenlabs',
   metaTitle: 'FlashTTS vs ElevenLabs: 6x More Credits at Half the Price',
-  metaDescription: 'Comparing FlashTTS vs ElevenLabs? FlashTTS gives creators 6x more voice credits at half the price. Same studio quality — smarter pricing. See the full breakdown.',
+  metaDescription: 'Comparing FlashTTS vs ElevenLabs? FlashTTS gives creators 6x more voice credits at half the price. Same studio quality - smarter pricing. See the full breakdown.',
   hero: {
     badge: 'HONEST COMPARISON',
     title: 'FlashTTS vs ElevenLabs: More Credits, Half the Price',
-    subheadline: "ElevenLabs is great. But if you're a creator who publishes daily, you'll run out of credits every single month. FlashTTS gives you 6x more — without the premium price tag."
+    subheadline: "ElevenLabs is great. But if you're a creator who publishes daily, you'll run out of credits every single month. FlashTTS gives you 6x more - without the premium price tag."
   },
   verdictCards: [
     {
@@ -176,7 +176,7 @@ export const elevenLabsData: ComparisonData = {
   faqs: [
     {
       q: 'Is FlashTTS cheaper than ElevenLabs?',
-      a: 'Yes — significantly. At the Creator plan level, FlashTTS costs $19/mo vs ElevenLabs $22/mo, but gives you 5x more characters (500k vs 100k). At Pro level, FlashTTS is $39 vs ElevenLabs $99 — with double the credits.'
+      a: 'Yes - significantly. At the Creator plan level, FlashTTS costs $19/mo vs ElevenLabs $22/mo, but gives you 5x more characters (500k vs 100k). At Pro level, FlashTTS is $39 vs ElevenLabs $99 - with double the credits.'
     },
     {
       q: 'Does FlashTTS have the same voice quality as ElevenLabs?',
@@ -188,11 +188,11 @@ export const elevenLabsData: ComparisonData = {
     },
     {
       q: 'What happens when I run out of credits on ElevenLabs?',
-      a: 'On ElevenLabs, you either upgrade to a higher plan or purchase additional credits at a premium rate. FlashTTS gives you significantly more credits per dollar, reducing the chance of running out mid-month — especially important for daily content creators.'
+      a: 'On ElevenLabs, you either upgrade to a higher plan or purchase additional credits at a premium rate. FlashTTS gives you significantly more credits per dollar, reducing the chance of running out mid-month - especially important for daily content creators.'
     },
     {
       q: 'Is there a free trial on FlashTTS?',
-      a: 'Yes. FlashTTS offers a free tier with 10,000 characters — no credit card required. You can test voices, generate audio, and explore the platform before committing to any paid plan.'
+      a: 'Yes. FlashTTS offers a free tier with 10,000 characters - no credit card required. You can test voices, generate audio, and explore the platform before committing to any paid plan.'
     }
   ]
 };

@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
+﻿import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   const cookieStore = await cookies()
 
   // Build the redirect response first so we can attach cookies directly to it.
-  // Using cookieStore.set() alone is NOT reliable here — cookies set that way
+  // Using cookieStore.set() alone is NOT reliable here - cookies set that way
   // may not be included in a manually created NextResponse.redirect().
   const redirectUrl = new URL(next.startsWith('/') ? next : '/dashboard', origin)
   const response = NextResponse.redirect(redirectUrl)

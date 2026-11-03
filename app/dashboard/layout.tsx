@@ -1,8 +1,8 @@
-import type { Metadata } from 'next';
+﻿import type { Metadata } from 'next';
 import DashboardLayoutClient from './DashboardLayoutClient';
 
 export const metadata: Metadata = {
-    title: { default: 'Dashboard — FlashTTS', template: '%s — FlashTTS' },
+    title: { default: 'Dashboard - FlashTTS', template: '%s - FlashTTS' },
 };
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

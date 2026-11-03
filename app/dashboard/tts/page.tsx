@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useCallback, useMemo, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
@@ -21,7 +21,7 @@ const TEMPLATES = [
   { id: 'youtube', label: '📺 YouTube Script', text: "Welcome back to the channel! Today we're diving into something that's going to completely change the way you think about [TOPIC]. Stay with me because this is important..." },
   { id: 'podcast', label: '🎙️ Podcast Intro', text: "Hey everyone, welcome back to another episode. I'm your host and today we have an incredible topic lined up for you. Let's jump right in..." },
   { id: 'story', label: '📖 Story Narrator', text: "In a world where nothing was quite as it seemed, one person dared to look beyond the ordinary and discover something extraordinary..." },
-  { id: 'ad', label: '📢 Advertisement', text: "Tired of [PROBLEM]? Introducing the solution you've been waiting for. Fast, simple, and incredibly effective. Try it today — you won't look back." },
+  { id: 'ad', label: '📢 Advertisement', text: "Tired of [PROBLEM]? Introducing the solution you've been waiting for. Fast, simple, and incredibly effective. Try it today - you won't look back." },
   { id: 'edu', label: '🎓 E-Learning', text: "Welcome to today's lesson. By the end of this session, you'll understand exactly how [TOPIC] works and how to apply it in real-world situations." },
   { id: 'custom', label: '✍️ Custom', text: "" },
 ];
