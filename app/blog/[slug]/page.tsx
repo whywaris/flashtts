@@ -300,35 +300,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               )}
             </div>
 
-            {/* Right Sidebar - Author + CTA */}
+            {/* Right Sidebar - Share + CTA */}
             <aside className="lg:w-[260px] flex-shrink-0 flex flex-col gap-6">
                <div className="sticky top-[100px] flex flex-col gap-6">
                   
-                  {/* Author Card (E-E-A-T) */}
-                  <div className="bg-white rounded-2xl border border-[rgba(10,10,15,0.08)] p-6 shadow-sm">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#E8522A] to-[#ff7347] text-white flex items-center justify-center font-['Syne'] font-black text-lg mb-4 shadow-md shadow-[#E8522A]/20">
-                      AL
-                    </div>
-                    <h4 className="font-bold font-['Instrument_Serif'] text-[#0a0a0f] text-lg">Avis Littel</h4>
-                    <p className="text-xs font-bold text-[#E8522A] uppercase tracking-wider mb-2">
-                      Founder & Lead Engineer
-                    </p>
-                    <p className="text-[13px] text-[#6b6878] mb-4 leading-relaxed">
-                      Speech synthesis researcher & audio systems architect building unmetered voice AI for creators.
-                    </p>
-                    <div className="flex gap-2.5 mb-4">
-                      <SocialIcon href="https://x.com/flashtts" icon={Twitter} />
-                      <SocialIcon href="https://www.linkedin.com/company/flashtts" icon={Linkedin} />
-                      <SocialIcon href="https://github.com/flashtts" icon={Github} />
-                    </div>
-                    <Link
-                      href="/about"
-                      className="block text-center py-2 px-3 rounded-lg bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 hover:border-[#E8522A] hover:text-[#E8522A] transition-colors"
-                    >
-                      View Founder Bio
-                    </Link>
-                  </div>
-
                   {/* Share Card */}
                   <div className="bg-white rounded-2xl border border-[rgba(10,10,15,0.08)] p-6 shadow-sm">
                     <h4 className="text-[12px] font-bold font-['Instrument_Serif'] uppercase tracking-[0.2em] text-[#6b6878] mb-4 text-center">
