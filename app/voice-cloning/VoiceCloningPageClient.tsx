@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import React, { useState, useRef } from 'react'
 import Link from 'next/link'
@@ -306,7 +306,7 @@ export default function VoiceCloningPageClient({ faqs }: { faqs: { q: string, a:
       {/* ── SECTION 2: TRUST BAR ── */}
       <section style={{ borderBottom: `1px solid ${colors.border}`, backgroundColor: colors.card, padding: '32px 20px' }}>
         <div style={{ maxWidth: '1000px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: '24px', color: colors.text, fontSize: '15px', fontWeight: 700 }}>
-          <div>50,000+ Voices Cloned</div>
+          <div>Ultra-Fast Neural Cloning</div>
           <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: colors.muted }} />
           <div>30+ Languages</div>
           <div style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: colors.muted }} />
@@ -598,7 +598,7 @@ export default function VoiceCloningPageClient({ faqs }: { faqs: { q: string, a:
             Ready to clone your voice?
           </h2>
           <p style={{ fontSize: '18px', color: colors.muted, margin: '0 0 40px', lineHeight: 1.6 }}>
-            Join 50,000+ creators producing studio-quality audio in their own voice.
+            Start producing studio-quality audio in your own authentic voice.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Link href="/signup" style={{ padding: '18px 48px', backgroundColor: colors.accent, color: '#fff', borderRadius: '12px', fontSize: '18px', fontWeight: 700, textDecoration: 'none', display: 'inline-block', transition: 'all 0.2s', marginBottom: '16px' }}>

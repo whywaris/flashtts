@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next';
+import type { Metadata } from 'next';
 import React from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/layout/Navbar';
@@ -139,7 +139,7 @@ export default function VoiceCloningPage() {
       <section className={homeStyles.ctaSection}>
         <div className={homeStyles.container}>
           <h2 className={homeStyles.sectionTitle} style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)', marginBottom: '32px' }}> Ready to clone your voice?</h2>
-          <p className={homeStyles.sectionDesc} style={{ margin: '0 auto 48px' }}>Join 12,000+ creators and start producing high-quality audio today.</p>
+          <p className={homeStyles.sectionDesc} style={{ margin: '0 auto 48px' }}>Start producing studio-quality audio with your own digital voice clone today.</p>
           <div className={homeStyles.heroActions} style={{ justifyContent: 'center' }}>
             <Link href="/signup" className={homeStyles.btnHeroCta} style={{ padding: '16px 40px' }}>Get Started Free</Link>
           </div>

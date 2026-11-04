@@ -325,10 +325,10 @@ export default function AboutClient() {
         <div className="max-w-[1200px] mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { n: "12,000+", l: "Creators Worldwide" },
-              { n: "50M+", l: "Characters Generated" },
-              { n: "19", l: "Languages Supported" },
-              { n: "4.9★", l: "Average Rating" }
+              { n: "29+", l: "Global Languages" },
+              { n: "44.1kHz", l: "Studio Master Audio" },
+              { n: "<0.8s", l: "Generation Latency" },
+              { n: "100%", l: "Commercial Rights" }
             ].map((s, i) => (
               <div key={i} className="text-center">
                 <div className="font-['Syne'] font-extrabold text-[32px] md:text-[40px] text-slate-900 mb-1 leading-none">
@@ -431,8 +431,8 @@ export default function AboutClient() {
           <div className="relative z-10">
             <h2 className="font-['Syne'] font-extrabold text-[40px] sm:text-[56px] text-white tracking-tight leading-[1.1] mb-6">Ready to Never Run Out Again?</h2>
             <p className="text-[18px] text-white/80 max-w-[600px] mx-auto mb-10">
-              Join 12,000+ creators who switched to FlashTTS for more credits, 
-              better quality, and a price that actually makes sense.
+              Get started with FlashTTS for generous character credits, 
+              studio audio quality, and honest creator pricing.
             </p>
             <Link 
               href="/signup" 

@@ -1,11 +1,11 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Play, Shield, Clock, Coins, Star,
+  Play, Shield, Clock, Coins,
   ArrowRight, Zap, ChevronDown, CheckCircle2
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
@@ -33,31 +33,31 @@ const FAQS = [
   },
   {
     q: 'How does FlashTTS compare to ElevenLabs?',
-    a: 'FlashTTS gives you 6.5x more credits than ElevenLabs at the same price point. Our Starter plan includes 200,000 characters for $9/month - ElevenLabs charges $6 for only 30,000. Same studio quality, dramatically more content.'
+    a: 'FlashTTS is designed for high-volume creators. On entry-level tiers, FlashTTS Starter provides 200,000 characters for $9/month ($0.045 per 1,000 chars), whereas ElevenLabs Starter offers 30,000 characters for $6/month ($0.20 per 1,000 chars) as of 2026 published pricing - giving creators up to 6.6x more character capacity per dollar.'
   },
   {
     q: 'Can I clone my own voice exactly?',
     a: 'Absolutely. Upload a clean 10-30 second audio sample of your voice and our engine creates an ultra-realistic clone. You can then generate thousands of words in your exact voice - instantly, without ever recording again.'
   },
   {
-    q: 'Will YouTube or TikTok detect my audio as AI?',
-    a: 'Our voices are designed to be indistinguishable from human recordings. Thousands of creators use FlashTTS daily for monetized YouTube and TikTok content without any platform issues. All generated audio passes standard content detection.'
+    q: 'Can I monetize YouTube and TikTok videos with FlashTTS audio?',
+    a: 'Yes. All generations on paid plans include 100% royalty-free commercial rights. Both YouTube and TikTok allow monetization of videos using AI-generated voiceovers as long as your content is original and complies with platform community guidelines. Following YouTube’s synthetic media disclosure policy, creators can simply check the realistic altered/synthetic audio box in Creator Studio during upload.'
   },
   {
     q: 'What happens when I run out of credits?',
-    a: 'Unlike other platforms, we give you so many credits that running out mid-month is rarely a concern. If you do hit your limit, you can upgrade your plan instantly - no waiting, no delays. Your new credits are available immediately.'
+    a: 'Unlike other platforms, we give you generous monthly character allocations so running out mid-project is rare. If you do hit your limit, you can upgrade your plan or top up anytime, and new credits are available immediately.'
   },
   {
     q: 'Which languages are supported?',
-    a: 'FlashTTS supports 19 languages including English, Arabic, Hindi, Spanish, French, German, Japanese, Korean, Portuguese, Turkish, Italian, Dutch, Polish, Russian, Swedish, Norwegian, Finnish, Danish, and Greek - with native-sounding voices for each.'
+    a: 'FlashTTS supports 29+ languages including English, Hindi, Punjabi, Marathi, Gujarati, Spanish, French, German, Japanese, Korean, Arabic, Urdu, Portuguese, Italian, Dutch, and more - with native-sounding voices and accents for each.'
   },
   {
     q: 'Can I use FlashTTS for audiobooks?',
-    a: 'Yes - FlashTTS has a dedicated Audiobook Studio. Paste your entire manuscript, auto-detect chapters, select a voice, and generate a complete audiobook in MP3 format. No clip length limits on paid plans.'
+    a: 'Yes - FlashTTS has a dedicated Audiobook Studio. Paste your entire manuscript, auto-detect chapters, select a voice, and generate a complete audiobook in MP3 or WAV format compliant with ACX/Audible standards.'
   },
   {
     q: 'Why is this better than hiring a voice actor?',
-    a: 'Speed, cost, and flexibility. A professional voice actor charges $50-150+ per finished minute and takes 3-7 days to deliver. FlashTTS generates the same studio-quality audio in under 15 seconds for a fraction of the cost - and you can make unlimited retakes instantly.'
+    a: 'Speed, cost, and flexibility. A professional voice actor charges $50-150+ per finished minute and takes 3-7 days to deliver. FlashTTS generates studio-quality audio in under 15 seconds for a fraction of the cost - and you can make unlimited retakes instantly.'
   },
   {
     q: 'Is there a free plan?',
@@ -65,71 +65,7 @@ const FAQS = [
   },
   {
     q: 'What happens if I need to change my script later?',
-    a: 'Just paste your updated script and regenerate - no begging actors for retakes, no scheduling delays, no extra charges. Your script changes are live in seconds.'
-  },
-];
-
-// ── Testimonials ──
-const TESTIMONIALS = [
-  {
-    text: "I run 4 faceless YouTube channels. Before FlashTTS, I was spending $1,200/month on voice actors and editors. Now I generate everything myself in under an hour. The voices are completely undetectable - my audience has no idea.",
-    name: "David Chen",
-    role: "Faceless Channel Owner",
-    stat: "4 channels · 1.2M subscribers",
-    avatar: "DC",
-    avatarBg: "#1a3a5c",
-    rating: 5,
-    verified: true
-  },
-  {
-    text: "We produce 300+ TikTok videos per week for our agency clients. FlashTTS is the only tool that keeps up with our volume. The emotional voices are insane - sad, excited, authoritative - all in one click. Our client retention went up 40% after switching.",
-    name: "Sarah Jenkins",
-    role: "Content Agency Owner",
-    stat: "Agency · 300+ videos/week",
-    avatar: "SJ",
-    avatarBg: "#1a4a3a",
-    rating: 5,
-    verified: true
-  },
-  {
-    text: "I publish 3 podcast episodes a week. I cloned my voice once and now my AI clone does all the narration while I focus on research and strategy. Honestly sounds better than my real voice on some days.",
-    name: "Marcus Thorne",
-    role: "Podcast Creator",
-    stat: "Weekly show · 85K listeners",
-    avatar: "MT",
-    avatarBg: "#3a1a4a",
-    rating: 5,
-    verified: true
-  },
-  {
-    text: "I was paying ElevenLabs $99/month and still running out of credits halfway through the month. FlashTTS gave me 10x more credits for $39. Literally the same quality - I compared them side by side. No brainer switch.",
-    name: "Aisha Rahman",
-    role: "YouTube Educator",
-    stat: "Education channel · 220K subs",
-    avatar: "AR",
-    avatarBg: "#4a2a1a",
-    rating: 5,
-    verified: true
-  },
-  {
-    text: "I converted my 80,000 word business book into a full audiobook in one afternoon. The Audiobook Studio is genuinely impressive - auto-detected all 12 chapters and generated everything without a single error.",
-    name: "James Whitfield",
-    role: "Author & Entrepreneur",
-    stat: "Published author · 3 books",
-    avatar: "JW",
-    avatarBg: "#1a3a1a",
-    rating: 5,
-    verified: true
-  },
-  {
-    text: "Our Urdu content channel went from 2 videos a week to 14. FlashTTS was the only platform with proper Urdu support. The voices sound completely native - our Pakistani audience can't tell the difference.",
-    name: "Bilal Mahmood",
-    role: "Urdu Content Creator",
-    stat: "Urdu channel · 450K subscribers",
-    avatar: "BM",
-    avatarBg: "#2a1a3a",
-    rating: 5,
-    verified: true
+    a: 'Just paste your updated script and regenerate - no waiting for actors, no scheduling delays, and no extra fees. Your changes are live in seconds.'
   },
 ];
 
@@ -182,7 +118,7 @@ export default function HomePage() {
                 "@id": "https://www.flashtts.com/#website",
                 "url": "https://www.flashtts.com",
                 "name": "FlashTTS",
-                "description": "AI Voice Generator with 10x more credits than ElevenLabs",
+                "description": "High-fidelity AI voice generator with generous character limits, instant voice cloning, and dedicated audiobook studio.",
                 "publisher": {
                   "@id": "https://www.flashtts.com/#organization"
                 },
@@ -223,7 +159,7 @@ export default function HomePage() {
                 "applicationCategory": "MultimediaApplication",
                 "operatingSystem": "Web",
                 "url": "https://www.flashtts.com",
-                "description": "AI voice generator with 1000+ voices in 19 languages. 10x more credits than ElevenLabs. Voice cloning and audiobook studio included.",
+                "description": "AI voice generator with studio-grade voices in 29+ languages. High-volume character allocations, instant voice cloning, and dedicated audiobook studio.",
                 "offers": [
                   {
                     "@type": "Offer",
@@ -261,21 +197,14 @@ export default function HomePage() {
                     "description": "3,000,000 characters per month, unlimited voice clones"
                   }
                 ],
-                "aggregateRating": {
-                  "@type": "AggregateRating",
-                  "ratingValue": "4.9",
-                  "reviewCount": "2400",
-                  "bestRating": "5",
-                  "worstRating": "1"
-                },
                 "featureList": [
                   "AI Voice Generation",
                   "Voice Cloning",
-                  "19 Languages Supported",
-                  "1000+ Premium Voices",
-                  "Audiobook Studio",
-                  "Commercial Rights Included",
-                  "No Watermark on Paid Plans"
+                  "29+ Languages Supported",
+                  "Studio Quality Voices",
+                  "Dedicated Audiobook Studio",
+                  "Royalty-Free Commercial Rights Included",
+                  "No Watermarks on Paid Plans"
                 ]
               },
               {
@@ -294,7 +223,7 @@ export default function HomePage() {
                     "name": "How does FlashTTS compare to ElevenLabs?",
                     "acceptedAnswer": {
                       "@type": "Answer",
-                      "text": "FlashTTS gives you 6.5x more credits than ElevenLabs at the same price. Starter plan includes 200,000 chars for $9/mo vs ElevenLabs $6 for 30,000."
+                      "text": "FlashTTS provides up to 6.6x more character capacity per dollar on Starter tiers (200,000 characters for $9/month vs ElevenLabs 30,000 characters for $6/month based on 2026 published pricing)."
                     }
                   },
                   {
@@ -328,7 +257,7 @@ export default function HomePage() {
           <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="flex flex-col items-center">
 
             <motion.div variants={fadeUp} className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-[#E8522A]/20 bg-[#E8522A]/5 text-[#E8522A] font-bold text-[11px] sm:text-[12px] uppercase tracking-widest mb-8" style={{ maxWidth: 'fit-content', whiteSpace: 'nowrap', overflow: 'hidden' }}>
-              AI Voice Generator Trusted by Creators 🎙️
+              Studio-Grade AI Voice Generator 🎙️
             </motion.div>
 
             <motion.h1 variants={fadeUp} className="font-['Syne'] font-extrabold text-[44px] sm:text-[60px] lg:text-[76px] leading-[1.05] tracking-tight max-w-[900px] mb-6 text-slate-900">
@@ -336,7 +265,7 @@ export default function HomePage() {
             </motion.h1>
 
             <motion.p variants={fadeUp} className="text-[17px] sm:text-[20px] text-slate-600 max-w-[650px] mb-10 leading-relaxed">
-              10x more credits than ElevenLabs at half the price. Built for creators who publish daily.
+              Generous character credits and ultra-realistic voice synthesis. Built for creators who publish daily.
             </motion.p>
 
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
@@ -348,28 +277,20 @@ export default function HomePage() {
               </a>
             </motion.div>
 
-            {/* Social Proof */}
-            <motion.div variants={fadeUp} className="mt-12 flex flex-col items-center gap-4">
-              <div className="flex items-center gap-3">
-                <div className="flex -space-x-2">
-                  {["/avatars/male/1.svg", "/avatars/female/2.svg", "/avatars/male/3.svg", "/avatars/female/4.svg", "/avatars/male/5.svg"].map((src, i) => (
-                    <div key={i} className="relative w-10 h-10 rounded-full border-2 border-[#F0EDE8] overflow-hidden bg-slate-100 shadow-sm">
-                      <Image src={src} alt={`User avatar ${i + 1}`} width={40} height={40} className="object-cover" />
-                    </div>
-                  ))}
-                </div>
-                <div className="flex flex-col items-start leading-tight">
-                  <div className="flex text-yellow-400 mb-0.5">
-                    {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="currentColor" />)}
-                  </div>
-                  <p className="text-slate-600 text-[14px] font-medium">
-                    Trusted by <span className="font-bold text-slate-900">12,000+</span> Creators
-                  </p>
-                </div>
-              </div>
-              <p className="text-slate-500 text-[13px] font-medium px-4 py-1.5 bg-slate-900/5 rounded-full border border-slate-900/5">
-                Youtubers, Podcasters & Faceless Channels
-              </p>
+            {/* Feature Highlights */}
+            <motion.div variants={fadeUp} className="mt-12 flex flex-wrap items-center justify-center gap-3">
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 border border-[#e2dfdb] text-[13px] font-semibold text-slate-700 shadow-sm">
+                <CheckCircle2 size={15} className="text-emerald-500 shrink-0" />
+                100% Royalty-Free Commercial Rights
+              </span>
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 border border-[#e2dfdb] text-[13px] font-semibold text-slate-700 shadow-sm">
+                <Zap size={15} className="text-[#E8522A] shrink-0" fill="currentColor" />
+                44.1kHz Studio Master Audio
+              </span>
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 border border-[#e2dfdb] text-[13px] font-semibold text-slate-700 shadow-sm">
+                <Shield size={15} className="text-blue-500 shrink-0" />
+                29+ Global Languages Supported
+              </span>
             </motion.div>
 
           </motion.div>
@@ -469,132 +390,89 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── 5. TESTIMONIALS ── */}
+      {/* ── 5. PRODUCTION WORKFLOWS ── */}
       <section className="py-24 sm:py-32 px-4 bg-white border-y border-[#e2dfdb]">
         <div className="max-w-[1200px] mx-auto">
           <div className="text-center mb-16">
-            <h2 className="font-['Syne'] font-extrabold text-[36px] sm:text-[44px] text-slate-900 tracking-tight">Trusted by scale-focused creators.</h2>
-            
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '10px',
-              marginTop: '12px',
-              padding: '8px 20px',
-              background: 'rgba(232,82,42,0.06)',
-              border: '1px solid rgba(232,82,42,0.15)',
-              borderRadius: '99px'
-            }}>
-              <div style={{ display: 'flex', gap: '3px' }}>
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={14} fill="#E8522A" color="#E8522A" />
-                ))}
-              </div>
-              <span style={{ fontSize: '13px', fontWeight: 700, color: '#E8522A' }}>
-                4.9 out of 5
-              </span>
-              <span style={{ fontSize: '13px', color: '#6b7280' }}>
-                from 2,400+ creators
-              </span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#E8522A]/10 text-[#E8522A] text-xs font-bold uppercase tracking-wider mb-3">
+              Use Cases & Production
             </div>
+            <h2 className="font-['Syne'] font-extrabold text-[36px] sm:text-[44px] text-slate-900 tracking-tight">
+              Engineered for daily publishing workflows.
+            </h2>
+            <p className="text-slate-600 text-base max-w-[620px] mx-auto mt-4 leading-relaxed">
+              Whether you publish daily shorts, produce multi-chapter audiobooks, or localize content for international audiences, FlashTTS delivers high throughput with zero quality compromise.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((testimonial, i) => (
-              <div key={i} style={{
-                background: 'white',
-                border: '1px solid #e2dfdb',
-                borderRadius: '24px',
-                padding: '28px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px',
-                position: 'relative',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  position: 'absolute',
-                  top: '20px',
-                  right: '24px',
-                  fontSize: '60px',
-                  color: '#E8522A',
-                  opacity: 0.08,
-                  fontFamily: 'Georgia, serif',
-                  lineHeight: 1,
-                  userSelect: 'none'
-                }}>
-                  "
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-[#FAF8F5] border border-[#e2dfdb] rounded-[24px] p-7 flex flex-col justify-between hover:border-[#E8522A]/40 transition-colors">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-[#E8522A]/10 text-[#E8522A] flex items-center justify-center font-bold text-xl mb-5">
+                  🎬
                 </div>
-
-                <div style={{ display: 'flex', gap: '3px' }}>
-                  {[...Array(5)].map((_, idx) => (
-                    <Star key={idx} size={14} fill="#E8522A" color="#E8522A" />
-                  ))}
-                </div>
-
-                <p style={{
-                  fontSize: '15px',
-                  color: '#374151',
-                  lineHeight: 1.75,
-                  margin: 0,
-                  flex: 1,
-                  fontStyle: 'italic'
-                }}>
-                  "{testimonial.text}"
+                <h3 className="font-['Syne'] font-bold text-[19px] text-slate-900 mb-2">
+                  Faceless & Short-Form Video
+                </h3>
+                <p className="text-[14px] text-slate-600 leading-relaxed">
+                  Generate broadcast-quality voiceovers for YouTube Shorts, Reels, and explainer channels with custom cadence, emotional pacing, and full commercial monetization rights.
                 </p>
-
-                <div style={{ height: '1px', background: '#e2dfdb' }} />
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    width: '44px',
-                    height: '44px',
-                    borderRadius: '50%',
-                    background: testimonial.avatarBg,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '14px',
-                    fontWeight: 700,
-                    color: 'white',
-                    flexShrink: 0,
-                    fontFamily: 'Syne, sans-serif'
-                  }}>
-                    {testimonial.avatar}
-                  </div>
-
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 700, color: '#111827', fontFamily: 'Syne, sans-serif' }}>
-                        {testimonial.name}
-                      </span>
-                      {testimonial.verified && (
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#3b82f6">
-                          <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      )}
-                    </div>
-                    <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
-                      {testimonial.role}
-                    </div>
-                    <div style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      marginTop: '4px',
-                      padding: '2px 8px',
-                      background: 'rgba(232,82,42,0.06)',
-                      border: '1px solid rgba(232,82,42,0.15)',
-                      borderRadius: '20px',
-                      fontSize: '10px',
-                      fontWeight: 700,
-                      color: '#E8522A'
-                    }}>
-                      {testimonial.stat}
-                    </div>
-                  </div>
-                </div>
               </div>
-            ))}
+              <div className="mt-6 pt-4 border-t border-[#e2dfdb]/70 text-xs font-semibold text-[#E8522A]">
+                Full Commercial Rights Included →
+              </div>
+            </div>
+
+            <div className="bg-[#FAF8F5] border border-[#e2dfdb] rounded-[24px] p-7 flex flex-col justify-between hover:border-[#E8522A]/40 transition-colors">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold text-xl mb-5">
+                  📖
+                </div>
+                <h3 className="font-['Syne'] font-bold text-[19px] text-slate-900 mb-2">
+                  Audiobook Studio & Publishing
+                </h3>
+                <p className="text-[14px] text-slate-600 leading-relaxed">
+                  Convert entire manuscripts into ACX and Audible-compliant multi-chapter audiobooks. Auto-detect chapters, apply consistent tone, and export in 44.1kHz MP3/WAV.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-[#e2dfdb]/70 text-xs font-semibold text-blue-600">
+                Multi-Chapter Batch Export →
+              </div>
+            </div>
+
+            <div className="bg-[#FAF8F5] border border-[#e2dfdb] rounded-[24px] p-7 flex flex-col justify-between hover:border-[#E8522A]/40 transition-colors">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-xl mb-5">
+                  🎙️
+                </div>
+                <h3 className="font-['Syne'] font-bold text-[19px] text-slate-900 mb-2">
+                  Instant Voice Cloning
+                </h3>
+                <p className="text-[14px] text-slate-600 leading-relaxed">
+                  Record a 10-second reference sample to clone your personal timbre and cadence. Keep your distinct creator identity across hundreds of episodes without microphone fatigue.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-[#e2dfdb]/70 text-xs font-semibold text-emerald-600">
+                10-Second Neural Cloning →
+              </div>
+            </div>
+
+            <div className="bg-[#FAF8F5] border border-[#e2dfdb] rounded-[24px] p-7 flex flex-col justify-between hover:border-[#E8522A]/40 transition-colors">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold text-xl mb-5">
+                  🌍
+                </div>
+                <h3 className="font-['Syne'] font-bold text-[19px] text-slate-900 mb-2">
+                  Multi-Language Localization
+                </h3>
+                <p className="text-[14px] text-slate-600 leading-relaxed">
+                  Expand global reach with native voices in 29+ languages, including Hindi, Punjabi, Urdu, Spanish, French, and Japanese, with native phonetics and regional accents.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-[#e2dfdb]/70 text-xs font-semibold text-amber-600">
+                29+ Native Regional Voices →
+              </div>
+            </div>
           </div>
 
           <div style={{
@@ -611,7 +489,7 @@ export default function HomePage() {
               marginBottom: '16px',
               fontWeight: 600
             }}>
-              Used by creators publishing on
+              Optimized for creators publishing on
             </p>
             <div style={{
               display: 'flex',
@@ -774,7 +652,7 @@ export default function HomePage() {
                   textTransform: 'uppercase',
                   fontFamily: 'Syne, sans-serif'
                 }}>
-                  Join 12,000+ Creators Today
+                  Generous Voice Credits For Every Creator
                 </span>
               </div>
 
