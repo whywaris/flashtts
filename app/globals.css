@@ -135,37 +135,129 @@
   /* ─── Prose Overrides for Blog ─── */
   .prose {
     max-width: none;
-    color: #6b6878;
-    line-height: 1.8;
+    color: #374151;
+    font-size: 1.05rem;
+    line-height: 1.85;
   }
-  .prose h1, .prose h2, .prose h3, .prose h4 {
-    font-family: 'Instrument Serif', serif;
+  .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+    font-family: 'Instrument Serif', Georgia, serif;
     color: #0a0a0f;
     font-weight: 700;
-    margin-top: 2em;
-    margin-bottom: 1em;
+    scroll-margin-top: 120px;
+  }
+  .prose h1 {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    line-height: 1.15;
+    margin-top: 2.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .prose h2 {
+    font-size: clamp(1.6rem, 3vw, 2.15rem);
+    line-height: 1.25;
+    margin-top: 2.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(10, 10, 15, 0.08);
+  }
+  .prose h3 {
+    font-size: clamp(1.25rem, 2.5vw, 1.6rem);
+    line-height: 1.35;
+    margin-top: 2.25rem;
+    margin-bottom: 0.75rem;
+  }
+  .prose h4, .prose h5, .prose h6 {
+    font-size: 1.2rem;
+    line-height: 1.4;
+    margin-top: 1.75rem;
+    margin-bottom: 0.5rem;
   }
   .prose p {
-    margin-bottom: 1.5em;
+    margin-bottom: 1.5rem;
+    color: #4b5563;
   }
-  .prose strong {
-    color: #0a0a0f;
+  .prose strong, .prose b {
+    color: #111827;
     font-weight: 700;
   }
-  .prose ul, .prose ol {
-    margin-bottom: 1.5em;
-    padding-left: 1.5em;
+  .prose em, .prose i {
+    font-style: italic;
+  }
+  .prose ul {
+    list-style-type: disc !important;
+    margin-top: 1rem;
+    margin-bottom: 1.75rem;
+    padding-left: 1.5rem;
+  }
+  .prose ol {
+    list-style-type: decimal !important;
+    margin-top: 1rem;
+    margin-bottom: 1.75rem;
+    padding-left: 1.5rem;
   }
   .prose li {
-    margin-bottom: 0.5em;
+    margin-bottom: 0.65rem;
+    line-height: 1.75;
+    color: #4b5563;
+  }
+  .prose li::marker {
+    color: #E8522A;
+    font-weight: 700;
+  }
+  .prose blockquote {
+    border-left: 4px solid #E8522A;
+    background: rgba(232, 82, 42, 0.04);
+    padding: 1.25rem 1.75rem;
+    border-radius: 0 16px 16px 0;
+    margin: 2rem 0;
+    font-style: italic;
+    color: #1f2937;
+    line-height: 1.75;
+  }
+  .prose code {
+    background: #f3f4f6;
+    padding: 0.2rem 0.45rem;
+    border-radius: 6px;
+    font-size: 0.88em;
+    font-family: monospace;
+    color: #E8522A;
+    border: 1px solid #e5e7eb;
+  }
+  .prose pre {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 1.25rem 1.5rem;
+    border-radius: 14px;
+    overflow-x: auto;
+    margin: 1.75rem 0;
+    line-height: 1.6;
+  }
+  .prose pre code {
+    background: transparent;
+    padding: 0;
+    border: none;
+    color: inherit;
   }
   .prose a {
-    color: #ff4d1c;
-    text-decoration: none;
+    color: #E8522A;
+    text-decoration: underline;
+    text-underline-offset: 3px;
     font-weight: 600;
+    transition: color 0.15s ease;
   }
   .prose a:hover {
-    text-decoration: underline;
+    color: #c03d19;
+  }
+  .prose img {
+    border-radius: 16px;
+    max-width: 100%;
+    height: auto;
+    margin: 2rem 0;
+    border: 1px solid #e5e7eb;
+  }
+  .prose hr {
+    border: 0;
+    border-top: 1px solid #e5e7eb;
+    margin: 3rem 0;
   }
 }
 

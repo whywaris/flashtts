@@ -11,6 +11,7 @@ import {
   MoreVertical, Search, Save, X, ExternalLink
 } from 'lucide-react'
 import Link from 'next/link'
+import { renderBlogHtml } from '@/lib/blog-parser'
 
 const ALLOWED_HTML_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'iframe']),
@@ -74,6 +75,26 @@ export default function BlogManager() {
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null)
   const [isAddingNew, setIsAddingNew] = useState(false)
   const [profile, setProfile] = useState<any>(null)
+  const [editorTab, setEditorTab] = useState<'write' | 'preview'>('write')
+
+  const insertFormat = (prefix: string, suffix: string = '') => {
+    const textarea = document.getElementById('blog-content-textarea') as HTMLTextAreaElement | null
+    if (!textarea) {
+      setContent(prev => prev + prefix + suffix)
+      return
+    }
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const selected = content.substring(start, end)
+    const replacement = prefix + (selected || 'text') + suffix
+    const newContent = content.substring(0, start) + replacement + content.substring(end)
+    setContent(newContent)
+    setTimeout(() => {
+      textarea.focus()
+      const newCursor = start + prefix.length + (selected ? selected.length : 4)
+      textarea.setSelectionRange(newCursor, newCursor)
+    }, 10)
+  }
 
   useEffect(() => {
     fetchPosts()
@@ -432,14 +453,113 @@ export default function BlogManager() {
                   </div>
 
                   {/* Main Editor Body */}
-                  <div className="space-y-3 pt-10 border-t border-[#f1f3f5]">
-                     <label className="text-[10px] font-black text-[#374151] uppercase tracking-widest px-1">Principal Content Body (Markdown/HTML Compatible)</label>
-                     <textarea 
-                        className="w-full min-h-[600px] border border-[#f1f3f5] outline-none text-[16px] font-medium leading-[1.8] bg-[#fcfdfe] p-10 rounded-[32px] focus:ring-8 focus:ring-[#f5c518]/5 focus:bg-white transition-all font-sans text-[#111827] shadow-inner"
-                        placeholder="Ignite the discourse here..."
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                     />
+                  <div className="space-y-4 pt-10 border-t border-[#f1f3f5]">
+                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <label className="text-[10px] font-black text-[#374151] uppercase tracking-widest px-1">
+                           Principal Content Body (Markdown & HTML Supported)
+                        </label>
+                        <div className="flex items-center gap-1 bg-[#f1f3f5] p-1 rounded-xl">
+                           <button
+                              type="button"
+                              onClick={() => setEditorTab('write')}
+                              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${editorTab === 'write' ? 'bg-white text-[#111827] shadow-sm' : 'text-[#6b7280] hover:text-[#111827]'}`}
+                           >
+                              Write
+                           </button>
+                           <button
+                              type="button"
+                              onClick={() => setEditorTab('preview')}
+                              className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${editorTab === 'preview' ? 'bg-[#111827] text-white shadow-sm' : 'text-[#6b7280] hover:text-[#111827]'}`}
+                           >
+                              Live Preview
+                           </button>
+                        </div>
+                     </div>
+
+                     {editorTab === 'write' && (
+                        <div className="flex flex-wrap items-center gap-1.5 p-2 bg-[#f8f9fa] border border-[#e9ecef] rounded-2xl">
+                           <button
+                              type="button"
+                              onClick={() => insertFormat('\n## ', '\n')}
+                              className="px-2.5 py-1.5 text-xs font-black rounded-lg bg-white border border-[#e9ecef] text-[#111827] hover:bg-slate-100 transition-colors"
+                              title="Heading 2"
+                           >
+                              H2
+                           </button>
+                           <button
+                              type="button"
+                              onClick={() => insertFormat('\n### ', '\n')}
+                              className="px-2.5 py-1.5 text-xs font-black rounded-lg bg-white border border-[#e9ecef] text-[#111827] hover:bg-slate-100 transition-colors"
+                              title="Heading 3"
+                           >
+                              H3
+                           </button>
+                           <button
+                              type="button"
+                              onClick={() => insertFormat('**', '**')}
+                              className="px-2.5 py-1.5 text-xs font-black rounded-lg bg-white border border-[#e9ecef] text-[#111827] hover:bg-slate-100 transition-colors"
+                              title="Bold"
+                           >
+                              B
+                           </button>
+                           <button
+                              type="button"
+                              onClick={() => insertFormat('*', '*')}
+                              className="px-2.5 py-1.5 text-xs italic font-bold rounded-lg bg-white border border-[#e9ecef] text-[#111827] hover:bg-slate-100 transition-colors"
+                              title="Italic"
+                           >
+                              I
+                           </button>
+                           <button
+                              type="button"
+                              onClick={() => insertFormat('\n- ', '')}
+                              className="px-2.5 py-1.5 text-xs font-bold rounded-lg bg-white border border-[#e9ecef] text-[#111827] hover:bg-slate-100 transition-colors"
+                              title="Bullet List"
+                           >
+                              • List
+                           </button>
+                           <button
+                              type="button"
+                              onClick={() => insertFormat('\n1. ', '')}
+                              className="px-2.5 py-1.5 text-xs font-bold rounded-lg bg-white border border-[#e9ecef] text-[#111827] hover:bg-slate-100 transition-colors"
+                              title="Numbered List"
+                           >
+                              1. List
+                           </button>
+                           <button
+                              type="button"
+                              onClick={() => insertFormat('\n> ', '\n')}
+                              className="px-2.5 py-1.5 text-xs font-bold rounded-lg bg-white border border-[#e9ecef] text-[#111827] hover:bg-slate-100 transition-colors"
+                              title="Quote"
+                           >
+                              Quote
+                           </button>
+                           <button
+                              type="button"
+                              onClick={() => insertFormat('[', '](https://)')}
+                              className="px-2.5 py-1.5 text-xs font-bold rounded-lg bg-white border border-[#e9ecef] text-[#111827] hover:bg-slate-100 transition-colors"
+                              title="Link"
+                           >
+                              Link
+                           </button>
+                        </div>
+                     )}
+
+                     {editorTab === 'write' ? (
+                        <textarea 
+                           id="blog-content-textarea"
+                           className="w-full min-h-[600px] border border-[#f1f3f5] outline-none text-[16px] font-medium leading-[1.8] bg-[#fcfdfe] p-10 rounded-[32px] focus:ring-8 focus:ring-[#f5c518]/5 focus:bg-white transition-all font-sans text-[#111827] shadow-inner"
+                           placeholder="Write or paste your article here. Headings (## Heading), lists (- bullet), and paragraphs will render with full formatting..."
+                           value={content}
+                           onChange={(e) => setContent(e.target.value)}
+                        />
+                     ) : (
+                        <div className="w-full min-h-[600px] bg-white border border-[#e9ecef] rounded-[32px] p-10 shadow-inner overflow-y-auto">
+                           <article className="prose">
+                              <div dangerouslySetInnerHTML={{ __html: renderBlogHtml(content || '') }} />
+                           </article>
+                        </div>
+                     )}
                   </div>
 
                   {/* SEO Section */}

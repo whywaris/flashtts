@@ -1,7 +1,6 @@
 export const revalidate = 0;
 
 import React from 'react';
-import sanitizeHtml from 'sanitize-html';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/server';
 import { notFound } from 'next/navigation';
@@ -10,6 +9,7 @@ import Footer from '@/components/layout/Footer';
 import ReadingProgress from '../../components/blog/ReadingProgress';
 import TableOfContents from '../../components/blog/TableOfContents';
 import ShareButtons from '../../components/blog/ShareButtons';
+import { renderBlogHtml } from '@/lib/blog-parser';
 import { 
   Clock, Calendar, User, 
   Github, 
@@ -214,17 +214,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               </div>
 
               <article className="prose">
-                <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content || '', {
-                  allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'h1', 'h2', 'h3', 'h4', 'figure', 'figcaption', 'iframe']),
-                  allowedAttributes: {
-                    ...sanitizeHtml.defaults.allowedAttributes,
-                    img: ['src', 'alt', 'width', 'height', 'loading'],
-                    iframe: ['src', 'width', 'height', 'allowfullscreen', 'frameborder'],
-                    a: ['href', 'target', 'rel'],
-                    '*': ['class', 'id', 'style'],
-                  },
-                  allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com'],
-                }) }} />
+                <div dangerouslySetInnerHTML={{ __html: renderBlogHtml(post.content || '') }} />
               </article>
 
               {/* Author Bio Box (E-E-A-T) */}

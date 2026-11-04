@@ -41,17 +41,30 @@ export default function TableOfContents() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {headings.map(h => (
-            <a key={h.id} href={`#${h.id}`} style={{
-              display: 'block',
-              padding: '6px 0',
-              fontSize: '13px',
-              color: active === h.id ? '#ff4d1c' : '#6b6878',
-              fontWeight: active === h.id ? '600' : '400',
-              textDecoration: 'none',
-              borderLeft: active === h.id ? '2px solid #ff4d1c' : '2px solid transparent',
-              paddingLeft: h.level === 3 ? '12px' : '8px',
-              transition: 'all 0.15s',
-            }}>
+            <a 
+              key={h.id} 
+              href={`#${h.id}`} 
+              onClick={(e) => {
+                e.preventDefault();
+                const target = document.getElementById(h.id);
+                if (target) {
+                  target.scrollIntoView({ behavior: 'smooth' });
+                  window.history.pushState(null, '', `#${h.id}`);
+                  setActive(h.id);
+                }
+              }}
+              style={{
+                display: 'block',
+                padding: '6px 0',
+                fontSize: '13px',
+                color: active === h.id ? '#ff4d1c' : '#6b6878',
+                fontWeight: active === h.id ? '600' : '400',
+                textDecoration: 'none',
+                borderLeft: active === h.id ? '2px solid #ff4d1c' : '2px solid transparent',
+                paddingLeft: h.level === 3 ? '12px' : '8px',
+                transition: 'all 0.15s',
+              }}
+            >
               {h.text}
             </a>
           ))}
