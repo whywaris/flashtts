@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import AdUnit from '@/components/ads/AdUnit';
 import { ComparisonData } from '@/data/comparisons/elevenlabs';
 
 const fadeUp = {
@@ -439,11 +438,6 @@ export default function VsComparisonTemplate({ data }: Props) {
           })}
         </div>
       </section>
-
-      {/* Ad Placement Container */}
-      <div className="max-w-[1000px] mx-auto px-4 mb-20">
-        <AdUnit label="Advertisement" />
-      </div>
 
       {/* ── 7. FINAL CTA ── */}
       <section className="pb-32 px-4 sm:px-6">

@@ -10,7 +10,6 @@ import Footer from '@/components/layout/Footer';
 import ReadingProgress from '../../components/blog/ReadingProgress';
 import TableOfContents from '../../components/blog/TableOfContents';
 import ShareButtons from '../../components/blog/ShareButtons';
-import AdUnit from '@/components/ads/AdUnit';
 import { 
   Clock, Calendar, User, 
   Twitter, Linkedin, Github, 
@@ -227,9 +226,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                   allowedIframeHostnames: ['www.youtube.com', 'player.vimeo.com'],
                 }) }} />
               </article>
-
-              {/* In-Article / Post-Content Ad Unit */}
-              <AdUnit label="Advertisement" className="my-10" />
 
               {/* Author Bio Box (E-E-A-T) */}
               <div className="mt-14 p-6 sm:p-8 bg-white rounded-2xl border border-[rgba(10,10,15,0.08)] shadow-sm">

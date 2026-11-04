@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import AdUnit from '@/components/ads/AdUnit';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -398,11 +397,6 @@ export default function ToolsClient() {
               </div>
             </motion.div>
           )}
-        </div>
-
-        {/* Ad Placement Container */}
-        <div className="max-w-[900px] mx-auto px-4 mt-8">
-          <AdUnit label="Advertisement" />
         </div>
       </section>
 
