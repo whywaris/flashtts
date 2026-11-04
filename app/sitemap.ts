@@ -26,6 +26,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/vs/lovo`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${baseUrl}/vs/wellsaid`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
     { url: `${baseUrl}/vs/naturalreader`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${baseUrl}/vs/cartesia`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${baseUrl}/vs/fish-audio`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    // Regional Indic Language Pages
+    { url: `${baseUrl}/text-to-speech/hindi`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${baseUrl}/text-to-speech/punjabi`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.9 },
+    { url: `${baseUrl}/text-to-speech/marathi`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/text-to-speech/gujarati`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/text-to-speech/kannada`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
+    { url: `${baseUrl}/text-to-speech/malayalam`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
   ]
 
   let blogRoutes: MetadataRoute.Sitemap = []

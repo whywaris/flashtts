@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -118,12 +118,38 @@ const COMPARISONS: CompetitorCard[] = [
       'Advanced voice customization & cloning engine',
     ],
   },
+  {
+    name: 'Cartesia',
+    slug: 'cartesia',
+    badge: 'Creator Studio Alternative',
+    headline: 'No-Code Creator Studio vs Developer API Metering',
+    description: 'Cartesia Sonic is optimized for 100ms API bots. FlashTTS gives creators 10x more characters with a complete web studio and audiobook mastering.',
+    savings: 'Predictable creator pricing',
+    keyPoints: [
+      '200k chars for $9 vs confusing developer token burn',
+      'Full multi-chapter audiobook studio and 1-click cloning',
+      'Included commercial rights without surprise overage bills',
+    ],
+  },
+  {
+    name: 'Fish Audio',
+    slug: 'fish-audio',
+    badge: 'Cloud Alternative',
+    headline: 'Zero-GPU Cloud Studio vs Complex Self-Hosting',
+    description: 'Fish.Audio requires expensive GPUs and Python setups. FlashTTS delivers clean, calibrated studio voices in a 100% cloud browser studio.',
+    savings: 'Save $111+/mo on GPU bills',
+    keyPoints: [
+      'No GPU drivers, Python environments, or HuggingFace tokens',
+      'Clear commercial licensing on all tiers without open model ambiguity',
+      'Clean 44.1kHz audio without background artifacts or hallucinations',
+    ],
+  },
 ];
 
 const COMPARISON_METRICS = [
-  { feature: 'Entry Plan Price', flash: '$9 / month', others: '$19 – $49 / month' },
-  { feature: 'Included Volume', flash: '200,000 characters', others: '30,000 – 60,000 characters' },
-  { feature: 'Voice Cloning', flash: 'Included on all paid tiers', others: 'Locked behind $25–$99+ tiers' },
+  { feature: 'Entry Plan Price', flash: '$9 / month', others: '$19 - $49 / month' },
+  { feature: 'Included Volume', flash: '200,000 characters', others: '30,000 - 60,000 characters' },
+  { feature: 'Voice Cloning', flash: 'Included on all paid tiers', others: 'Locked behind $25 - $99+ tiers' },
   { feature: 'Commercial Rights', flash: 'Included on all paid plans', others: 'Personal plans restrict monetization' },
   { feature: 'Languages Supported', flash: '19+ languages', others: 'Often English only or limited' },
   { feature: 'Credit Expiration', flash: 'Credits never expire', others: 'Hard monthly resets' },
@@ -318,7 +344,7 @@ export default function VsHubClient() {
       {/* ── TRADEMARK DISCLAIMER ── */}
       <div className="max-w-[1200px] mx-auto px-6 py-6 text-center text-[12px] text-slate-400">
         <p>
-          Disclaimer: ElevenLabs, Murf AI, Speechify, LOVO, WellSaid Labs, and NaturalReader are trademarks
+          Disclaimer: ElevenLabs, Murf AI, Speechify, LOVO, WellSaid Labs, NaturalReader, Cartesia, and Fish Audio are trademarks
           of their respective owners. FlashTTS is an independent platform and is not affiliated with,
           sponsored by, or endorsed by any of these companies. Comparison data is gathered from
           publicly available information as of 2026.

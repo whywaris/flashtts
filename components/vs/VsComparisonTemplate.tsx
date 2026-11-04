@@ -463,7 +463,7 @@ export default function VsComparisonTemplate({ data }: Props) {
       {/* ── TRADEMARK DISCLAIMER ── */}
       <div className="max-w-[1200px] mx-auto px-6 py-6 text-center text-[12px] text-slate-400">
         <p>
-          Disclaimer: ElevenLabs, Murf AI, Speechify, LOVO, WellSaid Labs, and NaturalReader are trademarks
+          Disclaimer: ElevenLabs, Murf AI, Speechify, LOVO, WellSaid Labs, NaturalReader, Cartesia, and Fish Audio are trademarks
           of their respective owners. FlashTTS is an independent platform and is not affiliated with,
           sponsored by, or endorsed by any of these companies. Comparison data is gathered from
           publicly available information as of 2026.
