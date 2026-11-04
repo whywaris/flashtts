@@ -12,7 +12,7 @@ import TableOfContents from '../../components/blog/TableOfContents';
 import ShareButtons from '../../components/blog/ShareButtons';
 import { 
   Clock, Calendar, User, 
-  Twitter, Linkedin, Github, 
+  Github, 
   Zap, ChevronRight
 } from 'lucide-react';
 
@@ -255,8 +255,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                     </p>
                     <div className="flex items-center justify-center sm:justify-start gap-2.5">
                       <SocialIcon href="https://github.com/flashtts" icon={Github} />
-                      <SocialIcon href="https://www.linkedin.com/company/flashtts" icon={Linkedin} />
-                      <SocialIcon href="https://x.com/flashtts" icon={Twitter} />
                     </div>
                   </div>
                 </div>

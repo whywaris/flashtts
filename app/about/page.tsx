@@ -1,4 +1,4 @@
-﻿import type { Metadata } from 'next';
+import type { Metadata } from 'next';
 import AboutClient from './AboutClient';
 
 export const metadata: Metadata = {
@@ -39,9 +39,7 @@ export default function AboutPage() {
         jobTitle: 'Founder & Lead Engineer',
         description: 'Speech synthesis engineer and audio systems architect with 8+ years developing neural voice architectures.',
         sameAs: [
-          'https://github.com/flashtts',
-          'https://linkedin.com/company/flashtts',
-          'https://x.com/flashtts'
+          'https://github.com/flashtts'
         ]
       }
     }

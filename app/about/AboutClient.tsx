@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -14,9 +14,7 @@ import {
   TrendingUp,
   Users,
   MessageSquare,
-  Github,
-  Linkedin,
-  Twitter
+  Github
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
@@ -398,24 +396,6 @@ export default function AboutClient() {
                       aria-label="GitHub profile"
                     >
                       <Github size={16} />
-                    </Link>
-                    <Link
-                      href="https://linkedin.com/company/flashtts"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-[#E8522A] hover:text-white transition-colors"
-                      aria-label="LinkedIn profile"
-                    >
-                      <Linkedin size={16} />
-                    </Link>
-                    <Link
-                      href="https://x.com/flashtts"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-[#E8522A] hover:text-white transition-colors"
-                      aria-label="X profile"
-                    >
-                      <Twitter size={16} />
                     </Link>
                   </div>
                 </div>
