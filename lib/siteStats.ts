@@ -15,12 +15,13 @@ export const VOICE_COUNT: number | null = null;
 
 export const FOUNDER = {
   name: 'Theo Greenslade',
-  role: 'Founder',
+  role: 'Founder & Software Engineer',
   initials: 'TG',
   photoUrl: 'https://pub-fd880e99144d4575846bfb03d99d3d29.r2.dev/Theo%20Greenslade.jfif',
   linkedinUrl: 'https://www.linkedin.com/in/theogreenslade/',
-  // TODO: founder bio. Nothing renders until set — do not invent credentials.
-  bio: '',
+  // Only facts supplied by the founder. Do not add credentials that were not provided.
+  bio: 'Theo Greenslade is a software engineer with 3 years of experience who loves building SaaS products. FlashTTS is one of them: a text-to-speech and voice cloning platform built for creators, with clear limits and a lower cost per character.',
+  highlights: ['Software engineer', '3 years of experience', 'Builds SaaS products'],
 };
 
 // Price per 1,000 characters, monthly billing. price / characters x 1000.

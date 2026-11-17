@@ -370,9 +370,6 @@ export default function AboutClient() {
               {/* Founder Avatar */}
               <div className="relative shrink-0">
                 <FounderAvatar className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl font-['Syne'] text-3xl sm:text-4xl shadow-xl shadow-[#E8522A]/25 border-4 border-white" />
-                <div className="absolute -bottom-2 -right-2 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-white">
-                  {FOUNDER.role}
-                </div>
               </div>
 
               {/* Bio & Details */}
@@ -392,18 +389,22 @@ export default function AboutClient() {
                         href={FOUNDER.linkedinUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-[#E8522A] hover:text-white transition-colors"
-                        aria-label="LinkedIn profile"
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#0A66C2] text-white text-[13px] font-bold hover:bg-[#004182] transition-colors"
                       >
-                        <Linkedin size={16} />
+                        <Linkedin size={15} /> Connect on LinkedIn
                       </Link>
                     </div>
                   )}
                 </div>
 
                 {FOUNDER.bio && (
-                  <p className="text-[15px] text-slate-600 leading-relaxed mb-6 font-medium">{FOUNDER.bio}</p>
+                  <p className="text-[16px] text-slate-600 leading-relaxed mt-4 mb-5">{FOUNDER.bio}</p>
                 )}
+                <div className="flex flex-wrap justify-center md:justify-start gap-2 pt-4 border-t border-slate-100">
+                  {FOUNDER.highlights.map((h) => (
+                    <span key={h} className="bg-[#E8522A]/10 text-[#E8522A] px-3 py-1 rounded-full text-[12px] font-bold">{h}</span>
+                  ))}
+                </div>
               </div>
             </div>
           </motion.div>
