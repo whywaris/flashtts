@@ -3,16 +3,6 @@
 import { usePathname } from 'next/navigation'
 import Script from 'next/script'
 
-const EXCLUDED_PREFIXES = [
-  '/dashboard',
-  '/login',
-  '/signup',
-  '/auth',
-  '/admin',
-  '/studio',
-  '/reset-password',
-  '/forgot-password',
-]
 
 interface GoogleAdSenseProps {
   publisherId: string
@@ -21,10 +11,12 @@ interface GoogleAdSenseProps {
 export default function GoogleAdSense({ publisherId }: GoogleAdSenseProps) {
   const pathname = usePathname()
 
-  // Strictly block AdSense script execution on dashboard, studio, and auth pages to prevent accidental/invalid clicks
-  const isExcluded = pathname ? EXCLUDED_PREFIXES.some(prefix => pathname.startsWith(prefix)) : false
+  // AdSense runs on the blog only. Never on product, pricing, tools, signup, comparison or app pages.
+  // TODO: in AdSense > Blocking controls, block competitor domains: elevenlabs.io, murf.ai, speechify.com,
+  // lovo.ai, wellsaidlabs.com, naturalreaders.com, play.ht
+  const isBlog = pathname === '/blog' || !!pathname?.startsWith('/blog/')
 
-  if (isExcluded) {
+  if (!isBlog) {
     return null
   }
 

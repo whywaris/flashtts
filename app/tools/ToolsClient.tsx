@@ -28,7 +28,7 @@ export default function ToolsClient() {
 
   // Tool 1: Word to Audio Duration State
   const [scriptText, setScriptText] = useState(
-    "Stop paying thousands of dollars for voice actors. Generate studio-quality, human-like voiceovers in seconds with FlashTTS. Built specifically for YouTube creators, podcasters, and publishers who release new content every single day."
+    "Paste your script here to estimate how long the voiceover will run. Word count, character count and spoken duration update as you type, so you can plan videos, podcasts and audiobook chapters before you generate audio."
   );
   const [wpm, setWpm] = useState<number>(150); // 130 slow, 150 normal, 175 fast
   const [copied, setCopied] = useState(false);
@@ -56,7 +56,7 @@ export default function ToolsClient() {
 
   // Tool 3: Audio File Size Calculator State
   const [calcDurationMinutes, setCalcDurationMinutes] = useState<number>(5);
-  const [bitrate, setBitrate] = useState<'128' | '192' | '320' | 'wav'>('192');
+  const [bitrate, setBitrate] = useState<'64' | '128' | '192' | '320' | 'wav'>('192');
 
   const estimatedFileSizeMB = useMemo(() => {
     const totalSeconds = calcDurationMinutes * 60;
@@ -264,6 +264,7 @@ export default function ToolsClient() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[
                   {
+                    // TODO: confirm these platform recommendations (lengths, WPM, formats).
                     format: 'TikTok / YouTube Shorts / Reels',
                     duration: '30 - 60 seconds',
                     words: '75 - 150 words',
@@ -353,10 +354,11 @@ export default function ToolsClient() {
                     </label>
                     <div className="grid grid-cols-2 gap-3">
                       {[
+                        { id: '64', label: 'MP3 64 kbps', desc: 'Spoken word / Small' },
                         { id: '128', label: 'MP3 128 kbps', desc: 'Podcast / Standard' },
                         { id: '192', label: 'MP3 192 kbps', desc: 'Studio (Recommended)' },
                         { id: '320', label: 'MP3 320 kbps', desc: 'Maximum MP3 Quality' },
-                        { id: 'wav', label: 'WAV 16-bit / 44.1kHz', desc: 'Uncompressed Master' },
+                        { id: 'wav', label: 'WAV 16-bit / 44.1kHz', desc: 'Uncompressed, mono' },
                       ].map((fmt) => (
                         <button
                           key={fmt.id}
@@ -410,7 +412,7 @@ export default function ToolsClient() {
             Turn Your Words Into Studio Voiceovers Today
           </h2>
           <p className="text-slate-600 text-base max-w-[620px] mx-auto mb-8 leading-relaxed">
-            Stop estimating and start publishing. FlashTTS gives you 10x more characters than ElevenLabs at half the price, with instant voice cloning included.
+            Ready to generate? FlashTTS has a lower cost per character on every plan, with voice cloning included. Start with 10,000 free characters a month.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link

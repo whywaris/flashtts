@@ -1,4 +1,6 @@
-﻿export interface ComparisonData {
+import { PAID_PLAN_COSTS, formatPer1k, LANGUAGE_COUNT_LABEL } from '@/lib/siteStats';
+
+export interface ComparisonData {
   competitorName: string;
   slug: string;
   metaTitle: string;
@@ -12,7 +14,7 @@
     icon: 'lightning' | 'dollar' | 'microphone' | 'shield' | 'infinity' | 'waveform';
     title: string;
     text: string;
-    badge: string;
+    badge: string; // e.g. 'FlashTTS Wins', 'Tie', 'Our opinion'
     badgeColor: 'green' | 'gray';
   }[];
   table: {
@@ -23,16 +25,21 @@
       win?: 'flash' | 'tie' | 'competitor';
     }[];
   };
+  // Competitor plans from their official pricing page. Per-1k cost is computed in the template.
+  pricing: {
+    sourceUrl: string; // TODO per page: official pricing URL
+    note?: string;
+    competitorPlans: { name: string; price: number | null; chars: number | null; estimated?: boolean; note?: string }[];
+  };
   pricingBreakdown: {
     heading: string;
     subtext: string;
+    // FlashTTS side is computed from lib/plans.ts via flashPlanFor(chars).
     creators: {
       type: string;
-      needs: string;
+      chars: number;
       competitorCost: string;
-      flashTtsCost: string;
-      savings: string;
-      savingsYearly: string;
+      competitorMath: string;
     }[];
   };
   whyChoose: {
@@ -60,6 +67,7 @@
     title: string;
     text: string;
     source: string;
+    sourceUrl?: string; // section renders only when a source link is set
     quote?: string;
     quoteSource?: string;
     note?: string;
@@ -77,83 +85,93 @@
   };
 }
 
+// TODO: verify every ElevenLabs value below on https://elevenlabs.io/pricing (official page)
+// and set COMPETITOR_PRICES_CHECKED in lib/siteStats.ts. Values are carried over from the previous page, not re-checked.
+const EL_PLANS = [
+  { name: 'Starter', price: 6, chars: 30000 },
+  { name: 'Creator', price: 22, chars: 100000 },
+  { name: 'Pro', price: 99, chars: 500000 },
+  { name: 'Scale', price: 330, chars: 2000000 },
+];
+const elPer1k = EL_PLANS.map((p) => (p.price / p.chars) * 1000);
+const flashPer1k = PAID_PLAN_COSTS.map((p) => p.per1k);
+const range = (a: number[]) => `${formatPer1k(Math.min(...a))}-${formatPer1k(Math.max(...a))}`;
+
 export const elevenLabsData: ComparisonData = {
   competitorName: 'ElevenLabs',
   slug: 'elevenlabs',
-  metaTitle: 'FlashTTS vs ElevenLabs: 6x More Credits at Half the Price',
-  metaDescription: 'Comparing FlashTTS vs ElevenLabs? FlashTTS gives creators 6x more voice credits at half the price. Same studio quality - smarter pricing. See the full breakdown.',
+  metaTitle: 'FlashTTS vs ElevenLabs: Price per Character Compared',
+  metaDescription: 'FlashTTS vs ElevenLabs, tier by tier. Lower cost per character on every plan, including where ElevenLabs is cheaper to start. Prices, math and sources inside.',
   hero: {
-    badge: 'HONEST COMPARISON',
-    title: 'FlashTTS vs ElevenLabs: More Credits, Half the Price',
-    subheadline: "ElevenLabs is great. But if you're a creator who publishes daily, you'll run out of credits every single month. FlashTTS gives you 6x more - without the premium price tag."
+    badge: 'PRICE COMPARISON',
+    title: 'FlashTTS vs ElevenLabs: Price per Character Compared',
+    subheadline: "ElevenLabs is a strong product. If you publish often, the number that matters is cost per character. Here is every tier side by side - including where ElevenLabs costs less."
   },
   verdictCards: [
     {
-      icon: 'lightning',
-      title: '6x More Credits',
-      text: '200k credits for $9 vs 30k for $6. More content, less top-ups.',
+      icon: 'dollar',
+      title: 'Lower Cost per Character',
+      text: `FlashTTS: ${range(flashPer1k)} per 1,000 characters. ElevenLabs: ${range(elPer1k)}.`,
       badge: 'FlashTTS Wins',
       badgeColor: 'green'
     },
     {
-      icon: 'dollar',
-      title: 'Up to 76% Cheaper',
-      text: 'Pro plan: $39 vs $99. Same quality, fraction of the cost.',
-      badge: 'FlashTTS Wins',
-      badgeColor: 'green'
+      icon: 'lightning',
+      title: 'Cheaper Entry Plan',
+      text: 'ElevenLabs Starter is $6/mo vs $9/mo for FlashTTS Starter - with 30,000 vs 200,000 characters.',
+      badge: 'ElevenLabs Wins',
+      badgeColor: 'gray'
     },
     {
       icon: 'microphone',
-      title: 'Same Studio Quality',
-      text: 'Both platforms deliver professional-grade AI voices.',
-      badge: 'Tie',
+      title: 'Voice Quality',
+      text: 'Both produce natural-sounding AI voices. Quality is subjective - try both free tiers with your own script.',
+      badge: 'Our opinion',
       badgeColor: 'gray'
     }
   ],
   table: {
     rows: [
-      { feature: 'Free Plan', flashTts: '10,000 chars', competitor: '10,000 chars', win: 'tie' },
-      { feature: 'Starter Plan', flashTts: '200k / $9', competitor: '30k / $6', win: 'flash' },
-      { feature: 'Creator Plan', flashTts: '500k / $19', competitor: '100k / $22', win: 'flash' },
-      { feature: 'Pro Plan', flashTts: '1M / $39', competitor: '500k / $99', win: 'flash' },
-      { feature: 'Studio/Scale Plan', flashTts: '3M / $79', competitor: '2M / $330', win: 'flash' },
-      { feature: 'Voice Cloning', flashTts: 'Included', competitor: 'Paid add-on', win: 'flash' },
-      { feature: 'Languages', flashTts: '19 languages', competitor: '29 languages', win: 'tie' },
+      { feature: 'Free Plan', flashTts: '10,000 chars/mo', competitor: '10,000 chars/mo', win: 'tie' },
+      { feature: 'Starter price', flashTts: '$9/mo', competitor: '$6/mo', win: 'competitor' },
+      { feature: 'Starter characters', flashTts: '200,000', competitor: '30,000', win: 'flash' },
+      { feature: 'Creator', flashTts: '600,000 / $19', competitor: '100,000 / $22', win: 'flash' },
+      { feature: 'Pro', flashTts: '2,000,000 / $39', competitor: '500,000 / $99', win: 'flash' },
+      { feature: 'Studio / Scale', flashTts: '3,000,000 / $79', competitor: '2,000,000 / $330', win: 'flash' },
+      // TODO verify: old page said both "Paid add-on" and "from Creator onwards" for ElevenLabs cloning.
+      { feature: 'Voice Cloning', flashTts: 'Every plan (1 clone on Free)', competitor: 'Paid plans', win: 'tie' },
+      { feature: 'Languages', flashTts: LANGUAGE_COUNT_LABEL, competitor: '29 languages', win: 'competitor' },
       { feature: 'Commercial Rights', flashTts: 'All paid plans', competitor: 'All paid plans', win: 'tie' },
-      { feature: 'API Access', flashTts: 'Studio plan', competitor: 'Creator+', win: 'tie' },
-      { feature: 'Voice Library', flashTts: '1,000+ voices', competitor: '3,000+ voices', win: 'tie' },
-      { feature: 'Watermark Free', flashTts: 'All paid plans', competitor: 'All paid plans', win: 'tie' },
-      { feature: 'Generation Speed', flashTts: 'Fast', competitor: 'Fast', win: 'tie' },
-      { feature: 'Mobile Friendly', flashTts: 'Yes', competitor: 'Yes', win: 'tie' }
+      { feature: 'API Access', flashTts: 'Studio plan', competitor: 'Creator+', win: 'competitor' },
+      { feature: 'Voice Library', flashTts: 'Library + your clones', competitor: '3,000+ voices', win: 'competitor' },
+      { feature: 'Watermark Free', flashTts: 'All paid plans', competitor: 'All paid plans', win: 'tie' }
     ]
   },
+  pricing: {
+    sourceUrl: '', // TODO: https://elevenlabs.io/pricing once verified
+    competitorPlans: EL_PLANS,
+  },
   pricingBreakdown: {
-    heading: 'The Real Cost of Running Out of Credits',
-    subtext: "ElevenLabs creators spend 3x more every month just to keep publishing. Here's the math.",
+    heading: 'Cost Scenarios',
+    subtext: 'Each scenario uses the cheapest plan whose monthly allowance actually covers the usage.',
     creators: [
       {
-        type: 'Daily YouTube Creator',
-        needs: '~600k chars/month',
+        type: 'Podcast + Shorts Creator',
+        chars: 300000,
         competitorCost: '$99/mo (Pro)',
-        flashTtsCost: '$19/mo (Creator)',
-        savings: '$80/mo',
-        savingsYearly: '$960/year'
+        competitorMath: '300,000 needed > 100,000 on Creator ($22) → Pro, 500,000 included'
+      },
+      {
+        type: 'Daily YouTube Creator',
+        chars: 600000,
+        competitorCost: '$330/mo (Scale) or Pro + overage',
+        competitorMath: '600,000 needed > 500,000 on Pro ($99) → Scale, 2,000,000 included'
       },
       {
         type: 'Faceless Channel Owner (3 channels)',
-        needs: '~1.5M chars/month',
+        chars: 1500000,
         competitorCost: '$330/mo (Scale)',
-        flashTtsCost: '$39/mo (Pro)',
-        savings: '$291/mo',
-        savingsYearly: '$3,492/year'
-      },
-      {
-        type: 'Podcast + Shorts Creator',
-        needs: '~300k chars/month',
-        competitorCost: '$22/mo (Creator)',
-        flashTtsCost: '$9/mo (Starter)',
-        savings: '$13/mo',
-        savingsYearly: '$156/year'
+        competitorMath: '1,500,000 needed ≤ 2,000,000 included'
       }
     ]
   },
@@ -161,38 +179,37 @@ export const elevenLabsData: ComparisonData = {
     flashTts: [
       'You publish content daily or weekly',
       'You need high-volume audio generation',
-      'Budget matters to your business',
-      'You want more credits for less money',
-      'You\'re a YouTuber, Podcaster or Agency',
-      'You want voice cloning included'
+      'You want a lower cost per character',
+      'You want voice cloning on every plan',
+      'You\'re a YouTuber, Podcaster or Agency'
     ],
     competitor: [
-      'You need 29+ language support',
-      'You need the largest voice library',
-      'Enterprise-level API is your priority',
-      'You only generate audio occasionally'
+      'You need more languages than FlashTTS supports',
+      'You want a larger voice library',
+      'You need API access below a top-tier plan',
+      'You only generate a little audio (ElevenLabs Starter is cheaper)'
     ]
   },
   faqs: [
     {
       q: 'Is FlashTTS cheaper than ElevenLabs?',
-      a: 'Yes - significantly. At the Creator plan level, FlashTTS costs $19/mo vs ElevenLabs $22/mo, but gives you 5x more characters (500k vs 100k). At Pro level, FlashTTS is $39 vs ElevenLabs $99 - with double the credits.'
+      a: `Per character, yes on every plan we compared: FlashTTS costs ${range(flashPer1k)} per 1,000 characters, ElevenLabs ${range(elPer1k)}. ElevenLabs has the cheaper entry plan ($6 vs $9), but it includes 30,000 characters vs 200,000.`
     },
     {
       q: 'Does FlashTTS have the same voice quality as ElevenLabs?',
-      a: 'FlashTTS uses state-of-the-art neural TTS models that deliver studio-grade, natural-sounding audio across 19 languages. While ElevenLabs has a larger voice library, FlashTTS voices are indistinguishable from professional recordings for most content creation use cases.'
+      a: 'Voice quality is subjective and depends on the voice and the script. Both services have a free tier, so the fairest test is to generate the same paragraph of your own script on each and listen on the device your audience uses.'
     },
     {
-      q: 'Can I clone my voice on FlashTTS like ElevenLabs?',
-      a: 'Yes. Voice cloning is included on all paid FlashTTS plans. You can clone your voice in under 60 seconds with a short audio sample. ElevenLabs includes voice cloning from their Creator plan onwards as well.'
+      q: 'Can I clone my voice on FlashTTS?',
+      a: 'Yes. Voice cloning is included on every FlashTTS plan: 1 clone on Free, 3 on Starter, 10 on Creator, 25 on Pro and unlimited on Studio.'
     },
     {
       q: 'What happens when I run out of credits on ElevenLabs?',
-      a: 'On ElevenLabs, you either upgrade to a higher plan or purchase additional credits at a premium rate. FlashTTS gives you significantly more credits per dollar, reducing the chance of running out mid-month - especially important for daily content creators.'
+      a: 'Check the ElevenLabs pricing page for its current upgrade and overage options. On FlashTTS, generation pauses when you reach your monthly allowance until it resets at the next billing cycle, or you can upgrade to a larger plan at any time.'
     },
     {
-      q: 'Is there a free trial on FlashTTS?',
-      a: 'Yes. FlashTTS offers a free tier with 10,000 characters - no credit card required. You can test voices, generate audio, and explore the platform before committing to any paid plan.'
+      q: 'Is there a free plan on FlashTTS?',
+      a: 'Yes. FlashTTS offers a free tier with 10,000 characters a month - no credit card required. Free-plan audio is for personal use and may include a watermark (see our Terms).'
     }
   ]
 };

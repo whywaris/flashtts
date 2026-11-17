@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   Headphones, Play, Pause, 
   CheckCircle2, ArrowRight, ChevronDown, 
@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import FaqList from '@/components/marketing/FaqList';
 
 // Framer motion animation variants
 const fadeUp = {
@@ -23,107 +24,39 @@ const staggerContainer = {
 };
 
 // Genre Audio Samples
-const GENRES = [
-  {
-    id: 'fiction',
-    name: 'Fiction & Fantasy',
-    voice: 'Arthur - Deep Storyteller',
-    duration: '0:34',
-    excerpt: "The gates of Aethelgard groaned in the northern gale. Kael gripped the hilt of his father's blade, the ancient runes pulsing with a faint, violet ember in the gathering dark.",
-    audioUrl: 'https://cdn.freesound.org/previews/612/612089_11861866-lq.mp3'
-  },
-  {
-    id: 'business',
-    name: 'Business & Leadership',
-    voice: 'Marcus - Confident Executive',
-    duration: '0:28',
-    excerpt: "Hyper-growth isn't born from reckless expansion. It emerges from relentless operational discipline, razor-sharp feedback loops, and an obsession with customer retention.",
-    audioUrl: 'https://cdn.freesound.org/previews/612/612089_11861866-lq.mp3'
-  },
-  {
-    id: 'thriller',
-    name: 'Thriller & Mystery',
-    voice: 'Elena - Cinematic Suspense',
-    duration: '0:31',
-    excerpt: "The encrypted terminal flickered once before going dark. She wasn't alone in the archives. Footsteps echoed from corridor B, measured, deliberate, and closing fast.",
-    audioUrl: 'https://cdn.freesound.org/previews/612/612089_11861866-lq.mp3'
-  },
-  {
-    id: 'scifi',
-    name: 'Sci-Fi & Cyberpunk',
-    voice: 'Nova - Atmospheric AI',
-    duration: '0:30',
-    excerpt: "Sub-orbital telemetry confirmed the anomaly. Sector 9 was venting atmospheric plasma directly into the low vacuum, illuminating the neo-Tokyo skyline in neon violet.",
-    audioUrl: 'https://cdn.freesound.org/previews/612/612089_11861866-lq.mp3'
-  },
-  {
-    id: 'children',
-    name: "Children's Stories",
-    voice: 'Pip - Warm & Playful',
-    duration: '0:26',
-    excerpt: "Barnaby the little blue hedgehog packed his acorn biscuits, adjusted his tiny spectacles, and took his very first step into the Great Whispering Woods.",
-    audioUrl: 'https://cdn.freesound.org/previews/612/612089_11861866-lq.mp3'
-  }
-];
-
 // Audiobook FAQs
 const AUDIOBOOK_FAQS = [
   {
-    q: "Can I sell audiobooks created with FlashTTS on Audible, Spotify, and Apple Books?",
-    a: "Yes, 100%! All audiobooks generated on paid plans (Starter, Creator, Pro, Studio) come with full, unconditional commercial publishing rights. You keep 100% of your book royalties with zero licensing fees or attribution required."
+    q: "Can I sell audiobooks created with FlashTTS?",
+    a: "Audiobooks generated on paid plans (Starter, Creator, Pro, Studio) include commercial rights, with no royalties or attribution owed to FlashTTS. Each store sets its own rules for AI-narrated audiobooks, so check the platform's policy before you publish."
   },
   {
-    q: "Does FlashTTS audio pass ACX / Audible audio submission guidelines?",
-    a: "Yes. Our Audiobook Studio includes automated ACX mastering. Audio is encoded at 192kbps/320kbps MP3 or lossless 24-bit WAV, with RMS loudness calibrated between -23dB and -19dB, peak levels below -3dB, and a noise floor lower than -60dB."
+    q: "Does FlashTTS audio meet ACX / Audible submission requirements?",
+    a: "FlashTTS does not apply automatic loudness mastering. Check your chapters against your platform's technical requirements and master them in an audio editor if needed."
   },
   {
-    q: "Can I assign different voices to dialogue and narration?",
-    a: "Absolutely. With our Multi-Voice Character Casting engine, you can assign one voice for narration and distinct character voices for character dialogues within the same chapter."
+    q: "Can I assign different voices to different chapters?",
+    a: "Yes. In the Audiobook Studio each chapter has its own voice setting, so you can use one voice for the narrator and another for, say, an interview chapter."
   },
   {
     q: "Can I clone my own voice to narrate my own book?",
-    a: "Yes! Simply record a 60-second clear sample of your voice in our browser studio. FlashTTS will clone your voice with full emotional range so you can narrate an 80,000-word book in your own voice in under 2 hours without renting a recording booth."
+    a: "Yes. Record or upload a clean sample of your voice to create a clone, then select it as the voice for your chapters. Voice cloning is included on every plan."
   },
   {
-    q: "What manuscript formats can I upload?",
-    a: "FlashTTS natively accepts DOCX, PDF, EPUB, and plain TXT files. Our parser automatically detects chapter headings, breaks, and scene transitions."
+    q: "How do I add my manuscript?",
+    a: "Paste your manuscript text into the Audiobook Studio. It detects chapter headings and splits the text into chapters you can edit before generating."
   }
 ];
 
 export default function AudiobookClient() {
-  const [activeGenre, setActiveGenre] = useState(GENRES[0]);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
   // Interactive Calculator State
   const [wordCount, setWordCount] = useState<number>(65000);
   const wordsPerHour = 9300; // standard narration pace ~155 words/min
   const estimatedHours = (wordCount / wordsPerHour).toFixed(1);
-  const traditionalCost = Math.round(Number(estimatedHours) * 350); // $350 per finished hour typical PFH rate
+  // TODO: confirm the per-finished-hour narrator rate you want to cite (assumed $350/PFH), or remove this calculator.
+  const traditionalCost = Math.round(Number(estimatedHours) * 350);
   const flashttsCost = 39; // Pro plan cost
   const savings = traditionalCost - flashttsCost;
-
-  // FAQ Accordion State
-  const [activeFaq, setActiveFaq] = useState<number | null>(0);
-
-  const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      audioRef.current.play().catch(() => {});
-      setIsPlaying(true);
-    }
-  };
-
-  const handleSelectGenre = (genre: typeof GENRES[0]) => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    }
-    setActiveGenre(genre);
-  };
 
   return (
     <div className="bg-[#F0EDE8] min-h-screen font-sans selection:bg-[#E8522A]/20 text-slate-800">
@@ -138,7 +71,7 @@ export default function AudiobookClient() {
             "name": "FlashTTS Audiobook Studio",
             "operatingSystem": "Web",
             "applicationCategory": "AudioApplication",
-            "description": "Convert full manuscripts into studio-quality audiobooks ready for Audible and Apple Books with multi-character AI narration.",
+            "description": "Convert manuscripts into multi-chapter AI-narrated audiobooks with a voice per chapter.",
             "offers": {
               "@type": "Offer",
               "price": "0",
@@ -166,7 +99,7 @@ export default function AudiobookClient() {
 
             <motion.p variants={fadeUp} className="text-[17px] sm:text-[20px] text-slate-600 max-w-[680px] mb-10 leading-relaxed font-normal">
               Convert full-length novels, non-fiction guides, and memoirs into master-grade audiobooks. 
-              Auto-split chapters, cast multiple character voices, and export ACX & Audible-compliant audio.
+              Auto-split chapters, pick a voice per chapter, and export MP3 or WAV.
             </motion.p>
 
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
@@ -176,125 +109,22 @@ export default function AudiobookClient() {
               >
                 Create Your Audiobook Free <ArrowRight size={18} />
               </Link>
-              <a 
-                href="#demo" 
-                className="w-full sm:w-auto px-8 py-4 bg-white border-2 border-[#e2dfdb] hover:border-[#E8522A] text-slate-800 rounded-xl font-['Syne'] font-bold text-[17px] items-center justify-center flex transition-colors shadow-sm"
-              >
-                Listen to Samples ↓
-              </a>
             </motion.div>
 
             {/* Badges */}
             <motion.div variants={fadeUp} className="mt-10 flex flex-wrap justify-center items-center gap-6 text-[13px] font-bold text-slate-500">
               <span className="flex items-center gap-2">
-                <CheckCircle2 size={16} className="text-[#E8522A]" /> 100% Audible & ACX Compliant
+                <CheckCircle2 size={16} className="text-[#E8522A]" /> Auto Chapter Detection
               </span>
               <span className="flex items-center gap-2">
-                <CheckCircle2 size={16} className="text-[#E8522A]" /> Full Commercial Rights
+                <CheckCircle2 size={16} className="text-[#E8522A]" /> Commercial Rights on Paid Plans
               </span>
               <span className="flex items-center gap-2">
-                <CheckCircle2 size={16} className="text-[#E8522A]" /> Multi-Voice Character Casting
+                <CheckCircle2 size={16} className="text-[#E8522A]" /> Voice per Chapter
               </span>
             </motion.div>
 
           </motion.div>
-        </div>
-      </section>
-
-      {/* ── 2. INTERACTIVE AUDIO SAMPLES / GENRE PLAYER ── */}
-      <section id="demo" className="py-20 bg-white border-y border-[#e2dfdb]/70 px-4 sm:px-6">
-        <div className="max-w-[1100px] mx-auto">
-          
-          <div className="text-center mb-12">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-[#E8522A] bg-[#E8522A]/10 px-3 py-1 rounded-full">
-              Voice Library & Samples
-            </span>
-            <h2 className="font-['Syne'] font-extrabold text-[32px] sm:text-[44px] text-slate-900 tracking-tight mt-3 mb-3">
-              Hear The Studio Difference
-            </h2>
-            <p className="text-slate-600 text-[16px] max-w-[550px] mx-auto">
-              Natural breathing, emotional pacing, and zero robotic monotone. Listen to real samples across different literary genres.
-            </p>
-          </div>
-
-          {/* Genre selector tabs */}
-          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-10">
-            {GENRES.map((g) => (
-              <button
-                key={g.id}
-                onClick={() => handleSelectGenre(g)}
-                className={`px-5 py-2.5 rounded-xl font-bold text-[14px] transition-all cursor-pointer ${
-                  activeGenre.id === g.id
-                    ? 'bg-[#E8522A] text-white shadow-md shadow-[#E8522A]/20 scale-105'
-                    : 'bg-[#faf8f3] text-slate-700 border border-[#e2dfdb] hover:border-slate-400'
-                }`}
-              >
-                {g.name}
-              </button>
-            ))}
-          </div>
-
-          {/* Audio Player Card */}
-          <div className="bg-[#faf8f3] border-2 border-[#e2dfdb] rounded-[28px] p-6 sm:p-10 shadow-sm relative overflow-hidden">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              
-              {/* Left Details */}
-              <div className="lg:col-span-7 space-y-4">
-                <div className="flex items-center gap-3">
-                  <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold uppercase tracking-wider">
-                    {activeGenre.name}
-                  </span>
-                  <span className="text-slate-400 text-xs font-semibold">
-                    Narrated by: <strong className="text-slate-800">{activeGenre.voice}</strong>
-                  </span>
-                </div>
-
-                <div className="bg-white border border-[#e2dfdb] rounded-2xl p-6 italic text-slate-700 text-[16px] sm:text-[18px] leading-relaxed shadow-sm">
-                  "{activeGenre.excerpt}"
-                </div>
-
-                <div className="flex items-center gap-4 text-xs font-bold text-slate-400 uppercase tracking-widest pt-2">
-                  <span>Sample Duration: {activeGenre.duration}</span>
-                  <span>•</span>
-                  <span>44.1kHz Studio Quality</span>
-                </div>
-              </div>
-
-              {/* Right Controls */}
-              <div className="lg:col-span-5 flex flex-col items-center justify-center p-6 bg-white rounded-2xl border border-[#e2dfdb]">
-                <audio
-                  ref={audioRef}
-                  src={activeGenre.audioUrl}
-                  onEnded={() => setIsPlaying(false)}
-                  preload="none"
-                />
-
-                <button
-                  onClick={togglePlay}
-                  className="w-20 h-20 rounded-full bg-[#E8522A] text-white flex items-center justify-center shadow-lg shadow-[#E8522A]/30 hover:scale-105 active:scale-95 transition-all mb-4 cursor-pointer"
-                  aria-label={isPlaying ? 'Pause sample' : 'Play sample'}
-                >
-                  {isPlaying ? <Pause size={32} /> : <Play size={32} className="ml-1" />}
-                </button>
-
-                <p className="font-['Syne'] font-bold text-slate-900 text-sm mb-1">
-                  {isPlaying ? 'Now Playing Sample' : 'Click to Play Narration'}
-                </p>
-                <p className="text-xs text-slate-500 mb-4">
-                  100% generated via FlashTTS Neural Engine
-                </p>
-
-                <Link
-                  href="/signup"
-                  className="w-full py-2.5 bg-slate-900 hover:bg-black text-white text-center rounded-xl font-bold text-xs uppercase tracking-wider transition-colors"
-                >
-                  Generate With This Voice →
-                </Link>
-              </div>
-
-            </div>
-          </div>
-
         </div>
       </section>
 
@@ -310,7 +140,7 @@ export default function AudiobookClient() {
               From Manuscript to Master in 4 Steps
             </h2>
             <p className="text-slate-600 text-[17px] max-w-[620px] mx-auto">
-              No audio engineers, no soundproof booths, and no $50/hour recording studio fees.
+              No recording booth and no studio booking.
             </p>
           </div>
 
@@ -361,10 +191,10 @@ export default function AudiobookClient() {
                 04
               </div>
               <h3 className="font-['Syne'] font-bold text-[20px] text-slate-900 mb-3">
-                ACX Master Export
+                Chapter Export
               </h3>
               <p className="text-slate-600 text-[14px] leading-relaxed">
-                Export chapter-by-chapter with automated volume leveling. 100% compliant with Audible, Spotify, and Apple Books upload rules.
+                Export chapter by chapter as MP3 or WAV. Check your store&apos;s technical requirements before uploading.
               </p>
             </div>
 
@@ -484,81 +314,6 @@ export default function AudiobookClient() {
         </div>
       </section>
 
-      {/* ── 5. INDUSTRY SPECIFICATIONS (ACX & AUDIBLE READY) ── */}
-      <section className="py-24 px-4 sm:px-6">
-        <div className="max-w-[1200px] mx-auto">
-          
-          <div className="bg-slate-900 text-white rounded-[36px] p-8 sm:p-14 relative overflow-hidden">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-              
-              <div className="lg:col-span-7 space-y-6">
-                <span className="text-[11px] font-bold text-[#E8522A] uppercase tracking-widest bg-[#E8522A]/10 px-3 py-1 rounded-full border border-[#E8522A]/20">
-                  Distribution Standards
-                </span>
-
-                <h2 className="font-['Syne'] font-extrabold text-[32px] sm:text-[44px] text-white tracking-tight leading-tight">
-                  Guaranteed Pass on ACX & Audible Requirements.
-                </h2>
-
-                <p className="text-white/80 text-[16px] leading-relaxed">
-                  Audiobook platforms reject thousands of files every month due to inconsistent volume, noise floor violations, and clipping. FlashTTS pre-masters every chapter automatically to exact industry specifications.
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 size={18} className="text-[#E8522A] shrink-0" />
-                    <span className="text-sm font-semibold text-white/90">-23dB to -19dB RMS Loudness</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 size={18} className="text-[#E8522A] shrink-0" />
-                    <span className="text-sm font-semibold text-white/90">-3dB Peak Headroom (No Clipping)</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 size={18} className="text-[#E8522A] shrink-0" />
-                    <span className="text-sm font-semibold text-white/90">192kbps / 44.1kHz MP3 & WAV</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <CheckCircle2 size={18} className="text-[#E8522A] shrink-0" />
-                    <span className="text-sm font-semibold text-white/90">Automated Room-Tone & Head/Tail Pauses</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="lg:col-span-5 bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-sm">
-                <h3 className="font-['Syne'] font-bold text-white text-lg mb-4 flex items-center gap-2">
-                  <Award size={20} className="text-[#E8522A]" /> Platform Compatibility
-                </h3>
-
-                <ul className="space-y-3.5 text-sm text-white/80">
-                  <li className="flex items-center justify-between py-2 border-b border-white/10">
-                    <span>Audible (ACX)</span>
-                    <span className="text-emerald-400 font-bold text-xs uppercase">Certified Ready</span>
-                  </li>
-                  <li className="flex items-center justify-between py-2 border-b border-white/10">
-                    <span>Apple Books</span>
-                    <span className="text-emerald-400 font-bold text-xs uppercase">Certified Ready</span>
-                  </li>
-                  <li className="flex items-center justify-between py-2 border-b border-white/10">
-                    <span>Spotify Audiobooks</span>
-                    <span className="text-emerald-400 font-bold text-xs uppercase">Certified Ready</span>
-                  </li>
-                  <li className="flex items-center justify-between py-2 border-b border-white/10">
-                    <span>Google Play Books</span>
-                    <span className="text-emerald-400 font-bold text-xs uppercase">Certified Ready</span>
-                  </li>
-                  <li className="flex items-center justify-between py-2">
-                    <span>Kobo Writing Life</span>
-                    <span className="text-emerald-400 font-bold text-xs uppercase">Certified Ready</span>
-                  </li>
-                </ul>
-              </div>
-
-            </div>
-          </div>
-
-        </div>
-      </section>
-
       {/* ── 6. AUDIOBOOK FAQS ── */}
       <section className="py-20 px-4 sm:px-6 max-w-[850px] mx-auto">
         <div className="text-center mb-14">
@@ -571,40 +326,7 @@ export default function AudiobookClient() {
         </div>
 
         <div className="flex flex-col gap-4">
-          {AUDIOBOOK_FAQS.map((faq, idx) => {
-            const isOpen = activeFaq === idx;
-            return (
-              <div 
-                key={idx} 
-                className="bg-white border border-[#e2dfdb] rounded-[22px] overflow-hidden shadow-sm transition-all"
-              >
-                <button 
-                  onClick={() => setActiveFaq(isOpen ? null : idx)} 
-                  className="w-full flex items-center justify-between p-6 text-left cursor-pointer focus:outline-none"
-                >
-                  <span className="font-['Syne'] font-bold text-[17px] text-slate-900 pr-6">
-                    {faq.q}
-                  </span>
-                  <ChevronDown 
-                    size={20} 
-                    className={`text-slate-400 shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#E8522A]' : ''}`} 
-                  />
-                </button>
-                <AnimatePresence>
-                  {isOpen && (
-                    <motion.div 
-                      initial={{ height: 0, opacity: 0 }} 
-                      animate={{ height: 'auto', opacity: 1 }} 
-                      exit={{ height: 0, opacity: 0 }} 
-                      className="px-6 pb-6 text-slate-600 text-[15px] leading-relaxed"
-                    >
-                      {faq.a}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
+          <FaqList faqs={AUDIOBOOK_FAQS} />
         </div>
       </section>
 
@@ -616,7 +338,7 @@ export default function AudiobookClient() {
               Your Book Deserves to Be Heard Worldwide.
             </h2>
             <p className="text-[17px] text-white/85 mb-10 leading-relaxed">
-              Join thousands of indie authors and publishing houses converting manuscripts into audiobooks in hours. 
+              Turn your manuscript into chapter audio with the voice you choose.  
               Start completely free today.
             </p>
             <Link 

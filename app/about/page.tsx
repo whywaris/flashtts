@@ -1,23 +1,24 @@
 import type { Metadata } from 'next';
 import AboutClient from './AboutClient';
+import { FOUNDER, LANGUAGE_COUNT } from '@/lib/siteStats';
 
 export const metadata: Metadata = {
   title: "About FlashTTS - Built for Creators Who Never Stop Publishing",
-  description: "FlashTTS was built because ElevenLabs kept running out of credits. Founded by Avis Littel, we give creators unlimited studio-quality AI voices at a price that makes sense.",
+  description: `FlashTTS is an AI text-to-speech and voice cloning platform for creators, founded by ${FOUNDER.name}. ${LANGUAGE_COUNT} languages and a lower cost per character.`,
   alternates: {
     canonical: 'https://www.flashtts.com/about',
   },
   openGraph: {
-    title: 'About FlashTTS - Our Story & Team',
-    description: 'Learn why Avis Littel and the FlashTTS team built an unmetered alternative to legacy AI voice generators.',
+    title: 'About FlashTTS - Our Story',
+    description: `Why ${FOUNDER.name} started FlashTTS, a credit-based AI voice generator for creators.`,
     url: 'https://www.flashtts.com/about',
     type: 'website',
     images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'About FlashTTS' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'About FlashTTS - Our Story & Team',
-    description: 'Learn why Avis Littel and the FlashTTS team built an unmetered alternative to legacy AI voice generators.',
+    title: 'About FlashTTS - Our Story',
+    description: `Why ${FOUNDER.name} started FlashTTS, a credit-based AI voice generator for creators.`,
     images: ['/og-image.png'],
   },
 };
@@ -35,12 +36,10 @@ export default function AboutPage() {
       logo: 'https://www.flashtts.com/logo.png',
       founder: {
         '@type': 'Person',
-        name: 'Avis Littel',
-        jobTitle: 'Founder & Lead Engineer',
-        description: 'Speech synthesis engineer and audio systems architect with 8+ years developing neural voice architectures.',
-        sameAs: [
-          'https://github.com/flashtts'
-        ]
+        name: FOUNDER.name,
+        jobTitle: FOUNDER.role,
+        ...(FOUNDER.bio ? { description: FOUNDER.bio } : {}),
+        ...(FOUNDER.linkedinUrl ? { sameAs: [FOUNDER.linkedinUrl] } : {}),
       }
     }
   };

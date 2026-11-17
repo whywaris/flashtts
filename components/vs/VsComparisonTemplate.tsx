@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   Zap, DollarSign, Mic, CheckCircle2, 
   ArrowRight, ChevronDown, Check, X,
@@ -15,6 +15,11 @@ import {
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { ComparisonData } from '@/data/comparisons/elevenlabs';
+import { PAID_PLAN_COSTS, formatPer1k, formatChars, flashPlanFor, COMPETITOR_PRICES_CHECKED } from '@/lib/siteStats';
+import FaqList from '@/components/marketing/FaqList';
+import PlanLimitsTable from '@/components/marketing/PlanLimitsTable';
+import RelatedLinks, { COMPARISON_LINKS } from '@/components/marketing/RelatedLinks';
+import { CHARS_PER_AUDIO_MINUTE, CLONE_SAMPLE_SECONDS } from '@/lib/siteStats';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -31,13 +36,14 @@ interface Props {
 }
 
 export default function VsComparisonTemplate({ data }: Props) {
-  const [activeFaq, setActiveFaq] = useState<number | null>(0);
+  // FAQs with an empty answer are hidden from the page and from FAQPage schema until filled in.
+  const faqs = data.faqs.filter((f) => f.a.trim());
 
   // SEO Schema
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    "mainEntity": data.faqs.map(faq => ({
+    "mainEntity": faqs.map(faq => ({
       "@type": "Question",
       "name": faq.q,
       "acceptedAnswer": {
@@ -74,10 +80,12 @@ export default function VsComparisonTemplate({ data }: Props) {
 
   return (
     <div className="bg-[#F0EDE8] min-h-screen font-sans selection:bg-[#E8522A]/20 text-slate-800">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
+      {faqs.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      )}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
@@ -216,11 +224,56 @@ export default function VsComparisonTemplate({ data }: Props) {
                         {row.flashTts}
                       </div>
                     </td>
-                    <td className="p-5 text-center text-slate-500 text-[14px]">{row.competitor}</td>
+                    <td className="p-5 text-center text-slate-500 text-[14px]">
+                      <div className="flex items-center justify-center gap-2">
+                        {row.win === 'competitor' && <CheckCircle2 size={16} className="text-emerald-500" />}
+                        {row.competitor}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+          <p className="mt-4 text-center text-[13px] text-slate-500">
+            {data.competitorName} prices checked {COMPETITOR_PRICES_CHECKED}. Source:{' '}
+            {data.pricing.sourceUrl
+              ? <a href={data.pricing.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline">{data.competitorName} pricing page</a>
+              : <span>[official pricing page link]</span>}
+            . Prices change - check before buying.
+          </p>
+        </div>
+      </section>
+
+      {/* ── 3.2 PRICE PER 1,000 CHARACTERS ── */}
+      <section className="py-24 px-4 sm:px-6">
+        <div className="max-w-[1000px] mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="font-['Syne'] font-extrabold text-[32px] sm:text-[44px] text-slate-900 tracking-tight mb-4">Price per 1,000 Characters</h2>
+            <p className="text-[16px] text-slate-600 max-w-[640px] mx-auto">Monthly price ÷ monthly characters × 1,000. {data.pricing.note}</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[
+              { title: 'FlashTTS', rows: PAID_PLAN_COSTS.map((p) => ({ name: p.name, price: `$${p.price}`, chars: formatChars(p.credits), per1k: formatPer1k(p.per1k) })) },
+              { title: data.competitorName, rows: data.pricing.competitorPlans.map((p) => ({
+                name: p.name,
+                price: p.price === null ? '-' : `$${p.price}`,
+                chars: p.chars === null ? '-' : `${formatChars(p.chars)}${p.estimated ? ' (est.)' : ''}`,
+                per1k: p.price !== null && p.chars ? `${formatPer1k((p.price / p.chars) * 1000)}${p.estimated ? ' (est.)' : ''}` : (p.note || 'n/a'),
+              })) },
+            ].map((col) => (
+              <div key={col.title} className="bg-white rounded-[24px] border border-[#e2dfdb] overflow-hidden">
+                <div className="px-6 py-4 font-['Syne'] font-bold text-slate-900 border-b border-[#e2dfdb]">{col.title}</div>
+                <table className="w-full text-[14px]">
+                  <thead><tr className="text-slate-400 text-left"><th className="px-6 py-2">Plan</th><th className="py-2">Price/mo</th><th className="py-2">Chars/mo</th><th className="py-2 pr-6">Per 1k</th></tr></thead>
+                  <tbody>
+                    {col.rows.map((r) => (
+                      <tr key={r.name} className="border-t border-slate-100"><td className="px-6 py-3 font-bold">{r.name}</td><td>{r.price}</td><td>{r.chars}</td><td className="pr-6 font-bold">{r.per1k}</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -269,32 +322,36 @@ export default function VsComparisonTemplate({ data }: Props) {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {data.pricingBreakdown.creators.map((c, i) => (
+            {data.pricingBreakdown.creators.map((c, i) => {
+              const flash = flashPlanFor(c.chars);
+              return (
               <div key={i} className="bg-white p-8 rounded-[32px] border border-[#e2dfdb] hover:border-[#E8522A] transition-colors shadow-sm group">
                 <div className="text-[12px] font-black uppercase tracking-[0.2em] text-[#E8522A] mb-4">{c.type}</div>
                 <div className="flex items-center gap-2 text-slate-400 text-[14px] font-medium mb-8">
-                  <Zap size={14} className="text-[#E8522A]" /> Needs: {c.needs}
-                </div>
-                
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                    <span className="text-[13px] font-bold text-slate-500">{data.competitorName} Cost</span>
-                    <span className="text-[15px] font-bold text-red-500">{c.competitorCost}</span>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
-                    <span className="text-[13px] font-bold text-emerald-700">FlashTTS Cost</span>
-                    <span className="text-[15px] font-bold text-emerald-600">{c.flashTtsCost}</span>
-                  </div>
+                  <Zap size={14} className="text-[#E8522A]" /> Needs: ~{formatChars(c.chars)} chars/month
                 </div>
 
-                <div className="text-center p-6 bg-[#E8522A] rounded-[20px] text-white shadow-lg shadow-[#E8522A]/20">
-                  <div className="text-[11px] font-black uppercase tracking-widest text-white/70 mb-1">Total Savings</div>
-                  <div className="text-[28px] font-['Syne'] font-extrabold text-white">{c.savings}</div>
-                  <div className="text-[13px] font-bold text-white/90">({c.savingsYearly})</div>
+                <div className="space-y-4">
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[13px] font-bold text-slate-500">{data.competitorName}</span>
+                      <span className="text-[15px] font-bold text-slate-700">{c.competitorCost}</span>
+                    </div>
+                    <div className="mt-1 text-[12px] text-slate-400">{c.competitorMath}</div>
+                  </div>
+                  <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[13px] font-bold text-emerald-700">FlashTTS</span>
+                      <span className="text-[15px] font-bold text-emerald-600">{flash.label}</span>
+                    </div>
+                    <div className="mt-1 text-[12px] text-emerald-700/70">{flash.math}</div>
+                  </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
+          <p className="mt-6 text-center text-[13px] text-slate-500">{data.competitorName} prices checked {COMPETITOR_PRICES_CHECKED}. Monthly billing.</p>
         </div>
       </section>
 
@@ -341,7 +398,7 @@ export default function VsComparisonTemplate({ data }: Props) {
       </section>
 
       {/* ── 5.5 WARNING SECTION (Optional) ── */}
-      {data.warningSection && (
+      {data.warningSection?.sourceUrl && (
         <section className="py-24 px-4 sm:px-6">
           <div className="max-w-[1000px] mx-auto bg-amber-50 border-2 border-amber-200 p-10 sm:p-14 rounded-[40px] shadow-sm relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-40 h-40 bg-amber-200/20 blur-[50px] rounded-full"></div>
@@ -406,7 +463,7 @@ export default function VsComparisonTemplate({ data }: Props) {
                 )}
 
                 <div className="inline-flex items-center gap-2 text-[12px] font-bold text-slate-400 uppercase tracking-widest italic">
-                  <Info size={14} /> Source: {data.warningSection.source}
+                  <Info size={14} /> Source: <a href={data.warningSection.sourceUrl} target="_blank" rel="noopener noreferrer" className="underline">{data.warningSection.source}</a>
                 </div>
               </div>
             </div>
@@ -414,28 +471,53 @@ export default function VsComparisonTemplate({ data }: Props) {
         </section>
       )}
 
+      {/* ── 5.8 HOW WE COMPARED + SWITCHING ── */}
+      <section className="py-24 px-4 sm:px-6">
+        <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white rounded-[24px] border border-[#e2dfdb] p-8">
+            <h2 className="font-['Syne'] font-extrabold text-[26px] text-slate-900 mb-4">How we compared</h2>
+            <ul className="space-y-3 text-slate-600 text-[15px] leading-relaxed list-disc pl-5">
+              <li>{data.competitorName} plans and features come from its official website, checked {COMPETITOR_PRICES_CHECKED}. Prices change, so check before you buy.</li>
+              <li>FlashTTS figures come straight from our current plans.</li>
+              <li>Price per 1,000 characters = monthly price ÷ monthly characters × 1,000, on monthly billing.</li>
+              <li>Where a plan is sold in audio minutes or words, we convert at about {formatChars(CHARS_PER_AUDIO_MINUTE)} characters per minute and mark the result &quot;est.&quot;.</li>
+              <li>Each cost scenario uses the cheapest plan whose monthly allowance actually covers the usage.</li>
+              <li>We do not score voice quality: it is subjective, so test both free tiers with your own script.</li>
+            </ul>
+          </div>
+          <div className="bg-white rounded-[24px] border border-[#e2dfdb] p-8">
+            <h2 className="font-['Syne'] font-extrabold text-[26px] text-slate-900 mb-4">Switching to FlashTTS</h2>
+            <ol className="space-y-3 text-slate-600 text-[15px] leading-relaxed list-decimal pl-5">
+              <li>Create a free account (10,000 characters a month, no card) and generate one paragraph of a real script.</li>
+              <li>Compare two or three library voices on that paragraph.</li>
+              <li>If you used a cloned voice on {data.competitorName}, record a new {CLONE_SAMPLE_SECONDS}-second sample of your own voice here. Clone only voices you have permission to use.</li>
+              <li>Split long scripts at natural breaks so each part fits your plan&apos;s per-generation limit.</li>
+              <li>Pick the plan whose monthly allowance covers your usage, then cancel the old subscription at the end of its billing period.</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 5.9 FLASHTTS PLAN LIMITS ── */}
+      <section className="pb-24 px-4 sm:px-6">
+        <div className="max-w-[1100px] mx-auto">
+          <h2 className="font-['Syne'] font-extrabold text-[30px] sm:text-[40px] text-slate-900 tracking-tight mb-6">FlashTTS plans and limits</h2>
+          <PlanLimitsTable />
+        </div>
+      </section>
+
       {/* ── 6. FAQ ── */}
       <section className="py-24 sm:py-32 px-4 max-w-[800px] mx-auto">
         <h2 className="font-['Syne'] font-extrabold text-[36px] sm:text-[44px] text-slate-900 tracking-tight text-center mb-12">Frequently Asked Questions</h2>
         <div className="flex flex-col gap-4">
-          {data.faqs.map((faq, idx) => {
-            const isOpen = activeFaq === idx;
-            return (
-              <div key={idx} className={`border ${isOpen ? 'border-[#E8522A] bg-white' : 'border-[#e2dfdb] bg-white'} rounded-[20px] overflow-hidden transition-colors shadow-sm`}>
-                <button onClick={() => setActiveFaq(isOpen ? null : idx)} className="w-full flex items-center justify-between p-6 text-left focus:outline-none">
-                  <span className="font-['Syne'] font-bold text-[18px] text-slate-900 pr-8">{faq.q}</span>
-                  <ChevronDown size={20} className={`text-slate-400 shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#E8522A]' : ''}`} />
-                </button>
-                <AnimatePresence>
-                  {isOpen && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="px-6 pb-6 text-slate-600 text-[15.5px] leading-relaxed">
-                      {faq.a}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
+          <FaqList faqs={faqs} />
+        </div>
+      </section>
+
+      {/* ── RELATED COMPARISONS ── */}
+      <section className="pb-24 px-4 sm:px-6">
+        <div className="max-w-[1100px] mx-auto">
+          <RelatedLinks title="Other comparisons" links={COMPARISON_LINKS.filter((l) => l.href !== `/vs/${data.slug}`)} />
         </div>
       </section>
 
@@ -445,7 +527,7 @@ export default function VsComparisonTemplate({ data }: Props) {
           <div className="absolute top-[-100px] right-[-100px] w-[300px] h-[300px] bg-white/10 blur-[80px] rounded-full pointer-events-none"></div>
           <div className="relative z-10">
             <h2 className="font-['Syne'] font-extrabold text-[40px] sm:text-[56px] text-white tracking-tight leading-[1.1] mb-6">Ready to Stop Running Out of Credits?</h2>
-            <p className="text-[18px] text-white/80 max-w-[500px] mx-auto mb-10">Join thousands of creators who switched to FlashTTS for more audio, less cost.</p>
+            <p className="text-[18px] text-white/80 max-w-[500px] mx-auto mb-10">Start with 10,000 free characters a month. No credit card.</p>
             <Link href="/signup" className="inline-flex py-5 px-10 bg-slate-900 hover:bg-black text-white rounded-xl font-['Syne'] font-bold text-[18px] items-center justify-center gap-3 transition-transform hover:-translate-y-1 shadow-xl">
               Start Free - No Credit Card →
             </Link>
@@ -460,7 +542,8 @@ export default function VsComparisonTemplate({ data }: Props) {
           Disclaimer: ElevenLabs, Murf AI, Speechify, LOVO, WellSaid Labs, NaturalReader, Cartesia, and Fish Audio are trademarks
           of their respective owners. FlashTTS is an independent platform and is not affiliated with,
           sponsored by, or endorsed by any of these companies. Comparison data is gathered from
-          publicly available information as of 2026.
+          publicly available information checked {COMPETITOR_PRICES_CHECKED}; prices change. See our{' '}
+          <Link href="/disclaimer" className="underline">disclaimer</Link>.
         </p>
       </div>
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { PLANS } from '@/lib/plans';
 import { createClient } from '@/utils/supabase/server';
 import { spawn } from 'child_process';
 import { writeFile, readFile, unlink } from 'fs/promises';
@@ -9,13 +10,8 @@ import { randomUUID } from 'crypto';
 const MODAL_API_URL = 'https://genztts--flashtts-api.modal.run';
 
 // ─── Character limits per plan ────────────────────────────────────────────────
-const PLAN_LIMITS: Record<string, number> = {
-  free: 10000,
-  starter: 200000,
-  creator: 500000,
-  pro: 1000000,
-  studio: 3000000,
-};
+// Monthly character allowance per plan; single source is lib/plans.ts (same as the billing webhook).
+const PLAN_LIMITS: Record<string, number> = Object.fromEntries(PLANS.map((p) => [p.id, p.credits]));
 
 export async function POST(req: NextRequest) {
   try {

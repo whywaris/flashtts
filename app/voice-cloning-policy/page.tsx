@@ -64,6 +64,18 @@ export default function VoiceCloningPolicyPage() {
           in civil liability for defamation.
         </p>
 
+        <h2>AI Disclosure</h2>
+        <p>
+          You are responsible for disclosing that audio is AI-generated wherever a platform or law requires it.
+          For example, YouTube asks creators to use the altered or synthetic content setting when uploading
+          realistic content made with AI, including a synthetic voice that could be mistaken for a real person.
+          Check the rules of each platform you publish on.
+        </p>
+        <p>
+          {/* TODO: confirm. The API does not currently add a watermark; the Terms say Free audio "may include" one. */}
+          Audio generated on the Free plan may include a watermark (see our Terms). Paid-plan audio is not watermarked.
+        </p>
+
         <h2>Enforcement & Penalties</h2>
         <p>
           We actively monitor our platform for policy violations.

@@ -1,130 +1,135 @@
 ﻿import { ComparisonData } from './elevenlabs';
+import { LANGUAGE_COUNT_LABEL, CHARS_PER_AUDIO_MINUTE } from '@/lib/siteStats';
+
+// TODO: verify every LOVO value below on https://lovo.ai/pricing (official page) and set
+// COMPETITOR_PRICES_CHECKED in lib/siteStats.ts. Values carried over from the previous page, not re-checked.
+// LOVO bills by audio minutes; character figures are estimates at CHARS_PER_AUDIO_MINUTE.
+const min = (m: number) => m * CHARS_PER_AUDIO_MINUTE;
 
 export const lovoData: ComparisonData = {
   competitorName: 'LOVO AI',
   slug: 'lovo',
-  metaTitle: 'FlashTTS vs LOVO AI: 64% Cheaper With No Voice Deletion Risk',
-  metaDescription: 'Comparing FlashTTS vs LOVO AI? LOVO AI charges $25/mo for just 2 hours of audio and randomly deletes voices with no warning. FlashTTS gives you more audio, lower price, and zero deletion risk.',
+  metaTitle: 'FlashTTS vs LOVO AI: Price per Character Compared',
+  metaDescription: 'LOVO AI bills by audio hours, FlashTTS by characters. We convert both to an estimated cost per 1,000 characters, show the math, and list where LOVO is the better pick.',
   hero: {
-    badge: 'HONEST COMPARISON',
-    title: 'FlashTTS vs LOVO AI: More Audio, No Deleted Voices',
-    subheadline: "LOVO AI charges $25/month for just 2 hours of audio - and has a documented history of randomly deleting voices mid-project with no warning or compensation. FlashTTS gives you 200,000 characters for $9, with zero deletion risk."
+    badge: 'PRICE COMPARISON',
+    title: 'FlashTTS vs LOVO AI: Price per Character Compared',
+    subheadline: "LOVO AI's Basic plan is $25/month for 2 hours of audio. FlashTTS Starter is $9/month for 200,000 characters (about 200 minutes, estimated). Here is the per-character math."
   },
   verdictCards: [
     {
       icon: 'dollar',
-      title: '64% Cheaper',
-      text: 'FlashTTS Starter = $9/mo. LOVO Basic = $25/mo. Same audio volume, fraction of cost.',
+      title: 'Lower Cost per Character (est.)',
+      text: 'Converted at ~1,000 characters per audio minute, FlashTTS costs less per character on every plan we compared.',
       badge: 'FlashTTS Wins',
       badgeColor: 'green'
     },
     {
-      icon: 'lightning', // Lightning represents Reliability/Shield in this context maps to Zap
-      title: 'No Voice Deletion',
-      text: 'LOVO AI deletes voices without warning, breaking projects mid-production. FlashTTS voices are permanent.',
+      icon: 'microphone',
+      title: 'Voice Cloning on Every Plan',
+      text: 'FlashTTS includes cloning on every plan. LOVO lists cloning from its Pro plan.',
       badge: 'FlashTTS Wins',
       badgeColor: 'green'
     },
     {
       icon: 'waveform',
-      title: 'More Per Dollar',
-      text: '200k chars (~200 mins) for $9 vs 2hrs/mo on LOVO for $25. Better value at every tier.',
-      badge: 'FlashTTS Wins',
-      badgeColor: 'green'
+      title: 'More Languages & Video Tools',
+      text: 'LOVO lists 100+ languages plus a built-in video editor.',
+      badge: 'LOVO Wins',
+      badgeColor: 'gray'
     }
   ],
   table: {
     rows: [
-      { feature: 'Free Plan', flashTts: '10,000 chars', competitor: '20 mins trial only', win: 'flash' },
-      { feature: 'Basic / Starter', flashTts: '200k / $9', competitor: '2hrs / $25', win: 'flash' },
-      { feature: 'Creator / Pro', flashTts: '500k / $19', competitor: '5hrs / $48', win: 'flash' },
-      { feature: 'Pro', flashTts: '1M / $39', competitor: '20hrs / $149', win: 'flash' },
-      { feature: 'Studio', flashTts: '3M / $79', competitor: 'Enterprise', win: 'flash' },
-      { feature: 'Voice Cloning', flashTts: 'All paid plans', competitor: 'Pro plan only', win: 'flash' },
-      { feature: 'Voice Deletion Risk', flashTts: 'None', competitor: 'Documented', win: 'flash' },
-      { feature: 'Unused Credits', flashTts: 'Stable', competitor: 'Expire monthly', win: 'flash' },
-      { feature: 'Languages', flashTts: '19 languages', competitor: '100+ languages', win: 'tie' },
+      { feature: 'Free Plan', flashTts: '10,000 chars/mo', competitor: '20 mins trial only', win: 'flash' },
+      { feature: 'Basic / Starter', flashTts: '200,000 chars / $9', competitor: '2 hrs / $25', win: 'flash' },
+      { feature: 'Mid tier', flashTts: '600,000 chars / $19', competitor: '5 hrs / $48', win: 'flash' },
+      { feature: 'Pro', flashTts: '2,000,000 chars / $39', competitor: '20 hrs / $149', win: 'flash' },
+      { feature: 'Studio', flashTts: '3,000,000 chars / $79', competitor: 'Enterprise', win: 'flash' },
+      { feature: 'Voice Cloning', flashTts: 'Every plan', competitor: 'Pro plan+', win: 'flash' },
+      { feature: 'Unused allowance', flashTts: 'Resets each billing cycle', competitor: 'Resets monthly', win: 'tie' },
+      { feature: 'Languages', flashTts: LANGUAGE_COUNT_LABEL, competitor: '100+ languages', win: 'competitor' },
       { feature: 'Commercial Rights', flashTts: 'All paid plans', competitor: 'All paid plans', win: 'tie' },
-      { feature: 'Customer Support', flashTts: 'Responsive', competitor: 'Slow (1-2 weeks)', win: 'flash' },
-      { feature: 'Voice Library', flashTts: '1,000+ voices', competitor: '500+ voices', win: 'flash' },
-      { feature: 'Free Downloads', flashTts: 'No', competitor: 'No (trial only)', win: 'tie' }
+      { feature: 'Billing unit', flashTts: 'Characters', competitor: 'Audio hours' }
     ]
   },
+  // Hidden until sourceUrl is set (template renders warnings only with a linked source).
+  // TODO: link the exact Capterra/G2 review quoted below, or delete this section.
   warningSection: {
-    title: 'Voices Get Deleted Without Warning',
-    text: 'Multiple verified user reports on Capterra and G2 document LOVO AI randomly removing voices from their library - breaking ongoing projects with no warning, explanation, or compensation. Users who built content series around specific voices were forced to start over completely.',
-    source: 'Verified Capterra Review',
+    title: 'User Reports of Removed Voices',
+    text: 'Some user reviews report LOVO AI removing voices from its library, which affected ongoing projects.',
+    source: 'Capterra review',
+    sourceUrl: '',
     quote: "Lovo have deleted the voices. That makes it hugely expensive in time and money. I really wish I'd never heard of this product.",
-    quoteSource: 'Verified Capterra Review',
-    note: "FlashTTS does not delete voices from our library. Your saved voices and cloned voices remain permanently available as long as your account is active."
+    quoteSource: 'Capterra review',
+  },
+  pricing: {
+    sourceUrl: '', // TODO: https://lovo.ai/pricing once verified
+    note: 'LOVO figures are converted from audio hours at ~1,000 characters per minute (estimate).',
+    competitorPlans: [
+      { name: 'Basic', price: 25, chars: min(120), estimated: true },
+      { name: 'Pro', price: 48, chars: min(300), estimated: true },
+      { name: 'Pro+', price: 149, chars: min(1200), estimated: true },
+    ],
   },
   pricingBreakdown: {
-    heading: 'Real Cost Comparison for Creators',
-    subtext: "Switch to FlashTTS - reliable AI audio at a price that makes sense.",
+    heading: 'Cost Scenarios',
+    subtext: 'Each scenario uses the cheapest plan whose allowance covers the usage. Minutes converted at ~1,000 chars/min (est.).',
     creators: [
       {
         type: 'Weekly YouTube Creator',
-        needs: '~180 mins audio/month',
-        competitorCost: '$25/mo (Basic)',
-        flashTtsCost: '$9/mo (Starter)',
-        savings: '$16/mo',
-        savingsYearly: '$192/year'
+        chars: min(180),
+        competitorCost: '$48/mo (Pro)',
+        competitorMath: '~180 min needed > 120 min on Basic ($25) → Pro, 300 min'
       },
       {
         type: 'Daily Shorts + Faceless Creator',
-        needs: '~500 mins audio/month',
-        competitorCost: '$48/mo (Pro)',
-        flashTtsCost: '$19/mo (Creator)',
-        savings: '$29/mo',
-        savingsYearly: '$348/year'
+        chars: min(500),
+        competitorCost: '$149/mo (Pro+)',
+        competitorMath: '~500 min needed > 300 min on Pro ($48) → Pro+, 1,200 min'
       },
       {
         type: 'Audiobook + Podcast Creator',
-        needs: '~1,000 mins audio/month',
+        chars: min(1000),
         competitorCost: '$149/mo (Pro+)',
-        flashTtsCost: '$39/mo (Pro)',
-        savings: '$110/mo',
-        savingsYearly: '$1,320/year'
+        competitorMath: '~1,000 min needed ≤ 1,200 min included'
       }
     ]
   },
   whyChoose: {
     flashTts: [
-      'You need reliable voices that never get deleted',
       'You publish content daily or weekly',
-      'Budget matters to your business',
-      'You want voice cloning without Pro plan',
-      'You need responsive customer support',
+      'You want a lower cost per character',
+      'You want voice cloning without a Pro plan',
       'You\'re a YouTuber, Podcaster or Agency'
     ],
     competitor: [
       'You need 100+ language support',
       'You need built-in video editor',
       'You need AI image generation bundled',
-      'You only produce low-volume audio',
       'You need subtitle generation built-in'
     ]
   },
   faqs: [
     {
       q: 'Is FlashTTS cheaper than LOVO AI?',
-      a: 'Yes - significantly. FlashTTS starts at $9/month with 200,000 characters included. LOVO AI\'s Basic plan starts at $25/month with only 2 hours of audio generation. That makes FlashTTS 64% cheaper at entry level, while delivering comparable or greater audio volume for most content creators.'
+      a: 'Per character, yes on every plan we compared (estimated, converting LOVO hours at ~1,000 characters per minute). FlashTTS Starter is $9/month for 200,000 characters; LOVO Basic is $25/month for 2 hours of audio.'
     },
     {
       q: 'Does LOVO AI delete voices?',
-      a: 'Multiple verified user reviews on Capterra and G2 report that LOVO AI has removed voices from their library without warning, breaking ongoing content projects with no compensation. FlashTTS does not delete voices - your saved voices and cloned voices remain permanently available as long as your account is active.'
+      a: '' // TODO: answer only with a linked source. Hidden until filled.
     },
     {
       q: 'Does LOVO AI include voice cloning?',
-      a: 'LOVO AI includes voice cloning starting from their Pro plan at $48/month. FlashTTS includes voice cloning on all paid plans starting from just $9/month - making it significantly more accessible for creators on a budget.'
+      a: 'LOVO lists voice cloning from its Pro plan ($48/month). FlashTTS includes voice cloning on every plan, including Starter at $9/month.'
     },
     {
       q: 'What is the best LOVO AI alternative for content creators?',
-      a: 'For content creators who need reliable, affordable AI voiceovers at scale, FlashTTS is the strongest LOVO AI alternative. It offers 200,000 characters for $9/month, includes voice cloning on all plans, has no voice deletion risk, and is purpose-built for YouTubers, Podcasters, and Agencies who publish daily.'
+      a: 'If you want character-based pricing and voice cloning on every plan, FlashTTS is worth trying: 200,000 characters for $9/month and a free tier to test with. If you need 100+ languages or a built-in video editor, LOVO may fit better.'
     },
     {
       q: 'How does LOVO AI compare to FlashTTS for audiobooks?',
-      a: 'FlashTTS has a dedicated Audiobook Studio designed for long-form narration at scale. LOVO AI\'s minute-based pricing makes audiobook production expensive - a single audiobook chapter can consume a significant portion of your monthly allowance. FlashTTS character-based pricing is far more predictable and cost-effective for audiobook creators.'
+      a: 'FlashTTS has a multi-chapter Audiobook Studio and bills by characters, so you can estimate a book\'s cost from its length. LOVO bills by audio time. Compare both against your manuscript length.'
     }
   ]
 };

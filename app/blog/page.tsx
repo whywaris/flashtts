@@ -2,6 +2,8 @@ import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import { readTimeMinutes as getReadTime } from '@/lib/blog-parser'
+import { FOUNDER } from '@/lib/siteStats'
 
 export const revalidate = 0
 
@@ -31,10 +33,6 @@ export default async function BlogPage() {
     'linear-gradient(135deg, #111827, #374151)',
   ]
 
-  function getReadTime(content: string) {
-    const words = content?.split(' ').length || 200
-    return Math.ceil(words / 200)
-  }
 
   function formatDate(date: string) {
     return new Date(date).toLocaleDateString('en-US', {
@@ -98,7 +96,7 @@ export default async function BlogPage() {
                     {posts[0].excerpt || posts[0].content?.replace(/<[^>]*>/g, '').slice(0, 200)}
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '13px', color: 'rgba(10,10,15,0.4)', marginBottom: '20px' }}>
-                    <span>{posts[0].author_name || 'Avis Littel'}</span>
+                    <span>{FOUNDER.name}</span>
                     <span>•</span>
                     <span>{formatDate(posts[0].published_at || posts[0].created_at)}</span>
                     <span>•</span>

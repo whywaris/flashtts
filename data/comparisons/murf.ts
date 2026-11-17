@@ -1,103 +1,90 @@
 ﻿import { ComparisonData } from './elevenlabs';
+import { LANGUAGE_COUNT_LABEL, CHARS_PER_AUDIO_MINUTE } from '@/lib/siteStats';
+
+// TODO: verify every Murf value below on https://murf.ai/pricing (official page) and set
+// COMPETITOR_PRICES_CHECKED in lib/siteStats.ts. Values carried over from the previous page, not re-checked.
+// Murf bills by audio minutes; character figures are estimates at CHARS_PER_AUDIO_MINUTE.
+const min = (m: number) => m * CHARS_PER_AUDIO_MINUTE;
 
 export const murfData: ComparisonData = {
   competitorName: 'Murf AI',
   slug: 'murf',
-  metaTitle: 'FlashTTS vs Murf AI: 4x More Audio at Half the Price',
-  metaDescription: 'Comparing FlashTTS vs Murf AI? FlashTTS gives creators 4x more audio generation at half the price - with voice cloning included on all plans. No minute limits. See the full breakdown.',
+  metaTitle: 'FlashTTS vs Murf AI: Character vs Minute Pricing Compared',
+  metaDescription: 'Murf AI bills by audio minutes, FlashTTS by characters. We convert both to an estimated cost per 1,000 characters, show the math, and list where Murf is the better pick.',
   hero: {
-    badge: 'HONEST COMPARISON',
-    title: 'FlashTTS vs Murf AI: More Audio, No Minute Limits',
-    subheadline: "Murf AI charges $19/month for just 2 hours of audio. FlashTTS gives you 200,000 characters - roughly 200+ minutes - for the same price. No expiring minutes. No surprise stops."
+    badge: 'PRICE COMPARISON',
+    title: 'FlashTTS vs Murf AI: Characters vs Minutes',
+    subheadline: "Murf AI's Creator plan is $19/month for 2 hours of audio. FlashTTS Starter is $9/month for 200,000 characters (about 200 minutes, estimated). Here is the per-character math."
   },
   verdictCards: [
     {
-      icon: 'lightning',
-      title: '4x More Audio',
-      text: '200k chars (~200 mins) for $9 vs 2 hrs/mo on Murf\'s $19 Creator plan.',
-      badge: 'FlashTTS Wins',
-      badgeColor: 'green'
-    },
-    {
       icon: 'dollar',
-      title: '53% Cheaper',
-      text: 'FlashTTS starts at $9/mo. Murf Creator starts at $19/mo.',
+      title: 'Lower Cost per Character (est.)',
+      text: 'Converted at ~1,000 characters per audio minute, FlashTTS costs less per character on every plan we compared.',
       badge: 'FlashTTS Wins',
       badgeColor: 'green'
     },
     {
       icon: 'microphone',
-      title: 'Cloning Included',
-      text: 'FlashTTS includes voice cloning on all paid plans. Murf requires Enterprise.',
+      title: 'Voice Cloning',
+      text: 'Included on every FlashTTS plan. Murf lists voice cloning on Enterprise.',
       badge: 'FlashTTS Wins',
       badgeColor: 'green'
+    },
+    {
+      icon: 'lightning',
+      title: 'Team & Slides Tools',
+      text: 'Murf offers collaboration and presentation integrations that FlashTTS does not.',
+      badge: 'Murf Wins',
+      badgeColor: 'gray'
     }
   ],
   table: {
     rows: [
-      { feature: 'Free Plan', flashTts: '10,000 chars', competitor: '10 mins lifetime', win: 'flash' },
-      { feature: 'Basic / Starter', flashTts: '200k / $9', competitor: '2hrs / $19', win: 'flash' },
-      { feature: 'Business / Creator', flashTts: '500k / $19', competitor: '8hrs / $66', win: 'flash' },
-      { feature: 'Pro', flashTts: '1M / $39', competitor: 'Enterprise only', win: 'flash' },
-      { feature: 'Studio', flashTts: '3M / $79', competitor: 'Enterprise only', win: 'flash' },
-      { feature: 'Voice Cloning', flashTts: 'All paid plans', competitor: 'Enterprise only', win: 'flash' },
-      { feature: 'Unused Credits', flashTts: 'Roll over', competitor: 'Expire monthly', win: 'flash' },
-      { feature: 'Languages', flashTts: '19 languages', competitor: '20 languages', win: 'tie' },
-      { feature: 'Commercial Rights', flashTts: 'All paid plans', competitor: 'Creator+', win: 'flash' },
-      { feature: 'Download Audio', flashTts: 'All paid plans', competitor: 'Creator+', win: 'flash' },
-      { feature: 'Free Downloads', flashTts: 'No', competitor: 'No', win: 'tie' },
-      { feature: 'Generation Type', flashTts: 'Character-based', competitor: 'Minute-based', win: 'flash' },
+      { feature: 'Free Plan', flashTts: '10,000 chars/mo', competitor: '10 mins lifetime', win: 'flash' },
+      { feature: 'Entry price', flashTts: '$9/mo', competitor: '$19/mo', win: 'flash' },
+      { feature: 'Entry allowance', flashTts: '200,000 chars (~200 min est.)', competitor: '2 hrs', win: 'flash' },
+      { feature: 'Mid tier', flashTts: '600,000 chars / $19', competitor: '8 hrs / $66', win: 'flash' },
+      { feature: 'Pro', flashTts: '2,000,000 chars / $39', competitor: 'Enterprise only', win: 'flash' },
+      { feature: 'Studio', flashTts: '3,000,000 chars / $79', competitor: 'Enterprise only', win: 'flash' },
+      { feature: 'Voice Cloning', flashTts: 'Every plan', competitor: 'Enterprise only', win: 'flash' },
+      { feature: 'Unused allowance', flashTts: 'Resets each billing cycle', competitor: 'Resets monthly', win: 'tie' },
+      { feature: 'Languages', flashTts: LANGUAGE_COUNT_LABEL, competitor: '20 languages', win: 'flash' },
+      { feature: 'Commercial Rights', flashTts: 'All paid plans', competitor: 'Creator+', win: 'tie' },
+      { feature: 'Billing unit', flashTts: 'Characters', competitor: 'Audio minutes' },
       { feature: 'API Access', flashTts: 'Studio plan', competitor: 'Enterprise only', win: 'flash' }
     ]
   },
-  problemSection: {
-    title: 'The Hidden Problem With Minute-Based Pricing',
-    subtext: "Murf AI measures usage by actual audio duration - not characters. Here's why that hurts creators.",
-    cards: [
-      {
-        icon: 'clock-x',
-        title: 'Minutes Expire',
-        text: "Murf's 2 hrs/month expires at month end. Unused minutes are gone forever. FlashTTS characters never expire."
-      },
-      {
-        icon: 'warning',
-        title: 'You Hit the Wall Mid-Project',
-        text: 'Run out of minutes on Murf? Generation stops immediately. No warning. No buffer.'
-      },
-      {
-        icon: 'calculator',
-        title: "Math Doesn't Work for Daily Creators",
-        text: '2 hrs = ~120 minutes of audio. A daily YouTube creator needs 600+ minutes per month minimum.'
-      }
-    ]
+  pricing: {
+    sourceUrl: '', // TODO: https://murf.ai/pricing once verified
+    note: 'Murf figures are converted from audio minutes at ~1,000 characters per minute (estimate).',
+    competitorPlans: [
+      { name: 'Creator', price: 19, chars: min(120), estimated: true },
+      { name: 'Business', price: 66, chars: min(480), estimated: true },
+      { name: 'Enterprise', price: null, chars: null, note: 'Custom pricing' },
+    ],
   },
   pricingBreakdown: {
-    heading: 'What You Actually Get Per Dollar',
-    subtext: "Switch to FlashTTS - character-based pricing that never runs out mid-project.",
+    heading: 'Cost Scenarios',
+    subtext: 'Each scenario uses the cheapest plan whose allowance covers the usage. Minutes converted at ~1,000 chars/min (est.).',
     creators: [
       {
         type: 'Weekly Podcast Creator',
-        needs: '~180 mins audio/month',
-        competitorCost: '$19/mo (barely fits)',
-        flashTtsCost: '$9/mo (Starter)',
-        savings: '$10/mo',
-        savingsYearly: '$120/year'
+        chars: min(180),
+        competitorCost: '$66/mo (Business)',
+        competitorMath: '~180 min needed > 120 min on Creator ($19) → Business, 480 min'
       },
       {
         type: 'Daily Shorts + YouTube Creator',
-        needs: '~600 mins audio/month',
-        competitorCost: '$66/mo (Business)',
-        flashTtsCost: '$19/mo (Creator)',
-        savings: '$47/mo',
-        savingsYearly: '$564/year'
+        chars: min(600),
+        competitorCost: 'Enterprise (custom)',
+        competitorMath: '~600 min needed > 480 min on Business ($66)'
       },
       {
         type: 'Agency (Multiple Clients)',
-        needs: '~1,500 mins audio/month',
-        competitorCost: 'Enterprise (Custom)',
-        flashTtsCost: '$39/mo (Pro)',
-        savings: 'Massive Savings',
-        savingsYearly: 'Enterprise vs $39/mo'
+        chars: min(1500),
+        competitorCost: 'Enterprise (custom)',
+        competitorMath: '~1,500 min needed > 480 min on Business ($66)'
       }
     ]
   },
@@ -106,8 +93,7 @@ export const murfData: ComparisonData = {
       'You publish content daily or weekly',
       'You need high-volume audio generation',
       'You want voice cloning without Enterprise',
-      'You hate expiring credits',
-      'Budget matters to your business',
+      'You prefer paying per character, not per minute',
       'You\'re a YouTuber, Podcaster or Agency'
     ],
     competitor: [
@@ -121,23 +107,23 @@ export const murfData: ComparisonData = {
   faqs: [
     {
       q: 'Is FlashTTS cheaper than Murf AI?',
-      a: 'Yes - significantly. FlashTTS starts at $9/month with 200,000 characters included. Murf AI\'s Creator plan starts at $19/month but limits you to just 2 hours of audio per month. For high-volume creators, FlashTTS delivers 4x more audio at half the price.'
+      a: 'Per character, yes on every plan we compared (estimated, converting Murf minutes at ~1,000 characters per minute). FlashTTS Starter is $9/month for 200,000 characters; Murf Creator is $19/month for 2 hours of audio.'
     },
     {
       q: 'Does Murf AI include voice cloning?',
-      a: 'No - Murf AI reserves voice cloning for Enterprise plan customers only, which requires custom pricing. FlashTTS includes voice cloning on all paid plans starting from $9/month.'
+      a: 'Murf lists voice cloning on its Enterprise plan - check Murf\'s pricing page for current terms. FlashTTS includes voice cloning on every plan: 1 clone on Free, 3 on Starter ($9/mo).'
     },
     {
       q: 'What happens when you run out of minutes on Murf AI?',
-      a: 'When your Voice Generation Time (VGT) runs out on Murf AI, generation stops immediately with no buffer or warning. Unused minutes also do not carry over to the next month - they expire. FlashTTS uses character-based credits that are more predictable for daily content creators.'
+      a: 'Check Murf\'s pricing page for its current top-up and upgrade options. On FlashTTS, generation pauses when you reach your monthly character allowance until it resets at the next billing cycle, or you can upgrade to a larger plan at any time.'
     },
     {
       q: 'Which is better for YouTubers - FlashTTS or Murf AI?',
-      a: 'For YouTubers who publish regularly, FlashTTS is the stronger choice. A daily YouTube creator typically needs 600+ minutes of audio per month. Murf AI\'s Creator plan only provides 120 minutes (2 hours) - requiring a $66/month Business upgrade. FlashTTS covers the same volume for just $19/month.'
+      a: 'It depends on volume. At about 600 minutes of audio a month (est. 600,000 characters), FlashTTS Creator ($19/mo) covers it, while Murf Business (8 hours, $66/mo) does not. For low volume or team features, Murf may suit you better.'
     },
     {
-      q: 'Does FlashTTS have commercial rights like Murf AI?',
-      a: 'Yes. All FlashTTS paid plans include full commercial usage rights - meaning you can use generated audio on YouTube, TikTok, podcasts, client projects, and paid ads without any additional licensing fees.'
+      q: 'Does FlashTTS include commercial rights?',
+      a: 'Yes, on all paid plans: you can use generated audio on YouTube, TikTok, podcasts, client projects and ads. The Free plan is not licensed for commercial use.'
     }
   ]
 };

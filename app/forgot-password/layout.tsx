@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Forget Password | FlashTTS',
+  title: 'Forget Password',
   description: 'Reset your FlashTTS account password.',
 };
 

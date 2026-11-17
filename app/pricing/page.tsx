@@ -141,13 +141,13 @@ export default function PricingPage() {
         <div className="max-w-[800px] mx-auto">
           <motion.div initial="hidden" animate="visible" variants={fadeUp}>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-[#E8522A]/20 bg-[#E8522A]/5 text-[#E8522A] font-bold text-[11px] uppercase tracking-widest mb-6">
-              ⚡ 10x More Credits Than ElevenLabs
+              ⚡ Lower Cost per Character on Every Plan
             </div>
             <h1 className="font-['Syne'] font-extrabold text-[40px] sm:text-[56px] leading-[1.05] tracking-tight text-slate-900 mb-5">
               Simple, <span className="text-[#E8522A]">Scale-Ready</span> Pricing.
             </h1>
             <p className="text-[17px] sm:text-[19px] text-slate-500 max-w-[550px] mx-auto leading-relaxed mb-8">
-              Start free - upgrade when you're ready. Every plan includes commercial rights and zero watermarks.
+              Start free - upgrade when you&apos;re ready. Every paid plan includes commercial rights and no watermark.
             </p>
           </motion.div>
 

@@ -44,6 +44,8 @@ export default function Footer() {
               <li><Link href="/terms" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Terms of Service</Link></li>
               <li><Link href="/refund" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Refund Policy</Link></li>
               <li><Link href="/voice-cloning-policy" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Voice Cloning Policy</Link></li>
+              <li><Link href="/cookies" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Cookie Policy</Link></li>
+              <li><Link href="/disclaimer" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Disclaimer</Link></li>
               <li><Link href="/contact" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">Contact</Link></li>
               <li><Link href="/about" className="text-[14px] text-slate-600 hover:text-[#E8522A] transition-colors">About</Link></li>
             </ul>

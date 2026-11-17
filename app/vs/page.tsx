@@ -3,10 +3,10 @@ import VsHubClient from './VsHubClient';
 
 export const metadata: Metadata = {
   title: 'FlashTTS vs Competitors - Compare AI Voice Generators & Alternatives',
-  description: 'See how FlashTTS compares to ElevenLabs, Murf AI, Speechify, LOVO AI, WellSaid Labs, and NaturalReader. 10x more credits, studio-grade voices, and half the price.',
+  description: 'See how FlashTTS compares to ElevenLabs, Murf AI, Speechify, LOVO AI, WellSaid Labs, and NaturalReader. Price per character, features and limits compared, with the math shown.',
   openGraph: {
-    title: 'FlashTTS vs Competitors | Honest AI Voice Generator Comparisons',
-    description: 'Compare FlashTTS with ElevenLabs, Murf AI, Speechify, LOVO AI, WellSaid Labs, and NaturalReader. Discover why creators switch to FlashTTS.',
+    title: 'FlashTTS vs Competitors | AI Voice Generator Comparisons',
+    description: 'Compare FlashTTS with ElevenLabs, Murf AI, Speechify, LOVO AI, WellSaid Labs, and NaturalReader. Prices, features and limits side by side.',
     url: 'https://www.flashtts.com/vs',
     type: 'website',
     images: [
@@ -53,7 +53,7 @@ export default function VsIndexPage() {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'FlashTTS Comparisons Hub',
-    description: 'Honest, side-by-side comparisons of FlashTTS vs top AI voice platforms.',
+    description: 'Side-by-side comparisons of FlashTTS vs top AI voice platforms.',
     url: 'https://www.flashtts.com/vs',
     mainEntity: {
       '@type': 'ItemList',

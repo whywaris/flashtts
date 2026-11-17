@@ -9,10 +9,12 @@ import Footer from '@/components/layout/Footer';
 import ReadingProgress from '../../components/blog/ReadingProgress';
 import TableOfContents from '../../components/blog/TableOfContents';
 import ShareButtons from '../../components/blog/ShareButtons';
-import { renderBlogHtml } from '@/lib/blog-parser';
+import { renderBlogHtml, readTimeMinutes as calculateReadTime } from '@/lib/blog-parser';
+import FounderAvatar from '@/components/FounderAvatar';
+import { FOUNDER, LANGUAGE_COUNT_LABEL } from '@/lib/siteStats';
 import { 
-  Clock, Calendar, User, 
-  Github, 
+  Clock, Calendar, 
+  Linkedin, 
   Zap, ChevronRight
 } from 'lucide-react';
 
@@ -89,16 +91,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     .neq('id', post.id)
     .limit(3);
 
-  const calculateReadTime = (content: string) => {
-    const words = content?.split(/\s+/)?.length || 200;
-    return Math.ceil(words / 200);
-  };
 
-  const publishDate = new Date(post.published_at || post.created_at).toLocaleDateString('en-US', { 
-    month: 'long', 
-    day: 'numeric', 
-    year: 'numeric' 
-  });
+  const fmtDate = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const publishDate = fmtDate(post.published_at || post.created_at);
+  const updatedDate = post.updated_at ? fmtDate(post.updated_at) : null;
 
   const fullUrl = `https://www.flashtts.com/blog/${slug}`;
 
@@ -121,8 +117,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             "dateModified": post.updated_at,
             "author": {
               "@type": "Person",
-              "name": "Avis Littel",
-              "jobTitle": "Founder & Lead Engineer",
+              "name": FOUNDER.name,
+              "jobTitle": FOUNDER.role,
               "url": "https://www.flashtts.com/about"
             },
             "publisher": {
@@ -165,16 +161,15 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
           <div className="flex flex-wrap items-center justify-between gap-6 py-6 border-y border-[rgba(10,10,15,0.08)]">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-[#E8522A] text-white flex items-center justify-center font-black text-xs shadow-md shadow-[#E8522A]/20">
-                AL
-              </div>
+              <FounderAvatar className="w-10 h-10 rounded-full text-xs shadow-md shadow-[#E8522A]/20" />
               <div className="flex flex-col">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-black text-[#0a0a0f]">Avis Littel</span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8522A] bg-[#E8522A]/10 px-2 py-0.5 rounded-full">Founder</span>
+                  <span className="text-sm font-black text-[#0a0a0f]">{FOUNDER.name}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#E8522A] bg-[#E8522A]/10 px-2 py-0.5 rounded-full">{FOUNDER.role}</span>
                 </div>
                 <div className="flex items-center gap-4 text-[11px] font-bold text-[rgba(10,10,15,0.4)] uppercase tracking-wider">
-                  <span className="flex items-center gap-1.5"><Calendar size={13} strokeWidth={2.5} className="text-[#ff4d1c]" /> {publishDate}</span>
+                  <span className="flex items-center gap-1.5"><Calendar size={13} strokeWidth={2.5} className="text-[#ff4d1c]" /> Published {publishDate}</span>
+                  {updatedDate && updatedDate !== publishDate && <span>Last updated {updatedDate}</span>}
                   <span className="flex items-center gap-1.5"><Clock size={13} strokeWidth={2.5} className="text-[#ff4d1c]" /> {calculateReadTime(post.content || '')} min read</span>
                 </div>
               </div>
@@ -220,17 +215,15 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               {/* Author Bio Box (E-E-A-T) */}
               <div className="mt-14 p-6 sm:p-8 bg-white rounded-2xl border border-[rgba(10,10,15,0.08)] shadow-sm">
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#E8522A] to-[#ff7347] flex items-center justify-center text-white font-['Syne'] font-extrabold text-xl shadow-lg shadow-[#E8522A]/20 shrink-0">
-                    AL
-                  </div>
+                  <FounderAvatar className="w-16 h-16 rounded-2xl font-['Syne'] text-xl shadow-lg shadow-[#E8522A]/20 shrink-0" />
                   <div className="flex-1 text-center sm:text-left">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                       <div>
                         <h4 className="font-['Syne'] font-extrabold text-lg text-[#0a0a0f]">
-                          Avis Littel
+                          {FOUNDER.name}
                         </h4>
                         <p className="text-xs font-bold text-[#E8522A] uppercase tracking-wider">
-                          Founder & Lead Audio Engineer
+                          {FOUNDER.role}
                         </p>
                       </div>
                       <Link 
@@ -240,12 +233,14 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                         About the Founder →
                       </Link>
                     </div>
-                    <p className="text-sm text-[#6b6878] leading-relaxed mb-4">
-                      Avis is a speech synthesis engineer and audio systems architect with 8+ years developing neural TTS pipelines, voice cloning models, and low-latency audio processing. He writes about neural voice synthesis, text-to-speech technology, and audio engineering.
-                    </p>
-                    <div className="flex items-center justify-center sm:justify-start gap-2.5">
-                      <SocialIcon href="https://github.com/flashtts" icon={Github} />
-                    </div>
+                    {FOUNDER.bio && (
+                      <p className="text-sm text-[#6b6878] leading-relaxed mb-4">{FOUNDER.bio}</p>
+                    )}
+                    {FOUNDER.linkedinUrl && (
+                      <div className="flex items-center justify-center sm:justify-start gap-2.5">
+                        <SocialIcon href={FOUNDER.linkedinUrl} icon={Linkedin} />
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -307,7 +302,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                       ⚡ Try FlashTTS Free
                     </h4>
                     <p className="text-[#ff4d1c] text-xs font-bold mb-6 leading-relaxed">
-                      10,000 chars/mo. 29 languages. Professional audio in seconds.
+                      10,000 chars/mo free. {LANGUAGE_COUNT_LABEL}.
                     </p>
                     <Link href="/signup" className="w-full flex items-center justify-center gap-2 py-3 bg-[#ff4d1c] text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-[#ff4d1c]/10 hover:opacity-90 transition-opacity">
                       Start Free →

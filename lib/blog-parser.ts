@@ -143,3 +143,14 @@ export function renderBlogHtml(rawContent: string): string {
   return cleanHtml;
 }
 
+
+// Read time from body word count (HTML tags and markdown symbols stripped), ~200 wpm, min 1.
+export function readTimeMinutes(content: string): number {
+  const words = (content || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/[#*_>`|\-]+/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+  return Math.max(1, Math.ceil(words / 200));
+}
