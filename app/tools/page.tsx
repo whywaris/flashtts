@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import ToolsClient from './ToolsClient';
 
 export const metadata: Metadata = {
-  title: 'Free Audio & Voiceover Tools - Word to Audio Calculator | FlashTTS',
+  title: 'Free Audio & Voiceover Tools - Word to Audio Calculator',
   description: 'Free creator utilities: Word to Audio Duration Calculator, Speech Pace Estimator, and Audio File Size Calculator. Calculate speech length and export sizes in seconds.',
   alternates: {
     canonical: 'https://www.flashtts.com/tools',

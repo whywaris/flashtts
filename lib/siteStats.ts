@@ -1,12 +1,12 @@
 // Single source of truth for public-facing product numbers and founder info.
 // Import from here; never hardcode these values in pages.
 import { PLANS } from '@/lib/plans';
-import { LANGUAGES } from '@/utils/demo-data';
+import { ALL_LANGUAGES } from '@/lib/languages';
 
-// Derived from the TTS Studio language list (utils/demo-data.ts, same 20 codes as the
-// <select> in app/dashboard/tts/page.tsx).
-// TODO: confirm against `select count(distinct language) from voices where is_active` in Supabase.
-export const LANGUAGE_COUNT = LANGUAGES.length;
+export { ALL_LANGUAGES };
+
+// TTS Studio languages (utils/demo-data.ts) + Indic landing-page languages (data/languages/indic.ts).
+export const LANGUAGE_COUNT = ALL_LANGUAGES.length;
 export const LANGUAGE_COUNT_LABEL = `${LANGUAGE_COUNT} languages`;
 
 // TODO: set from `select count(*) from voices where is_active` in Supabase.
@@ -14,13 +14,11 @@ export const LANGUAGE_COUNT_LABEL = `${LANGUAGE_COUNT} languages`;
 export const VOICE_COUNT: number | null = null;
 
 export const FOUNDER = {
-  name: 'Theo Green',
+  name: 'Theo Greenslade',
   role: 'Founder',
   initials: 'TG',
-  // TODO: add photo URL (e.g. /avatars/theo-green.jpg). Initials avatar renders until set.
-  photoUrl: '',
-  // TODO: add LinkedIn URL. Link is hidden until set.
-  linkedinUrl: '',
+  photoUrl: 'https://pub-fd880e99144d4575846bfb03d99d3d29.r2.dev/Theo%20Greenslade.jfif',
+  linkedinUrl: 'https://www.linkedin.com/in/theogreenslade/',
   // TODO: founder bio. Nothing renders until set — do not invent credentials.
   bio: '',
 };
@@ -53,6 +51,10 @@ export function flashPlanFor(chars: number) {
 // Rough conversion used only to compare minute-based competitors. Labelled "est." wherever shown.
 // TODO: confirm with real generations (≈150 wpm × ~6.5 chars/word).
 export const CHARS_PER_AUDIO_MINUTE = 1000;
+
+// Voice-clone sample length used in all copy. Matches the free trial recorder (components/VoiceCloneTrial.tsx).
+// The clone API enforces no minimum. TODO: confirm the length you want to recommend.
+export const CLONE_SAMPLE_SECONDS = 10;
 
 // Homepage demo clips. TODO: generate MP3s, upload to /public/samples, then list them here.
 // Demo section and "Hear a sample" buttons stay hidden while this is empty.

@@ -197,7 +197,7 @@ export const elevenLabsData: ComparisonData = {
     },
     {
       q: 'Does FlashTTS have the same voice quality as ElevenLabs?',
-      a: '' // TODO: write answer (no unverifiable quality claims). Hidden until filled.
+      a: 'Voice quality is subjective and depends on the voice and the script. Both services have a free tier, so the fairest test is to generate the same paragraph of your own script on each and listen on the device your audience uses.'
     },
     {
       q: 'Can I clone my voice on FlashTTS?',
@@ -205,7 +205,7 @@ export const elevenLabsData: ComparisonData = {
     },
     {
       q: 'What happens when I run out of credits on ElevenLabs?',
-      a: '' // TODO: write answer from ElevenLabs' official overage/upgrade terms. Hidden until filled.
+      a: 'Check the ElevenLabs pricing page for its current upgrade and overage options. On FlashTTS, generation pauses when you reach your monthly allowance until it resets at the next billing cycle, or you can upgrade to a larger plan at any time.'
     },
     {
       q: 'Is there a free plan on FlashTTS?',

@@ -1,18 +1,18 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { CLONE_SAMPLE_SECONDS } from '@/lib/siteStats';
 import Link from 'next/link';
 import { Mic, Square, Play, Pause, Zap, CheckCircle2, UploadCloud, RotateCcw } from 'lucide-react';
 import styles from './VoiceCloneTrial.module.css';
 
 const WAVE_BARS = [12, 24, 16, 30, 36, 22, 14, 28, 32, 18, 26, 15];
-const SAMPLE_AUDIO_URL = 'https://cdn.freesound.org/previews/612/612089_11861866-lq.mp3';
 
 export default function VoiceCloneTrial() {
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'record' | 'upload'>('record');
   const [status, setStatus] = useState<'idle' | 'recording' | 'processing' | 'result'>('idle');
-  const [secondsLeft, setSecondsLeft] = useState(10);
+  const [secondsLeft, setSecondsLeft] = useState(CLONE_SAMPLE_SECONDS);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [userAudioUrl, setUserAudioUrl] = useState<string | null>(null);
@@ -33,7 +33,7 @@ export default function VoiceCloneTrial() {
 
   const startRecording = async () => {
     setStatus('recording');
-    setSecondsLeft(10);
+    setSecondsLeft(CLONE_SAMPLE_SECONDS);
     audioChunksRef.current = [];
 
     // Attempt real browser mic recording if supported & permitted
@@ -85,11 +85,7 @@ export default function VoiceCloneTrial() {
       mediaRecorderRef.current.stop();
     }
 
-    setStatus('processing');
-
-    setTimeout(() => {
-      setStatus('result');
-    }, 2600);
+    setStatus('result');
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,10 +93,7 @@ export default function VoiceCloneTrial() {
       const file = e.target.files[0];
       const url = URL.createObjectURL(file);
       setUserAudioUrl(url);
-      setStatus('processing');
-      setTimeout(() => {
-        setStatus('result');
-      }, 2600);
+      setStatus('result');
     }
   };
 
@@ -112,16 +105,14 @@ export default function VoiceCloneTrial() {
       if (file.type.startsWith('audio/')) {
         const url = URL.createObjectURL(file);
         setUserAudioUrl(url);
-        setStatus('processing');
-        setTimeout(() => {
-          setStatus('result');
-        }, 2600);
+        setStatus('result');
       }
     }
   };
 
   const togglePlay = () => {
-    const playSrc = userAudioUrl || SAMPLE_AUDIO_URL;
+    const playSrc = userAudioUrl;
+    if (!playSrc) return;
 
     if (!audioRef.current || audioRef.current.src !== playSrc) {
       if (audioRef.current) {
@@ -150,7 +141,7 @@ export default function VoiceCloneTrial() {
     }
     setIsPlaying(false);
     setUserAudioUrl(null);
-    setSecondsLeft(10);
+    setSecondsLeft(CLONE_SAMPLE_SECONDS);
     setStatus('idle');
   };
 
@@ -163,13 +154,13 @@ export default function VoiceCloneTrial() {
         </div>
         <div className={styles.recordZone}>
           <div className={styles.timer}>00:10</div>
-          <p className={styles.recordHint}>Record a 10-second sample</p>
+          <p className={styles.recordHint}>Record a {CLONE_SAMPLE_SECONDS}-second sample</p>
           <button className={styles.recordBtn} aria-label="Start Recording" type="button">
             <Mic color="#fff" size={28} />
           </button>
         </div>
         <p className={styles.trialFootnote}>
-          Interactive demo only - not real voice cloning. Full cloning available after signup.
+          Your recording stays in your browser. Cloning happens after you sign up. Only clone your own voice or one you have permission to use.
         </p>
       </div>
     );
@@ -208,7 +199,7 @@ export default function VoiceCloneTrial() {
       {status === 'idle' && activeTab === 'record' && (
         <div className={styles.recordZone}>
           <div className={styles.timer}>00:10</div>
-          <p className={styles.recordHint}>Record a 10-second sample</p>
+          <p className={styles.recordHint}>Record a {CLONE_SAMPLE_SECONDS}-second sample</p>
           <button
             className={styles.recordBtn}
             onClick={startRecording}
@@ -290,8 +281,7 @@ export default function VoiceCloneTrial() {
       {status === 'processing' && (
         <div className={styles.processing}>
           <div className={styles.spinner} />
-          <p className={styles.processingText}>Analyzing voice DNA...</p>
-          <p className={styles.processingSub}>Extracting timbre, pitch contour, and speech cadence.</p>
+          <p className={styles.processingText}>Preparing your recording...</p>
           <div className={styles.progressBarTrack}>
             <div className={styles.progressBarFill} />
           </div>
@@ -303,21 +293,21 @@ export default function VoiceCloneTrial() {
         <div className={styles.result}>
           <div className={styles.successBadge}>
             <CheckCircle2 size={13} />
-            Clone Preview Ready
+            Sample Ready
           </div>
-          <h4 className={styles.resultTitle}>Voice Cloned Successfully</h4>
+          <h4 className={styles.resultTitle}>Your sample is ready</h4>
           <p className={styles.resultSub}>
-            Listen to your cloned audio sample below or unlock full studio generation.
+            Play your recording back to check it is clear. Create a free account to turn it into a voice clone.
           </p>
 
           <button className={styles.playBtn} onClick={togglePlay} type="button">
             {isPlaying ? <Pause fill="#fff" size={18} /> : <Play fill="#fff" size={18} />}
-            {isPlaying ? 'Stop Audio Preview' : 'Play Cloned Audio Preview'}
+            {isPlaying ? 'Stop' : 'Play your recording'}
           </button>
 
           <Link href="/signup" className={styles.ctaBtn}>
             <Zap size={16} fill="currentColor" />
-            Save Voice & Open Studio Free
+            Sign up free to clone this voice
           </Link>
 
           <button className={styles.resetBtn} onClick={handleReset} type="button">
@@ -328,7 +318,7 @@ export default function VoiceCloneTrial() {
       )}
 
       <p className={styles.trialFootnote}>
-        Interactive demo only - not real voice cloning. Full cloning available after signup.
+        Your recording stays in your browser. Cloning happens after you sign up. Only clone your own voice or one you have permission to use.
       </p>
     </div>
   );

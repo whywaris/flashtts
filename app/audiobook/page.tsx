@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import AudiobookClient from './AudiobookClient';
 
 export const metadata: Metadata = {
-  title: 'AI Audiobook Generator | Multi-Chapter Audiobook Studio | FlashTTS',
+  title: 'AI Audiobook Generator | Multi-Chapter Audiobook Studio',
   description: 'Convert manuscripts, novels and guides into AI-narrated audiobooks. Automatic chapter detection, a voice per chapter, and commercial rights on paid plans.',
   alternates: {
     canonical: 'https://www.flashtts.com/audiobook',

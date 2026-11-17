@@ -20,7 +20,7 @@ export async function generateMetadata({
 
   if (!langData) {
     return {
-      title: 'Text to Speech | FlashTTS',
+      title: 'Text to Speech',
     };
   }
 

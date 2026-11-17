@@ -4,7 +4,7 @@ import LegalLayout from '@/components/legal/LegalLayout';
 import { COMPETITOR_PRICES_CHECKED } from '@/lib/siteStats';
 
 export const metadata: Metadata = {
-  title: 'Disclaimer | FlashTTS',
+  title: 'Disclaimer',
   description: 'How FlashTTS comparisons are sourced, trademark notice, and limits of our content.',
   alternates: {
     canonical: 'https://www.flashtts.com/disclaimer',

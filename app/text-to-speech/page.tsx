@@ -1,218 +1,195 @@
-'use client';
-
-import React, { useState, useRef } from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import {
-  Play, Pause, RefreshCw, Zap, CheckCircle2, ChevronDown, Wand2, Globe2, Mic2
-} from 'lucide-react';
-import toast, { Toaster } from 'react-hot-toast';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { LANGUAGE_COUNT_LABEL } from '@/lib/siteStats';
-import { LANGUAGES } from '@/utils/demo-data';
+import ScriptBox from '@/components/marketing/ScriptBox';
+import FaqList, { faqSchema, type Faq } from '@/components/marketing/FaqList';
+import PlanLimitsTable from '@/components/marketing/PlanLimitsTable';
+import RelatedLinks, { COMPARISON_LINKS, PRODUCT_LINKS } from '@/components/marketing/RelatedLinks';
+import { ALL_LANGUAGES, LANGUAGE_COUNT_LABEL, CLONE_SAMPLE_SECONDS } from '@/lib/siteStats';
 import { PLANS } from '@/lib/plans';
 
-// ── Framer Motion Variants ──
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
+const URL = 'https://www.flashtts.com/text-to-speech';
+const FREE = PLANS.find((p) => p.isFree)!;
+const PAID = PLANS.filter((p) => !p.isFree);
+
+export const metadata: Metadata = {
+  title: `Text to Speech Online: AI Voiceovers in ${LANGUAGE_COUNT_LABEL}`,
+  description: `Turn scripts into AI voiceovers in ${LANGUAGE_COUNT_LABEL}. Download MP3 or WAV, clone your own voice, and start free with 10,000 characters a month.`,
+  alternates: { canonical: URL },
+  openGraph: { title: 'Text to Speech Online | FlashTTS', url: URL, type: 'website', images: ['/og-image.png'] },
 };
 
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.15 } }
-};
-
-const FAQS = [
-  { q: 'Is this Text to Speech generator really free to use?', a: 'Yes. You can try the demo above without an account (250 characters per generation). Sign up free for 10,000 characters a month; paid plans add commercial rights.' },
-  { q: 'How many languages does the TTS support?', a: `FlashTTS supports ${LANGUAGE_COUNT_LABEL}: ${LANGUAGES.map((l) => l.label).join(', ')}.` },
-  { q: 'Can I export the generated speech into an MP3?', a: 'Yes. Signed-in users can download generations as MP3 or WAV on desktop or mobile.' },
-  { q: 'Is there a character limit on generated voiceovers?', a: `Guest demo generations are limited to 250 characters. Signed-in users can generate ${PLANS.map((p) => `${p.charsPerGen} (${p.name})`).join(', ')} characters per generation, within their monthly allowance.` }
+const STEPS = [
+  { t: 'Paste your script', d: `Type or paste text into the studio. Each generation can be up to ${FREE.charsPerGen} characters on Free and up to ${PAID[PAID.length - 1].charsPerGen} on Studio.` },
+  { t: 'Choose a voice', d: `Pick a voice from the library or use your own cloned voice (a ${CLONE_SAMPLE_SECONDS}-second sample is enough to start).` },
+  { t: 'Generate and download', d: 'Listen in the browser, regenerate any line you want to change, then download the audio as MP3 or WAV.' },
 ];
 
+const USE_CASES = [
+  { t: 'YouTube & faceless channels', d: 'Narrate explainers, list videos and documentaries without recording your own voice.' },
+  { t: 'Shorts, Reels & TikTok', d: 'Short scripts fit in a single generation, so you can test several takes quickly.' },
+  { t: 'Podcasts & intros', d: 'Generate intros, ad reads and segment voiceovers in a consistent voice.' },
+  { t: 'Audiobooks', d: 'Use the Audiobook Studio to split a manuscript into chapters and narrate each one.' },
+  { t: 'E-learning & training', d: 'Turn lesson scripts into narration and update a single slide without re-recording.' },
+  { t: 'Multilingual versions', d: `Produce the same video in more than one of our ${LANGUAGE_COUNT_LABEL}.` },
+];
+
+const FEATURES = [
+  { t: 'Voice library', d: `Free accounts get a basic set of voices; paid plans unlock the full library.` },
+  { t: 'Voice cloning on every plan', d: `${PLANS.map((p) => `${p.name}: ${p.voiceClones}`).join(' · ')} clones.` },
+  { t: 'Emotion and delivery controls', d: 'Adjust expressiveness and variation in the studio to change how a line is read.' },
+  { t: 'MP3 and WAV export', d: 'Download compressed MP3 for uploads or WAV for editing.' },
+  { t: 'Generation history', d: `${PLANS.map((p) => `${p.name}: ${p.history.replace(' history', '')}`).join(' · ')}.` },
+  { t: 'Commercial rights on paid plans', d: 'Use audio from any paid plan on YouTube, podcasts, ads and client work. Free-plan audio is for personal use.' },
+];
+
+const TIPS = [
+  'Use punctuation to control pacing: commas for short pauses, full stops for longer ones, and paragraph breaks between ideas.',
+  'Write numbers, dates and abbreviations the way you want them spoken ("twenty twenty-six", "doctor") when the default reading is wrong.',
+  'Keep sentences short. Long sentences with several clauses are harder to follow when heard.',
+  'Split long scripts at natural breaks so each part fits your plan’s per-generation limit, then join the files in your editor.',
+  'Test one paragraph with two or three voices before generating a whole video.',
+  'Listen to the final audio once before publishing and regenerate any word that sounds off.',
+];
+
+const FAQS: Faq[] = [
+  { q: 'Is FlashTTS text to speech free?', a: `Yes. The Free plan includes ${FREE.chars} characters a month and 1 voice clone, with no credit card. Free-plan audio is for personal use; paid plans from $${PAID[0].priceMonthly}/month add commercial rights.` },
+  { q: 'How many languages are supported?', a: `FlashTTS supports ${LANGUAGE_COUNT_LABEL}: ${ALL_LANGUAGES.map((l) => l.label).join(', ')}.` },
+  { q: 'What audio formats can I download?', a: 'MP3 and WAV on every plan.' },
+  { q: 'How long can one generation be?', a: `${PLANS.map((p) => `${p.name}: ${p.charsPerGen}`).join(', ')} characters per generation. Longer scripts can be split into parts.` },
+  { q: 'How many characters do I get each month?', a: `${PLANS.map((p) => `${p.name}: ${p.chars}`).join(', ')}. The allowance resets each billing cycle.` },
+  { q: 'Can I use the audio on YouTube and in ads?', a: 'Yes, on any paid plan. Platforms may ask you to disclose realistic AI-generated audio; YouTube, for example, has an altered or synthetic content setting at upload.' },
+  { q: 'Can I use my own voice?', a: `Yes. Record or upload a ${CLONE_SAMPLE_SECONDS}-second sample of your own voice on the Voice Cloning page, then select it in the studio. Only clone voices you have permission to use.` },
+  { q: 'What happens when I run out of characters?', a: 'Generation pauses until your allowance resets at the next billing cycle, or you can upgrade to a larger plan at any time.' },
+  { q: 'How do I make the voice sound more natural?', a: 'Write for the ear: short sentences, clear punctuation, and numbers written the way you want them spoken. Then compare two or three voices on the same paragraph.' },
+];
+
+const section = 'max-w-[1200px] mx-auto px-4 sm:px-6';
+const h2 = "font-['Syne'] font-extrabold text-[30px] sm:text-[40px] text-slate-900 tracking-tight mb-4";
+const card = 'bg-white rounded-[20px] border border-[#e2dfdb] p-6';
+
 export default function TextToSpeechPage() {
-  // ── Hero Demo State ──
-  const [demoText, setDemoText] = useState("FlashTTS is the fastest text to speech engine on the internet. Instantly generate ultra-realistic audio bytes natively in your browser.");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [demoAudio, setDemoAudio] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [activeFaq, setActiveFaq] = useState<number | null>(0);
-
-  const handleGenerateGuest = async () => {
-    if (!demoText.trim()) return;
-    setIsGenerating(true);
-    setDemoAudio(null);
-    if(audioRef.current) { audioRef.current.pause(); setIsPlaying(false); }
-    
-    try {
-      const response = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: demoText, guest: true, language: 'en' }),
-      });
-      if (response.ok) {
-        const blob = await response.blob();
-        setDemoAudio(URL.createObjectURL(blob));
-      } else {
-        toast.error("Demo generation failed. Rate limits may apply to guests.");
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const togglePlay = () => {
-    if(!demoAudio) return;
-    if(!audioRef.current) {
-       audioRef.current = new Audio(demoAudio);
-       audioRef.current.onended = () => setIsPlaying(false);
-    }
-    if(isPlaying) {
-      audioRef.current.pause(); setIsPlaying(false);
-    } else {
-      audioRef.current.play(); setIsPlaying(true);
-    }
-  };
-
   return (
-    <div className="bg-[#F0EDE8] min-h-screen font-sans overflow-hidden text-slate-800 selection:bg-[#E8522A]/20">
-      <Toaster position="top-right" />
+    <div className="bg-[#F0EDE8] min-h-screen font-sans text-slate-800">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema(FAQS)) }} />
       <Navbar />
 
-      {/* ── 1. HERO FOLD & DEMO INTERSECTION ── */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-4 sm:px-6 border-b border-[#e2dfdb]">
-        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#E8522A]/10 blur-[100px] rounded-full pointer-events-none"></div>
-
-        <div className="max-w-[1200px] mx-auto text-center relative z-10">
-          <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="flex flex-col items-center">
-            
-            <motion.div variants={fadeUp} className="inline-flex items-center gap-2 px-4 py-2 rounded-full border-2 border-[#E8522A]/20 bg-[#E8522A]/5 text-[#E8522A] font-bold text-[12px] uppercase tracking-widest mb-8">
-              <Zap size={14} fill="currentColor" /> Ultra-Realistic Voices
-            </motion.div>
-
-            <motion.h1 variants={fadeUp} className="font-['Syne'] font-extrabold text-[40px] sm:text-[56px] lg:text-[72px] leading-[1.05] tracking-tight max-w-[900px] mb-6 text-slate-900">
-              Free AI <span className="text-[#E8522A] relative">
-                Text to Speech
-                <svg className="absolute w-full h-[12px] -bottom-1 left-0 text-[#E8522A]/30" viewBox="0 0 100 20" preserveAspectRatio="none"><path d="M0 10 Q50 20 100 10" stroke="currentColor" strokeWidth="8" fill="none"/></svg>
-              </span> Generator Online.
-            </motion.h1>
-
-             <motion.p variants={fadeUp} className="text-[17px] sm:text-[20px] text-slate-600 max-w-[650px] mb-10 leading-relaxed">
-              Instantly turn raw text into natural, emotional studio-grade audio natively directly inside your browser. No robotic voices allowed.
-            </motion.p>
-          </motion.div>
+      <section className="pt-32 pb-20 lg:pt-44 px-4 sm:px-6 border-b border-[#e2dfdb]">
+        <div className="max-w-[860px] mx-auto text-center">
+          <h1 className="font-['Syne'] font-extrabold text-[40px] sm:text-[56px] lg:text-[64px] leading-[1.05] tracking-tight mb-6 text-slate-900">
+            Text to Speech for <span className="text-[#E8522A]">Creators</span>
+          </h1>
+          <p className="text-[17px] sm:text-[20px] text-slate-600 mb-10 leading-relaxed">
+            Turn scripts into AI voiceovers in {LANGUAGE_COUNT_LABEL}. Pick a library voice or your own cloned voice, then download MP3 or WAV.
+          </p>
+          <ScriptBox defaultText="Welcome back to the channel. Today we're looking at three simple ways to plan a week of videos without burning out." />
+          <p className="mt-6 text-[13px] font-bold text-slate-400 uppercase tracking-widest">
+            {FREE.chars} free characters a month · No credit card · {LANGUAGE_COUNT_LABEL}
+          </p>
         </div>
+      </section>
 
-        {/* DEMO ENGINE */}
-        <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8 }} className="max-w-[800px] mx-auto mt-16 relative z-20">
-           <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-xl border border-[#e2dfdb] ring-1 ring-black/5">
-              
-              <div className="flex justify-between items-center mb-4">
-                 <div className="font-[Syne] font-bold text-[14px] text-slate-900 flex items-center gap-2">
-                   <span className="w-2 h-2 rounded-full bg-[#E8522A] animate-pulse"></span> Free TTS Guest Demo
-                 </div>
-                 <span className="text-slate-400 font-bold text-[12px]">{demoText.length} / 250 characters</span>
+      <section className="py-20 bg-white">
+        <div className={section}>
+          <h2 className={h2}>How text to speech works in FlashTTS</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            {STEPS.map((s, i) => (
+              <div key={s.t} className="bg-[#F0EDE8] rounded-[20px] border border-[#e2dfdb] p-6">
+                <div className="w-10 h-10 rounded-full bg-[#E8522A] text-white flex items-center justify-center font-bold mb-4">{i + 1}</div>
+                <h3 className="font-['Syne'] font-bold text-[19px] text-slate-900 mb-2">{s.t}</h3>
+                <p className="text-slate-600 text-[15px] leading-relaxed">{s.d}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-              <textarea 
-                value={demoText}
-                onChange={e => setDemoText(e.target.value.slice(0, 250))}
-                className="w-full h-[140px] bg-slate-50 border-2 border-[#e2dfdb] focus:border-[#E8522A] rounded-xl p-4 text-[16px] text-slate-700 resize-none outline-none transition-colors"
-                placeholder="Type your script here to synthesize voice..."
-              />
-
-              <div className="mt-6 flex flex-col sm:flex-row gap-4 items-center justify-between">
-                 {demoAudio ? (
-                    <div className="flex-1 bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-4 w-full">
-                       <button onClick={togglePlay} className="w-12 h-12 bg-[#10B981] hover:bg-[#059669] rounded-full flex items-center justify-center text-white shrink-0 transition-transform shadow-sm">
-                         {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-1" />}
-                       </button>
-                       <div className="flex-1 text-[14px] font-bold text-green-800">
-                         Generation Complete. Play your audio natively.
-                       </div>
-                    </div>
-                 ) : (
-                    <div className="flex-1 text-[13px] text-slate-500 font-medium">
-                      Press generate to compile your text over to ultra-high fidelity speech processing.
-                    </div>
-                 )}
-
-                 <button 
-                   onClick={handleGenerateGuest} 
-                   disabled={isGenerating || demoText.length < 5}
-                   className="w-full sm:w-auto px-8 py-4 bg-[#E8522A] hover:bg-[#d64119] text-white rounded-xl font-['Syne'] font-bold text-[16px] shadow-md transition-all flex items-center justify-center gap-2 disabled:bg-slate-300 disabled:shadow-none"
-                 >
-                   {isGenerating ? <RefreshCw className="animate-spin" size={18} /> : <Zap size={18} fill="currentColor" />}
-                   {isGenerating ? 'Synthesizing...' : 'Generate Demo Audio'}
-                 </button>
+      <section className="py-20">
+        <div className={section}>
+          <h2 className={h2}>What you can make</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">
+            {USE_CASES.map((u) => (
+              <div key={u.t} className={card}>
+                <h3 className="font-['Syne'] font-bold text-[18px] text-slate-900 mb-2">{u.t}</h3>
+                <p className="text-slate-600 text-[15px] leading-relaxed">{u.d}</p>
               </div>
-
-           </div>
-           
-           <p className="text-center mt-6 text-[14px] text-slate-500 font-medium">
-             Need longer scripts + file export? <Link href="/signup" className="text-[#E8522A] font-bold hover:underline">Create a free account.</Link>
-           </p>
-        </motion.div>
+            ))}
+          </div>
+        </div>
       </section>
 
-      {/* ── 2. SEO BENEFITS ── */}
-      <section className="py-24 px-4 bg-white">
-         <div className="max-w-[1200px] mx-auto">
-            <div className="text-center mb-16">
-               <h2 className="font-['Syne'] font-extrabold text-[32px] sm:text-[40px] text-slate-900 tracking-tight">Why leverage FlashTTS?</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-               {[
-                  { icon: <Wand2 size={24}/>, title: "Natural-Sounding Voices", desc: "Neural TTS voices with natural pacing. Try the demo above and judge for yourself." },
-                  { icon: <Globe2 size={24}/>, title: LANGUAGE_COUNT_LABEL, desc: "Generate speech in English, Spanish, Japanese, German, French and more." },
-                  { icon: <Mic2 size={24}/>, title: "Commercial Rights on Paid Plans", desc: "Audio generated on a paid plan is royalty-free for YouTube, TikTok, podcasts and client work." }
-               ].map((b, i) => (
-                  <div key={i} className="bg-[#F0EDE8] p-8 rounded-[24px] border border-[#e2dfdb]">
-                     <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-[#E8522A] shadow-sm mb-6">
-                        {b.icon}
-                     </div>
-                     <h3 className="font-['Syne'] font-bold text-[20px] text-slate-900 mb-3">{b.title}</h3>
-                     <p className="text-slate-600 text-[15px] leading-relaxed">{b.desc}</p>
-                  </div>
-               ))}
-            </div>
-         </div>
+      <section className="py-20 bg-white">
+        <div className={section}>
+          <h2 className={h2}>{LANGUAGE_COUNT_LABEL}</h2>
+          <p className="text-slate-600 text-[16px] mb-8 max-w-[700px]">Write your script in the language you want spoken. Languages with their own guide are linked.</p>
+          <div className="flex flex-wrap gap-3">
+            {ALL_LANGUAGES.map((l) =>
+              l.slug ? (
+                <Link key={l.code} href={`/text-to-speech/${l.slug}`} className="px-4 py-2 rounded-full bg-[#E8522A]/10 text-[#E8522A] font-bold text-[14px] hover:bg-[#E8522A] hover:text-white transition-colors">
+                  {l.label} →
+                </Link>
+              ) : (
+                <span key={l.code} className="px-4 py-2 rounded-full bg-[#F0EDE8] border border-[#e2dfdb] text-slate-700 font-semibold text-[14px]">{l.label}</span>
+              )
+            )}
+          </div>
+        </div>
       </section>
 
-      {/* ── 3. FAQ ── */}
-      <section className="py-24 bg-[#F0EDE8] px-4 max-w-[800px] mx-auto border-y border-[#e2dfdb]">
-         <h2 className="font-['Syne'] font-extrabold text-[32px] sm:text-[40px] text-slate-900 tracking-tight text-center mb-12">TTS Frequently Asked Questions</h2>
-         <div className="flex flex-col gap-4">
-            {FAQS.map((faq, idx) => {
-               const isOpen = activeFaq === idx;
-               return (
-                 <div key={idx} className={`border ${isOpen ? 'border-[#E8522A] bg-white' : 'border-[#e2dfdb] bg-white'} rounded-[20px] overflow-hidden transition-colors shadow-sm`}>
-                    <button onClick={() => setActiveFaq(isOpen ? null : idx)} className="w-full flex items-center justify-between p-6 text-left focus:outline-none">
-                       <span className="font-['Syne'] font-bold text-[16px] sm:text-[18px] text-slate-900 pr-8">{faq.q}</span>
-                       <ChevronDown size={20} className={`text-slate-400 shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#E8522A]' : ''}`} />
-                    </button>
-                    <div className={`px-6 pb-6 text-slate-600 text-[15.5px] leading-relaxed ${isOpen ? '' : 'hidden'}`}>
-                       {faq.a}
-                    </div>
-                 </div>
-               )
-            })}
-         </div>
+      <section className="py-20">
+        <div className={section}>
+          <h2 className={h2}>Features</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">
+            {FEATURES.map((f) => (
+              <div key={f.t} className={card}>
+                <h3 className="font-['Syne'] font-bold text-[18px] text-slate-900 mb-2">{f.t}</h3>
+                <p className="text-slate-600 text-[15px] leading-relaxed">{f.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
-      {/* ── 4. CTA ── */}
-      <section className="py-24 px-4 bg-white text-center">
-         <div className="max-w-[800px] mx-auto">
-            <h2 className="font-['Syne'] font-extrabold text-[40px] text-slate-900 mb-6 tracking-tight">Convert Text into Speech entirely free.</h2>
-            <p className="text-[18px] text-slate-600 mb-10">Stop navigating complex dashboards. FlashTTS was built entirely for scale.</p>
-            <Link href="/signup" className="inline-flex py-4 px-10 bg-[#E8522A] hover:bg-[#d64119] text-white rounded-xl font-['Syne'] font-bold text-[18px] items-center justify-center transition-transform hover:-translate-y-1 shadow-xl">
-               Start Generating Free Now
-            </Link>
-         </div>
+      <section className="py-20 bg-white">
+        <div className={section}>
+          <h2 className={h2}>Plans and limits</h2>
+          <p className="text-slate-600 text-[16px] mb-8">Every limit below is the one the studio enforces.</p>
+          <PlanLimitsTable />
+        </div>
+      </section>
+
+      <section className="py-20">
+        <div className={section}>
+          <h2 className={h2}>Tips for scripts that sound good aloud</h2>
+          <ul className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {TIPS.map((t) => (
+              <li key={t} className={`${card} text-slate-700 text-[15px] leading-relaxed`}>{t}</li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="py-20 bg-white">
+        <div className="max-w-[860px] mx-auto px-4 sm:px-6">
+          <h2 className={`${h2} text-center mb-10`}>Text to speech FAQ</h2>
+          <FaqList faqs={FAQS} />
+        </div>
+      </section>
+
+      <section className="py-20">
+        <div className={`${section} space-y-14`}>
+          <RelatedLinks title="Compare FlashTTS" links={COMPARISON_LINKS} />
+          <RelatedLinks title="More from FlashTTS" links={PRODUCT_LINKS.filter((l) => l.href !== '/text-to-speech')} />
+        </div>
+      </section>
+
+      <section className="py-20 bg-white text-center px-4">
+        <h2 className={h2}>Start with {FREE.chars} free characters</h2>
+        <p className="text-[17px] text-slate-600 mb-8">No credit card required. Upgrade only when you need more.</p>
+        <Link href="/signup" className="inline-flex py-4 px-10 bg-[#E8522A] hover:bg-[#d64119] text-white rounded-xl font-['Syne'] font-bold text-[18px]">
+          Create a free account
+        </Link>
       </section>
 
       <Footer />

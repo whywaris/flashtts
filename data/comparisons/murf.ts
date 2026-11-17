@@ -49,7 +49,7 @@ export const murfData: ComparisonData = {
       { feature: 'Studio', flashTts: '3,000,000 chars / $79', competitor: 'Enterprise only', win: 'flash' },
       { feature: 'Voice Cloning', flashTts: 'Every plan', competitor: 'Enterprise only', win: 'flash' },
       { feature: 'Unused allowance', flashTts: 'Resets each billing cycle', competitor: 'Resets monthly', win: 'tie' },
-      { feature: 'Languages', flashTts: LANGUAGE_COUNT_LABEL, competitor: '20 languages', win: 'tie' },
+      { feature: 'Languages', flashTts: LANGUAGE_COUNT_LABEL, competitor: '20 languages', win: 'flash' },
       { feature: 'Commercial Rights', flashTts: 'All paid plans', competitor: 'Creator+', win: 'tie' },
       { feature: 'Billing unit', flashTts: 'Characters', competitor: 'Audio minutes' },
       { feature: 'API Access', flashTts: 'Studio plan', competitor: 'Enterprise only', win: 'flash' }
@@ -115,7 +115,7 @@ export const murfData: ComparisonData = {
     },
     {
       q: 'What happens when you run out of minutes on Murf AI?',
-      a: '' // TODO: answer from Murf's official terms. Hidden until filled.
+      a: 'Check Murf\'s pricing page for its current top-up and upgrade options. On FlashTTS, generation pauses when you reach your monthly character allowance until it resets at the next billing cycle, or you can upgrade to a larger plan at any time.'
     },
     {
       q: 'Which is better for YouTubers - FlashTTS or Murf AI?',

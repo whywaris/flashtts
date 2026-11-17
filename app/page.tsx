@@ -12,8 +12,8 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import Image from 'next/image';
 import { createClient } from '@/utils/supabase/client';
-import { FOUNDER, LANGUAGE_COUNT, LANGUAGE_COUNT_LABEL, DEMO_SAMPLES, PAID_PLAN_COSTS, formatPer1k } from '@/lib/siteStats';
-import { LANGUAGES } from '@/utils/demo-data';
+import { CLONE_SAMPLE_SECONDS, FOUNDER, LANGUAGE_COUNT, LANGUAGE_COUNT_LABEL, DEMO_SAMPLES, PAID_PLAN_COSTS, formatPer1k } from '@/lib/siteStats';
+import { ALL_LANGUAGES } from '@/lib/siteStats';
 import { PLANS as SCHEMA_PLANS } from '@/lib/plans';
 
 // ── Framer Motion Variants ──
@@ -40,7 +40,7 @@ const FAQS = [
   },
   {
     q: 'Can I clone my own voice exactly?',
-    a: 'Yes. Upload a clean 10-30 second audio sample of your voice to create a clone, then generate speech with it from your text. Voice cloning is included on every plan (1 clone on Free).'
+    a: `Yes. Record or upload a clean ${CLONE_SAMPLE_SECONDS}-second sample of your own voice to create a clone, then generate speech with it from your text. Voice cloning is included on every plan (1 clone on Free).`
   },
   {
     q: 'Can I monetize YouTube and TikTok videos with FlashTTS audio?',
@@ -52,7 +52,7 @@ const FAQS = [
   },
   {
     q: 'Which languages are supported?',
-    a: `FlashTTS supports ${LANGUAGE_COUNT_LABEL}: ${LANGUAGES.map((l) => l.label).join(', ')}.`
+    a: `FlashTTS supports ${LANGUAGE_COUNT_LABEL}: ${ALL_LANGUAGES.map((l) => l.label).join(', ')}.`
   },
   {
     q: 'Can I use FlashTTS for audiobooks?',
@@ -74,6 +74,7 @@ const FAQS = [
 
 // ── Pricing Plans (imported from shared config) ──
 import { PLANS as IMPORTED_PLANS } from '@/lib/plans';
+import FaqList from '@/components/marketing/FaqList';
 const EXTRACTED_PLANS = IMPORTED_PLANS.map(p => ({
   id: p.id,
   name: p.name,
@@ -94,7 +95,6 @@ const EXTRACTED_PLANS = IMPORTED_PLANS.map(p => ({
 export default function HomePage() {
   // ── Demo Widget State ──
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
-  const [activeFaq, setActiveFaq] = useState<number | null>(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const supabase = useMemo(() => createClient(), []);
@@ -259,7 +259,7 @@ export default function HomePage() {
         <div className="max-w-[1200px] mx-auto">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={fadeUp} className="text-center mb-20">
             <h2 className="font-['Syne'] font-extrabold text-[36px] sm:text-[48px] text-slate-900 mb-6 tracking-tight">Stop renting voices.<br />Start owning your production.</h2>
-            <p className="text-[18px] text-slate-600 max-w-[600px] mx-auto leading-relaxed">FlashTTS completely eliminates the friction of traditional audio creation, converting your workflows from days to literally seconds.</p>
+            <p className="text-[18px] text-slate-600 max-w-[600px] mx-auto leading-relaxed">Paste a script, pick a voice, and download the audio. No booking, no recording session.</p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -322,7 +322,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="w-full py-4 bg-slate-700 rounded-xl mb-4"></div>
-              <div className="w-full py-6 bg-[#E8522A] rounded-xl flex items-center justify-center text-white font-[Syne] font-bold">Download MP3</div>
+              <Link href="/signup" className="w-full py-6 bg-[#E8522A] hover:bg-[#d64119] rounded-xl flex items-center justify-center text-white font-[Syne] font-bold transition-colors">Generate your first MP3 free →</Link>
             </div>
           </div>
         </div>
@@ -387,7 +387,7 @@ export default function HomePage() {
                   Instant Voice Cloning
                 </h3>
                 <p className="text-[14px] text-slate-600 leading-relaxed">
-                  Record a 10-second reference sample to clone your personal timbre and cadence. Keep your distinct creator identity across hundreds of episodes without microphone fatigue.
+                  Record a {CLONE_SAMPLE_SECONDS}-second sample of your own voice to create a clone, then narrate new scripts with it without re-recording.
                 </p>
               </div>
               <Link href="/voice-cloning" className="mt-6 pt-4 border-t border-[#e2dfdb]/70 text-xs font-semibold text-emerald-600 hover:underline">
@@ -537,20 +537,7 @@ export default function HomePage() {
           </div>
         </div>
         <div className="flex flex-col gap-4">
-          {FAQS.filter((f) => f.a.trim()).map((faq, idx) => {
-            const isOpen = activeFaq === idx;
-            return (
-              <div key={idx} className={`border ${isOpen ? 'border-[#E8522A] bg-white' : 'border-[#e2dfdb] bg-white'} rounded-[20px] overflow-hidden transition-colors shadow-sm`}>
-                <button onClick={() => setActiveFaq(isOpen ? null : idx)} className="w-full flex items-center justify-between p-6 text-left focus:outline-none">
-                  <span className="font-['Syne'] font-bold text-[18px] text-slate-900 pr-8">{faq.q}</span>
-                  <ChevronDown size={20} className={`text-slate-400 shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#E8522A]' : ''}`} />
-                </button>
-                <div className={`px-6 pb-6 text-slate-600 text-[15.5px] leading-relaxed ${isOpen ? '' : 'hidden'}`}>
-                  {faq.a}
-                </div>
-              </div>
-            );
-          })}
+          <FaqList faqs={FAQS} />
         </div>
       </section>
 

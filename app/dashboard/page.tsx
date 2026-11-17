@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/utils/supabase/client';
+import { CLONE_SAMPLE_SECONDS } from '@/lib/siteStats';
 import {
   Mic,
   Bookmark,
@@ -38,7 +39,7 @@ const QUICK_ACTIONS = [
   {
     icon: Mic,
     title: 'Voice Cloning',
-    desc: 'Clone your voice with just 30 seconds of audio',
+    desc: `Clone your voice from a ${CLONE_SAMPLE_SECONDS}-second sample`,
     href: '/dashboard/cloning',
   },
   {

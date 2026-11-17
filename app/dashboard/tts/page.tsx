@@ -471,6 +471,11 @@ function TTSPageInner() {
                  <option value="fi">🇫🇮 Finnish</option>
                  <option value="sv">🇸🇪 Swedish</option>
                  <option value="el">🇬🇷 Greek</option>
+                 <option value="pa">🇮🇳 Punjabi</option>
+                 <option value="mr">🇮🇳 Marathi</option>
+                 <option value="gu">🇮🇳 Gujarati</option>
+                 <option value="kn">🇮🇳 Kannada</option>
+                 <option value="ml">🇮🇳 Malayalam</option>
               </select>
             </div>
 

@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import LegalLayout from '@/components/legal/LegalLayout';
 
 export const metadata: Metadata = {
-  title: 'Cookie Policy | FlashTTS',
+  title: 'Cookie Policy',
   description: 'Which cookies FlashTTS uses, why, and how to opt out.',
   alternates: {
     canonical: 'https://www.flashtts.com/cookies',

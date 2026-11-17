@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import FaqList from '@/components/marketing/FaqList';
 
 // Framer motion animation variants
 const fadeUp = {
@@ -56,9 +57,6 @@ export default function AudiobookClient() {
   const traditionalCost = Math.round(Number(estimatedHours) * 350);
   const flashttsCost = 39; // Pro plan cost
   const savings = traditionalCost - flashttsCost;
-
-  // FAQ Accordion State
-  const [activeFaq, setActiveFaq] = useState<number | null>(0);
 
   return (
     <div className="bg-[#F0EDE8] min-h-screen font-sans selection:bg-[#E8522A]/20 text-slate-800">
@@ -328,31 +326,7 @@ export default function AudiobookClient() {
         </div>
 
         <div className="flex flex-col gap-4">
-          {AUDIOBOOK_FAQS.map((faq, idx) => {
-            const isOpen = activeFaq === idx;
-            return (
-              <div 
-                key={idx} 
-                className="bg-white border border-[#e2dfdb] rounded-[22px] overflow-hidden shadow-sm transition-all"
-              >
-                <button 
-                  onClick={() => setActiveFaq(isOpen ? null : idx)} 
-                  className="w-full flex items-center justify-between p-6 text-left cursor-pointer focus:outline-none"
-                >
-                  <span className="font-['Syne'] font-bold text-[17px] text-slate-900 pr-6">
-                    {faq.q}
-                  </span>
-                  <ChevronDown 
-                    size={20} 
-                    className={`text-slate-400 shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#E8522A]' : ''}`} 
-                  />
-                </button>
-                <div className={`px-6 pb-6 text-slate-600 text-[15px] leading-relaxed ${isOpen ? '' : 'hidden'}`}>
-                  {faq.a}
-                </div>
-              </div>
-            );
-          })}
+          <FaqList faqs={AUDIOBOOK_FAQS} />
         </div>
       </section>
 

@@ -113,7 +113,7 @@ export const naturalreaderData: ComparisonData = {
     },
     {
       q: 'Does NaturalReader have daily character limits?',
-      a: '' // TODO: answer from NaturalReader's official terms. Hidden until filled.
+      a: 'Check NaturalReader\'s pricing page for its current daily and monthly limits on each plan. FlashTTS has no daily cap: you can use your monthly character allowance whenever you like, within the per-generation limit of your plan.'
     },
     {
       q: 'Is FlashTTS cheaper than NaturalReader?',

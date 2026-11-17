@@ -16,6 +16,10 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { ComparisonData } from '@/data/comparisons/elevenlabs';
 import { PAID_PLAN_COSTS, formatPer1k, formatChars, flashPlanFor, COMPETITOR_PRICES_CHECKED } from '@/lib/siteStats';
+import FaqList from '@/components/marketing/FaqList';
+import PlanLimitsTable from '@/components/marketing/PlanLimitsTable';
+import RelatedLinks, { COMPARISON_LINKS } from '@/components/marketing/RelatedLinks';
+import { CHARS_PER_AUDIO_MINUTE, CLONE_SAMPLE_SECONDS } from '@/lib/siteStats';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -32,7 +36,6 @@ interface Props {
 }
 
 export default function VsComparisonTemplate({ data }: Props) {
-  const [activeFaq, setActiveFaq] = useState<number | null>(0);
   // FAQs with an empty answer are hidden from the page and from FAQPage schema until filled in.
   const faqs = data.faqs.filter((f) => f.a.trim());
 
@@ -468,24 +471,53 @@ export default function VsComparisonTemplate({ data }: Props) {
         </section>
       )}
 
+      {/* ── 5.8 HOW WE COMPARED + SWITCHING ── */}
+      <section className="py-24 px-4 sm:px-6">
+        <div className="max-w-[1100px] mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white rounded-[24px] border border-[#e2dfdb] p-8">
+            <h2 className="font-['Syne'] font-extrabold text-[26px] text-slate-900 mb-4">How we compared</h2>
+            <ul className="space-y-3 text-slate-600 text-[15px] leading-relaxed list-disc pl-5">
+              <li>{data.competitorName} plans and features come from its official website, checked {COMPETITOR_PRICES_CHECKED}. Prices change, so check before you buy.</li>
+              <li>FlashTTS figures come straight from our current plans.</li>
+              <li>Price per 1,000 characters = monthly price ÷ monthly characters × 1,000, on monthly billing.</li>
+              <li>Where a plan is sold in audio minutes or words, we convert at about {formatChars(CHARS_PER_AUDIO_MINUTE)} characters per minute and mark the result &quot;est.&quot;.</li>
+              <li>Each cost scenario uses the cheapest plan whose monthly allowance actually covers the usage.</li>
+              <li>We do not score voice quality: it is subjective, so test both free tiers with your own script.</li>
+            </ul>
+          </div>
+          <div className="bg-white rounded-[24px] border border-[#e2dfdb] p-8">
+            <h2 className="font-['Syne'] font-extrabold text-[26px] text-slate-900 mb-4">Switching to FlashTTS</h2>
+            <ol className="space-y-3 text-slate-600 text-[15px] leading-relaxed list-decimal pl-5">
+              <li>Create a free account (10,000 characters a month, no card) and generate one paragraph of a real script.</li>
+              <li>Compare two or three library voices on that paragraph.</li>
+              <li>If you used a cloned voice on {data.competitorName}, record a new {CLONE_SAMPLE_SECONDS}-second sample of your own voice here. Clone only voices you have permission to use.</li>
+              <li>Split long scripts at natural breaks so each part fits your plan&apos;s per-generation limit.</li>
+              <li>Pick the plan whose monthly allowance covers your usage, then cancel the old subscription at the end of its billing period.</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      {/* ── 5.9 FLASHTTS PLAN LIMITS ── */}
+      <section className="pb-24 px-4 sm:px-6">
+        <div className="max-w-[1100px] mx-auto">
+          <h2 className="font-['Syne'] font-extrabold text-[30px] sm:text-[40px] text-slate-900 tracking-tight mb-6">FlashTTS plans and limits</h2>
+          <PlanLimitsTable />
+        </div>
+      </section>
+
       {/* ── 6. FAQ ── */}
       <section className="py-24 sm:py-32 px-4 max-w-[800px] mx-auto">
         <h2 className="font-['Syne'] font-extrabold text-[36px] sm:text-[44px] text-slate-900 tracking-tight text-center mb-12">Frequently Asked Questions</h2>
         <div className="flex flex-col gap-4">
-          {faqs.map((faq, idx) => {
-            const isOpen = activeFaq === idx;
-            return (
-              <div key={idx} className={`border ${isOpen ? 'border-[#E8522A] bg-white' : 'border-[#e2dfdb] bg-white'} rounded-[20px] overflow-hidden transition-colors shadow-sm`}>
-                <button onClick={() => setActiveFaq(isOpen ? null : idx)} className="w-full flex items-center justify-between p-6 text-left focus:outline-none">
-                  <span className="font-['Syne'] font-bold text-[18px] text-slate-900 pr-8">{faq.q}</span>
-                  <ChevronDown size={20} className={`text-slate-400 shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#E8522A]' : ''}`} />
-                </button>
-                <div className={`px-6 pb-6 text-slate-600 text-[15.5px] leading-relaxed ${isOpen ? '' : 'hidden'}`}>
-                  {faq.a}
-                </div>
-              </div>
-            );
-          })}
+          <FaqList faqs={faqs} />
+        </div>
+      </section>
+
+      {/* ── RELATED COMPARISONS ── */}
+      <section className="pb-24 px-4 sm:px-6">
+        <div className="max-w-[1100px] mx-auto">
+          <RelatedLinks title="Other comparisons" links={COMPARISON_LINKS.filter((l) => l.href !== `/vs/${data.slug}`)} />
         </div>
       </section>
 
