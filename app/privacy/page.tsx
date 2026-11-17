@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <LegalLayout title="Privacy Policy" badge="LEGAL" lastUpdated="March 1, 2026">
+    <LegalLayout title="Privacy Policy" badge="LEGAL" lastUpdated="November 17, 2026">
       <section>
         <div className="highlight-box">
           At FlashTTS, we take your privacy seriously. We never sell your personal data 
@@ -40,15 +40,15 @@ export default function PrivacyPage() {
         <ul>
           <li><strong>Usage Data</strong>: Pages visited, features utilized, and your generation history.</li>
           <li><strong>Device Information</strong>: Browser type, operating system, and IP address for security auditing.</li>
-          <li><strong>Cookies</strong>: Essential cookies for authentication and optional analytics cookies to improve our platform.</li>
+          <li><strong>Cookies</strong>: Essential cookies for authentication, Google Analytics cookies to understand site usage, and advertising cookies on blog pages only. See our <a href="/cookies">Cookie Policy</a>.</li>
         </ul>
 
         <h2>Third-Party Advertising & Cookies</h2>
         <p>
-          We use third-party advertising companies, including Google AdSense, to serve ads when you visit our website. These companies may use cookies, web beacons, and other tracking technologies to collect information about your visits to this and other websites in order to provide personalized advertisements about goods and services of interest to you.
+          We show ads from Google AdSense on our blog pages (/blog) only - never on product, pricing, tools, sign-up or account pages. These companies may use cookies, web beacons, and other tracking technologies to collect information about your visits to this and other websites in order to provide personalized advertisements about goods and services of interest to you.
         </p>
         <p>
-          Google&apos;s use of advertising cookies enables it and its partners to serve ads based on your visit to FlashTTS and/or other sites on the Internet. Users may opt out of personalized advertising by visiting{' '}
+          Google&apos;s use of advertising cookies, including the DoubleClick cookie, enables it and its partners to serve ads based on your visit to FlashTTS and/or other sites on the Internet. Users may opt out of personalized advertising by visiting{' '}
           <a href="https://adssettings.google.com/" target="_blank" rel="noopener noreferrer">
             Google Ads Settings
           </a>{' '}
@@ -78,26 +78,64 @@ export default function PrivacyPage() {
           <li><strong>Supabase</strong>: For secure database and authentication services.</li>
           <li><strong>Lemon Squeezy</strong>: As our Merchant of Record and payment processor for PCI-compliant billing and subscription management.</li>
           <li><strong>Resend</strong>: For reliable transactional email delivery.</li>
-          <li><strong>Cloudflare</strong>: For secure asset storage and performance optimization.</li>
+          <li><strong>Cloudflare</strong>: For secure asset storage (R2) and DNS.</li>
+          <li><strong>Modal and RunPod</strong>: GPU providers that process your text and voice samples to generate audio and voice clones.</li>
+          <li><strong>Google Analytics</strong>: Aggregated website usage analytics.</li>
+          <li><strong>Google AdSense</strong>: Advertising on blog pages only.</li>
         </ul>
 
         <h2>Data Retention</h2>
         <p>
           We retain your information as long as your account remains active. 
-          You can request account deletion at any time by contacting us at 
+          You can request account deletion at any time by contacting us at{' '}
           <a href="mailto:support@flashtts.com">support@flashtts.com</a>. Upon deletion, 
           your personal data will be purged from our active systems.
         </p>
 
-        <h2>Your Rights (GDPR/CCPA)</h2>
-        <p>Depending on your location, you have the right to:</p>
+        <h2>Voice Recordings</h2>
+        <p>
+          When you use voice cloning, we store the voice sample you upload or record and the resulting
+          voice clone, so you can generate speech with it. Samples are stored in Cloudflare R2 and
+          processed by our GPU providers only to create and use your clone.
+        </p>
         <ul>
-          <li>Access the personal data we hold about you.</li>
-          <li>Request correction of any inaccurate information.</li>
-          <li>Request deletion of your account and associated data.</li>
-          <li>Export your data in a machine-readable format.</li>
-          <li>Opt-out of marketing communications at any time.</li>
+          {/* TODO: confirm the retention period actually enforced in code/storage. */}
+          <li><strong>Retention</strong>: We keep voice samples for [TODO] days after you delete the clone, then delete them.</li>
+          <li><strong>Deletion</strong>: You can delete a cloned voice in your dashboard or ask us at <a href="mailto:support@flashtts.com">support@flashtts.com</a>. Deleting your account deletes your samples and clones.</li>
+          {/* TODO: confirm. Only keep this sentence if it is true for every provider that touches samples. */}
+          <li><strong>Training</strong>: Your voice samples are never used to train shared models unless you opt in.</li>
         </ul>
+
+        <h2>Your Rights Under GDPR (EEA and UK)</h2>
+        <p>
+          If you are in the European Economic Area or the United Kingdom, you have the right to access,
+          correct, delete, restrict or object to processing of your personal data, to data portability, and
+          to withdraw consent at any time. You can also complain to your local data protection authority
+          (in the UK, the Information Commissioner&apos;s Office).
+        </p>
+        <p>
+          <strong>How to request:</strong> email <a href="mailto:support@flashtts.com">support@flashtts.com</a> from
+          the address on your account with the subject &quot;Data request&quot;. We may ask you to verify your identity.
+          <br />
+          <strong>Response time:</strong> within one month of receiving your request (extendable by two months for
+          complex requests, in which case we will tell you).
+        </p>
+
+        <h2>Your Rights Under the CCPA (California)</h2>
+        <p>
+          If you are a California resident, you have the right to know what personal information we collect,
+          use and disclose; to request deletion; to correct inaccurate information; and not to be discriminated
+          against for exercising these rights. We do not sell your personal information. Advertising cookies on
+          our blog pages may count as &quot;sharing&quot; for cross-context behavioral advertising; you can opt out via
+          {' '}<a href="https://adssettings.google.com/" target="_blank" rel="noopener noreferrer">Google Ads Settings</a>.
+        </p>
+        <p>
+          <strong>How to request:</strong> email <a href="mailto:support@flashtts.com">support@flashtts.com</a> with
+          the subject &quot;California privacy request&quot;. You may use an authorized agent.
+          <br />
+          <strong>Response time:</strong> we confirm receipt within 10 business days and respond within 45 days
+          (extendable by another 45 days with notice).
+        </p>
 
         <h2>Children's Privacy</h2>
         <p>

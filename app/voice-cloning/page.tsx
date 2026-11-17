@@ -5,20 +5,12 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import VoiceCloneTrial from '@/components/VoiceCloneTrial';
 import homeStyles from '../page.module.css';
+import { LANGUAGE_COUNT_LABEL } from '@/lib/siteStats';
 
 export const metadata: Metadata = {
   title: 'AI Voice Cloning - Clone Any Voice in Seconds | FlashTTS',
   description:
     'Clone any voice instantly with FlashTTS AI voice cloning. Create a perfect digital replica of your voice for TTS, podcasts, audiobooks & content creation. Free to start - no signup required.',
-  keywords: [
-    'ai voice cloning', 'voice cloning', 'voice cloning ai', 'free voice cloning',
-    'ai voice cloning free', 'best ai voice cloning', 'instant voice cloning',
-    'voice cloning text to speech', 'voice cloning app', 'ai voice cloning tool',
-    'ai voice cloning software', 'free ai voice cloning', 'clone voice ai',
-    'voice cloning technology', 'elevenlabs voice cloning alternative',
-    'best voice cloning ai', 'real time voice cloning', 'voice cloning online',
-    'ai voice cloning online free', 'voice cloning free ai',
-  ].join(', '),
   openGraph: {
     title: 'AI Voice Cloning - Clone Any Voice in Seconds | FlashTTS',
     description: 'Clone any voice instantly with FlashTTS. Record 30 seconds - no signup required.',
@@ -93,7 +85,7 @@ export default function VoiceCloningPage() {
             <div className={homeStyles.step}>
               <span className={homeStyles.stepN}>03</span>
               <div className={homeStyles.stepTitle}>Voice Ready</div>
-              <p className={homeStyles.stepDesc}>Your voice is saved to your library forever. Use it in the TTS studio with any of our 29 languages.</p>
+              <p className={homeStyles.stepDesc}>Your voice is saved to your library. Use it in the TTS studio in any of our {LANGUAGE_COUNT_LABEL}.</p>
             </div>
           </div>
         </div>
@@ -123,7 +115,7 @@ export default function VoiceCloningPage() {
               <div className={homeStyles.featTag} style={{ background: 'rgba(91, 33, 182, 0.08)', color: '#5b21b6' }}>Localization</div>
               <span className={homeStyles.featIcon}>🌍</span>
               <div className={homeStyles.featTitle}>Speak Any Language</div>
-              <p className={homeStyles.featDesc}>Your cloned voice can speak all 29+ languages we support. Expand your global reach without learning a new tongue.</p>
+              <p className={homeStyles.featDesc}>Your cloned voice can speak all {LANGUAGE_COUNT_LABEL} we support. Expand your global reach without learning a new tongue.</p>
             </div>
             <div className={`${homeStyles.feat} ${homeStyles.featC}`}>
               <div className={homeStyles.featTag}>Protection</div>

@@ -2,13 +2,16 @@
 
 import React, { useState, useRef } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   Play, Pause, RefreshCw, Zap, CheckCircle2, ChevronDown, Wand2, Globe2, Mic2
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import { LANGUAGE_COUNT_LABEL } from '@/lib/siteStats';
+import { LANGUAGES } from '@/utils/demo-data';
+import { PLANS } from '@/lib/plans';
 
 // ── Framer Motion Variants ──
 const fadeUp = {
@@ -22,10 +25,10 @@ const staggerContainer = {
 };
 
 const FAQS = [
-  { q: 'Is this Text to Speech generator really free to use?', a: 'Yes! You can generate audio using our unauthenticated demo above absolutely free. For unlimited generations and full commercial rights, you can sign up for our platform seamlessly.' },
-  { q: 'How many languages does the TTS support?', a: 'FlashTTS natively embeds over 29+ languages and 100+ unique accents globally. From US English to native Japanese, the pacing and dialect are absolutely perfect.' },
-  { q: 'Can I export the generated speech into an MP3?', a: 'Absolutely. All generations output dynamically into highest-fidelity 320kbps MP3 format natively supported and instantly downloadable down to your mobile or desktop device.' },
-  { q: 'Is there a character limit on generated voiceovers?', a: 'Guest users are limited to 250 characters per demo generation. Logged-in premium users can generate scripts running all the way out to 3,000,000 characters without crashing.' }
+  { q: 'Is this Text to Speech generator really free to use?', a: 'Yes. You can try the demo above without an account (250 characters per generation). Sign up free for 10,000 characters a month; paid plans add commercial rights.' },
+  { q: 'How many languages does the TTS support?', a: `FlashTTS supports ${LANGUAGE_COUNT_LABEL}: ${LANGUAGES.map((l) => l.label).join(', ')}.` },
+  { q: 'Can I export the generated speech into an MP3?', a: 'Yes. Signed-in users can download generations as MP3 or WAV on desktop or mobile.' },
+  { q: 'Is there a character limit on generated voiceovers?', a: `Guest demo generations are limited to 250 characters. Signed-in users can generate ${PLANS.map((p) => `${p.charsPerGen} (${p.name})`).join(', ')} characters per generation, within their monthly allowance.` }
 ];
 
 export default function TextToSpeechPage() {
@@ -151,7 +154,7 @@ export default function TextToSpeechPage() {
            </div>
            
            <p className="text-center mt-6 text-[14px] text-slate-500 font-medium">
-             Need absolute unlimited lengths + file export? <Link href="/signup" className="text-[#E8522A] font-bold hover:underline">Create a free account.</Link>
+             Need longer scripts + file export? <Link href="/signup" className="text-[#E8522A] font-bold hover:underline">Create a free account.</Link>
            </p>
         </motion.div>
       </section>
@@ -164,9 +167,9 @@ export default function TextToSpeechPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                {[
-                  { icon: <Wand2 size={24}/>, title: "Uncanny Human Realism", desc: "Our neural network models accurately deploy localized breath pacing and micro-expressions seamlessly into dialogue." },
-                  { icon: <Globe2 size={24}/>, title: "29+ Global Languages", desc: "Export perfect audio synthetics across English, Spanish, Japanese, German, and French completely instantly without translating constraints." },
-                  { icon: <Mic2 size={24}/>, title: "100% Zero Royalties", desc: "Audio generated utilizing FlashTTS is entirely owned exactly by you. Post across YouTube, TikTok, or Enterprise deployments automatically." }
+                  { icon: <Wand2 size={24}/>, title: "Natural-Sounding Voices", desc: "Neural TTS voices with natural pacing. Try the demo above and judge for yourself." },
+                  { icon: <Globe2 size={24}/>, title: LANGUAGE_COUNT_LABEL, desc: "Generate speech in English, Spanish, Japanese, German, French and more." },
+                  { icon: <Mic2 size={24}/>, title: "Commercial Rights on Paid Plans", desc: "Audio generated on a paid plan is royalty-free for YouTube, TikTok, podcasts and client work." }
                ].map((b, i) => (
                   <div key={i} className="bg-[#F0EDE8] p-8 rounded-[24px] border border-[#e2dfdb]">
                      <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-[#E8522A] shadow-sm mb-6">
@@ -192,13 +195,9 @@ export default function TextToSpeechPage() {
                        <span className="font-['Syne'] font-bold text-[16px] sm:text-[18px] text-slate-900 pr-8">{faq.q}</span>
                        <ChevronDown size={20} className={`text-slate-400 shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180 text-[#E8522A]' : ''}`} />
                     </button>
-                    <AnimatePresence>
-                       {isOpen && (
-                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="px-6 pb-6 text-slate-600 text-[15.5px] leading-relaxed">
-                            {faq.a}
-                         </motion.div>
-                       )}
-                    </AnimatePresence>
+                    <div className={`px-6 pb-6 text-slate-600 text-[15.5px] leading-relaxed ${isOpen ? '' : 'hidden'}`}>
+                       {faq.a}
+                    </div>
                  </div>
                )
             })}

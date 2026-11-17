@@ -3,36 +3,20 @@ import Script from "next/script";
 import CookieConsent from "@/components/layout/CookieConsent";
 import GoogleAdSense from "@/components/ads/GoogleAdSense";
 import "./globals.css";
+import { LANGUAGE_COUNT_LABEL } from "@/lib/siteStats";
+
+const SITE_TITLE = "FlashTTS - AI Voice Generator | Lower Cost per Character";
+const SITE_DESCRIPTION = `AI voices in ${LANGUAGE_COUNT_LABEL} with a lower cost per character on every plan. Voice cloning and an audiobook studio. Start free with 10,000 characters a month.`;
 
 export const metadata: Metadata = {
   // ── Primary Title ──
   title: {
-    default: 'FlashTTS - AI Voice Generator | 10x More Credits Than ElevenLabs',
+    default: SITE_TITLE,
     template: '%s | FlashTTS'
   },
 
   // ── Meta Description ──
-  description: 'Generate studio-quality AI voices in 19 languages. 10x more credits than ElevenLabs at half the price. Voice cloning, audiobooks & 1,000+ voices. Start free today.',
-
-  // ── Keywords ──
-  keywords: [
-    'AI voice generator',
-    'text to speech',
-    'AI text to speech',
-    'voice cloning AI',
-    'text to speech online free',
-    'AI voice generator free',
-    'ElevenLabs alternative',
-    'Murf alternative',
-    'Speechify alternative',
-    'AI voiceover generator',
-    'voice cloning online',
-    'audiobook generator',
-    'AI voice changer',
-    'realistic AI voices',
-    'text to speech 19 languages',
-    'FlashTTS',
-  ],
+  description: SITE_DESCRIPTION,
 
   // ── Canonical URL ──
   metadataBase: new URL('https://www.flashtts.com'),
@@ -45,8 +29,8 @@ export const metadata: Metadata = {
     type: 'website',
     url: 'https://www.flashtts.com',
     siteName: 'FlashTTS',
-    title: 'FlashTTS - AI Voice Generator | 10x More Credits Than ElevenLabs',
-    description: 'Generate studio-quality AI voices in 19 languages. 10x more credits than ElevenLabs at half the price. Voice cloning, audiobooks & 1,000+ voices. Start free today.',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
     images: [
       {
         url: '/og-image.png',
@@ -63,8 +47,8 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     site: '@flashtts',
     creator: '@flashtts',
-    title: 'FlashTTS - AI Voice Generator | More Credits, Half the Price',
-    description: 'Generate studio-quality AI voices in 19 languages. 10x more credits than ElevenLabs at half the price. Start free today.',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
     images: ['/og-image.png'],
   },
 
@@ -104,8 +88,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Google AdSense - Only loads on public marketing / informational routes */}
-        <GoogleAdSense publisherId="ca-pub-9051515195236723" />
+        {/* Google AdSense - loads only on /blog and /blog/* (see GoogleAdSense.tsx) */}
+        <GoogleAdSense publisherId="ca-pub-5238937416358061" />
         {process.env.NEXT_PUBLIC_COOKIEYES_ID && (
           <Script
             id="cookieyes"

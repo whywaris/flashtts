@@ -1,3 +1,5 @@
+import { LANGUAGES } from '@/utils/demo-data';
+
 export type PlanId = 'free' | 'starter' | 'creator' | 'pro' | 'studio';
 
 export interface PlanConfig {
@@ -60,7 +62,7 @@ export const PLANS: PlanConfig[] = [
     speed: 'Standard generation speed',
     history: '7 days history',
     emotionControl: 'Full emotion control',
-    languages: 'All 19 languages',
+    languages: `All ${LANGUAGES.length} languages`,
     support: 'Email support',
     commercialUse: false,
     noWatermark: false,
@@ -81,7 +83,7 @@ export const PLANS: PlanConfig[] = [
     speed: 'Standard generation speed',
     history: '30 days history',
     emotionControl: 'Full emotion control',
-    languages: 'All 19 languages',
+    languages: `All ${LANGUAGES.length} languages`,
     support: 'Email support',
     commercialUse: true,
     noWatermark: true,
@@ -103,7 +105,7 @@ export const PLANS: PlanConfig[] = [
     speed: 'Fast generation speed',
     history: '90 days history',
     emotionControl: 'Full emotion control',
-    languages: 'All 19 languages',
+    languages: `All ${LANGUAGES.length} languages`,
     support: 'Priority email support',
     commercialUse: true,
     noWatermark: true,
@@ -126,7 +128,7 @@ export const PLANS: PlanConfig[] = [
     speed: 'Priority generation speed',
     history: 'Unlimited history',
     emotionControl: 'Full emotion control',
-    languages: 'All 19 languages',
+    languages: `All ${LANGUAGES.length} languages`,
     support: 'Priority + Chat support',
     commercialUse: true,
     noWatermark: true,
@@ -148,7 +150,7 @@ export const PLANS: PlanConfig[] = [
     speed: 'Priority generation speed',
     history: 'Unlimited history',
     emotionControl: 'Full emotion control',
-    languages: 'All 19 languages',
+    languages: `All ${LANGUAGES.length} languages`,
     support: 'Priority + Chat support',
     commercialUse: true,
     noWatermark: true,

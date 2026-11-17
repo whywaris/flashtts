@@ -21,6 +21,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/terms`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
     { url: `${baseUrl}/refund`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
     { url: `${baseUrl}/voice-cloning-policy`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.4 },
+    { url: `${baseUrl}/cookies`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
+    { url: `${baseUrl}/disclaimer`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
     // Comparison Pages
     { url: `${baseUrl}/vs`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
     { url: `${baseUrl}/vs/elevenlabs`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },

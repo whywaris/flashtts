@@ -1,87 +1,92 @@
 import { ComparisonData } from './elevenlabs';
+import { LANGUAGE_COUNT_LABEL } from '@/lib/siteStats';
+
+// TODO: verify every Cartesia value below on https://cartesia.ai/pricing (official page) and set
+// COMPETITOR_PRICES_CHECKED in lib/siteStats.ts. Values carried over from the previous page, not re-checked.
 
 export const cartesiaData: ComparisonData = {
   competitorName: 'Cartesia',
   slug: 'cartesia',
   metaTitle: 'Cartesia vs ElevenLabs vs FlashTTS: 2026 Voice AI Comparison',
-  metaDescription: 'Comparing Cartesia AI vs ElevenLabs? See how Cartesia Sonic compares to ElevenLabs in latency and quality, and why FlashTTS gives creators 10x more credits.',
+  metaDescription: 'Comparing Cartesia AI vs ElevenLabs? Cartesia Sonic targets real-time voice agents; FlashTTS is a browser studio for creators with character-based plans. Features and pricing compared.',
   hero: {
-    badge: 'HONEST COMPARISON 2026',
+    badge: 'COMPARISON 2026',
     title: 'Cartesia vs ElevenLabs vs FlashTTS: The Creator Breakdown',
-    subheadline: "Cartesia Sonic is built for ultra-fast API bots. ElevenLabs is built for premium audiobooks at a steep cost. FlashTTS gives video creators and publishers the best of both worlds: studio quality with 10x more character credits."
+    subheadline: "Cartesia Sonic is built for low-latency API voice agents. FlashTTS is a browser studio for video creators and publishers with fixed monthly character allowances."
   },
   verdictCards: [
     {
       icon: 'lightning',
       title: 'Built for Daily Publishing',
-      text: 'FlashTTS offers 200k chars for $9 vs Cartesia developer credit burns. Generate daily without surprise bills.',
+      text: 'FlashTTS offers 200,000 characters for $9/month in a no-code web studio.',
       badge: 'FlashTTS Wins',
       badgeColor: 'green'
     },
     {
       icon: 'dollar',
       title: 'Predictable Creator Pricing',
-      text: 'Flat monthly credits without confusing token or concurrency calculations.',
-      badge: 'FlashTTS Wins',
-      badgeColor: 'green'
+      text: 'Flat monthly character allowances instead of usage-based developer billing.',
+      badge: 'Our opinion',
+      badgeColor: 'gray'
     },
     {
       icon: 'waveform',
-      title: 'Studio Quality Audio',
-      text: 'Lifelike emotional delivery with breaths and pauses for video & podcasts.',
-      badge: 'Tie',
+      title: 'Low-Latency Streaming',
+      text: 'Cartesia Sonic is built for real-time voice agents.',
+      badge: 'Cartesia Wins',
       badgeColor: 'gray'
     }
   ],
   table: {
     rows: [
-      { feature: 'Primary Focus', flashTts: 'Content Creators & Authors', competitor: 'Conversational Bot APIs', win: 'flash' },
-      { feature: 'Starter Price', flashTts: '$9 / 200k chars', competitor: '$5 - $25 dev tiers', win: 'flash' },
-      { feature: 'Pro Plan', flashTts: '$39 / 2M chars', competitor: 'Usage-based metering', win: 'flash' },
-      { feature: 'Voice Cloning', flashTts: '1-Click Instant Cloning', competitor: 'API-based cloning', win: 'flash' },
-      { feature: 'Audiobook Studio', flashTts: 'Full multi-chapter studio', competitor: 'Not available', win: 'flash' },
-      { feature: 'Latency (Speed)', flashTts: 'Ultra-fast streaming', competitor: '~100ms (Sonic model)', win: 'competitor' },
-      { feature: 'Commercial License', flashTts: 'Included on all paid plans', competitor: 'Tier dependent', win: 'flash' },
+      { feature: 'Primary Focus', flashTts: 'Content Creators & Authors', competitor: 'Conversational Bot APIs' },
+      { feature: 'Starter Price', flashTts: '$9 / 200,000 chars', competitor: '$5 - $25 dev tiers', win: 'tie' },
+      { feature: 'Pro Plan', flashTts: '$39 / 2,000,000 chars', competitor: 'Usage-based metering' },
+      { feature: 'Voice Cloning', flashTts: 'In the web studio', competitor: 'API-based cloning', win: 'flash' },
+      { feature: 'Audiobook Studio', flashTts: 'Multi-chapter studio', competitor: 'Not listed', win: 'flash' },
+      { feature: 'Latency', flashTts: 'Not published', competitor: '~100ms (Sonic model)', win: 'competitor' },
+      { feature: 'Commercial License', flashTts: 'All paid plans', competitor: 'Tier dependent', win: 'tie' },
       { feature: 'Browser Interface', flashTts: 'No-code Creator Studio', competitor: 'Developer-first console', win: 'flash' },
-      { feature: 'Export Formats', flashTts: '320kbps MP3 & Lossless WAV', competitor: 'PCM, WAV, MP3', win: 'tie' },
-      { feature: 'Languages Supported', flashTts: '19+ Languages', competitor: '15+ Languages', win: 'flash' }
+      { feature: 'Export Formats', flashTts: 'MP3 + WAV', competitor: 'PCM, WAV, MP3', win: 'tie' },
+      { feature: 'Languages Supported', flashTts: LANGUAGE_COUNT_LABEL, competitor: '15+ languages', win: 'flash' }
     ]
   },
+  pricing: {
+    sourceUrl: '', // TODO: https://cartesia.ai/pricing once verified
+    note: 'Cartesia uses usage-based developer pricing, so a per-plan character figure is not on record.',
+    competitorPlans: [
+      { name: 'Developer tiers', price: null, chars: null, note: '$5-$25, usage-based' },
+    ],
+  },
   pricingBreakdown: {
-    heading: 'The Real Cost of Creator Workflows',
-    subtext: "Cartesia's model pricing is great for real-time customer support calls, but video creators publishing daily YouTube videos run into unexpected overage fees.",
+    heading: 'Cost Scenarios',
+    subtext: 'FlashTTS side uses the cheapest plan whose allowance covers the usage. Cartesia figures are our earlier estimates, not quotes.',
     creators: [
       {
         type: 'Faceless YouTube Channel (10 videos/mo)',
-        needs: '250,000 chars/month',
-        competitorCost: '$35 - $50 (overages)',
-        flashTtsCost: '$19 (Creator Plan)',
-        savings: 'Save $31/mo',
-        savingsYearly: '$372 saved per year'
+        chars: 250000,
+        competitorCost: '$35 - $50 (est.)',
+        competitorMath: 'Usage-based; estimate - verify on Cartesia pricing'
       },
       {
         type: 'Daily TikTok & Reels Agency (60 clips/mo)',
-        needs: '1,500,000 chars/month',
-        competitorCost: '$160+ / month',
-        flashTtsCost: '$39 (Pro Plan)',
-        savings: 'Save $121/mo',
-        savingsYearly: '$1,452 saved per year'
+        chars: 1500000,
+        competitorCost: '$160+ (est.)',
+        competitorMath: 'Usage-based; estimate - verify on Cartesia pricing'
       },
       {
         type: 'Full Audiobook (80,000 words)',
-        needs: '500,000 chars in one batch',
-        competitorCost: 'Manual splicing needed',
-        flashTtsCost: 'Included in Pro plan',
-        savings: 'Ready in 2 hours',
-        savingsYearly: 'Zero sound engineering fees'
+        chars: 500000,
+        competitorCost: 'Usage-based',
+        competitorMath: 'API only; no audiobook editor listed'
       }
     ]
   },
   whyChoose: {
     flashTts: [
-      'You need a ready-to-use web studio to paste scripts and download MP3s in seconds.',
-      'You want generous character allowances (up to 3M chars) that do not run out mid-month.',
-      'You produce audiobooks, podcasts, or faceless YouTube videos requiring natural pauses.',
+      'You need a ready-to-use web studio to paste scripts and download MP3s.',
+      'You want fixed monthly character allowances (up to 3M chars).',
+      'You produce audiobooks, podcasts, or faceless YouTube videos.',
       'You want built-in voice cloning without writing API integration code.'
     ],
     competitor: [
@@ -93,16 +98,15 @@ export const cartesiaData: ComparisonData = {
   faqs: [
     {
       q: 'How does Cartesia compare to ElevenLabs and FlashTTS?',
-      a: 'Cartesia specializes in ultra-low latency (Sonic model) designed for real-time voice agents. ElevenLabs offers high-end audio quality at a premium price ($99/mo for Pro). FlashTTS bridges this gap by providing studio-quality voices with 6x to 10x more character credits at a fraction of the cost, purpose-built for video creators and authors.'
+      a: 'Cartesia specializes in low latency (Sonic model) for real-time voice agents. ElevenLabs is a broad voice platform. FlashTTS is a browser studio for creators with fixed monthly character allowances and a lower cost per character than ElevenLabs on every plan we compared.'
     },
     {
       q: 'Is Cartesia better than ElevenLabs for video creators?',
-      a: 'Not necessarily. Cartesia is built primarily for developers building voice bots via API. For creators who need a simple browser interface, audio chapter management, and predictable monthly credits, FlashTTS or ElevenLabs are much easier to use.'
+      a: 'Not necessarily. Cartesia is built primarily for developers building voice bots via API. For creators who want a browser interface, chapter management and predictable monthly allowances, FlashTTS or ElevenLabs are easier to use.'
     },
     {
-      q: 'Can I clone my voice on FlashTTS like in Cartesia or ElevenLabs?',
-      a: 'Yes. FlashTTS allows you to clone your voice in under 60 seconds directly in your web browser. All clones are saved to your private library with full commercial rights on paid plans.'
+      q: 'Can I clone my voice on FlashTTS?',
+      a: 'Yes. FlashTTS lets you clone your voice directly in your browser on every plan. Clones are saved to your private library, with commercial rights on paid plans.'
     }
   ]
 };
-

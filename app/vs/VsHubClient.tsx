@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import { LANGUAGE_COUNT_LABEL, COMPETITOR_PRICES_CHECKED } from '@/lib/siteStats';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 25 },
@@ -44,26 +45,26 @@ const COMPARISONS: CompetitorCard[] = [
     name: 'ElevenLabs',
     slug: 'elevenlabs',
     badge: 'Most Popular',
-    headline: '10x More Credits Than ElevenLabs',
-    description: 'Get 200,000 characters for $9 instead of just 30,000 for $5. Never run out of credits mid-generation again.',
-    savings: 'Save up to 80% per month',
+    headline: 'Price per Character Compared',
+    description: 'FlashTTS Starter: 200,000 characters for $9. ElevenLabs Starter: 30,000 for $6. Tier-by-tier table with the math.',
+    savings: 'Lower cost per character on every plan',
     keyPoints: [
       '200,000 chars vs 30,000 chars on entry tiers',
-      'Instant voice cloning included on every plan',
-      'No surprise credit burn on retakes',
+      'ElevenLabs has the cheaper entry price ($6 vs $9)',
+      'Voice cloning included on every FlashTTS plan',
     ],
   },
   {
     name: 'Murf AI',
     slug: 'murf',
-    badge: '4x More Audio',
-    headline: '4x More Audio & No Minute Limits',
-    description: 'Murf charges $19/mo for just 2 hours of audio. FlashTTS delivers ~200+ mins with voice cloning included for $9/mo.',
-    savings: '53% Cheaper entry pricing',
+    badge: 'Characters vs Minutes',
+    headline: 'Character vs Minute Pricing',
+    description: 'Murf bills by audio minutes ($19/mo for 2 hours). FlashTTS bills by characters ($9/mo for 200,000).',
+    savings: 'Lower cost per character (est.)',
     keyPoints: [
       '200,000 characters for $9 vs 2 hours for $19',
-      'Voice cloning included from $9/mo (Murf requires higher plans)',
-      'Uncapped character freedom without expiring minutes',
+      'Voice cloning on every FlashTTS plan; Murf lists it on Enterprise',
+      'Murf offers team and Slides integrations',
     ],
   },
   {
@@ -71,51 +72,51 @@ const COMPARISONS: CompetitorCard[] = [
     slug: 'speechify',
     badge: 'Creator Studio',
     headline: 'Built for Creators, Not Just Readers',
-    description: 'Speechify is designed to listen to PDFs and articles. FlashTTS is a production studio for YouTubers, podcasters & media agencies.',
-    savings: 'Pay-as-you-go vs rigid annual locks',
+    description: 'Speechify is designed to listen to PDFs and articles. FlashTTS is a production studio for YouTubers, podcasters and agencies.',
+    savings: '$9/mo vs $29/mo (monthly billing)',
     keyPoints: [
-      'Studio-grade audio export with lossless options',
-      'Full commercial rights included on all paid plans',
-      'Optimized workflow for publishing and content teams',
+      'MP3 and WAV export for publishing',
+      'Commercial rights on all paid plans',
+      'Voice cloning on every plan',
     ],
   },
   {
     name: 'LOVO AI',
     slug: 'lovo',
-    badge: 'Zero Risk',
-    headline: '64% Cheaper With Zero Voice Deletion Risk',
-    description: 'Avoid surprise voice removals and $25/mo caps for 2 hours. FlashTTS keeps your cloned voices permanent and safe.',
-    savings: '64% Cheaper than LOVO Basic',
+    badge: 'Characters vs Hours',
+    headline: 'Price per Character Compared',
+    description: 'LOVO Basic is $25/mo for 2 hours of audio. FlashTTS Starter is $9/mo for 200,000 characters.',
+    savings: 'Lower cost per character (est.)',
     keyPoints: [
       '$9/mo Starter vs LOVO $25/mo Basic tier',
-      'Guaranteed voice continuity for long-term projects',
-      'Fast multi-take generation without credit dread',
+      'Voice cloning on every FlashTTS plan; LOVO lists it from Pro',
+      'LOVO lists 100+ languages',
     ],
   },
   {
     name: 'WellSaid Labs',
     slug: 'wellsaid',
     badge: 'Multilingual Value',
-    headline: '81% Less Cost With 19 Languages Included',
-    description: 'WellSaid Labs charges $49/mo for English-only voices with no cloning. FlashTTS provides 19 languages & voice cloning from $9/mo.',
-    savings: '81% Lower cost to start',
+    headline: `${LANGUAGE_COUNT_LABEL} and Voice Cloning`,
+    description: `WellSaid Labs starts at $49/mo for English voices. FlashTTS starts at $9/mo with ${LANGUAGE_COUNT_LABEL} and voice cloning.`,
+    savings: '$9/mo vs $49/mo entry price',
     keyPoints: [
       '$9/mo starting price vs $49/mo on WellSaid',
-      '19+ global languages supported vs English-only',
-      'Real-time voice cloning and audiobook capabilities',
+      `${LANGUAGE_COUNT_LABEL} vs English-only`,
+      'WellSaid offers SOC2 enterprise compliance',
     ],
   },
   {
     name: 'NaturalReader',
     slug: 'naturalreader',
     badge: 'Commercial Rights',
-    headline: 'Full Commercial Rights & No Daily Throttling',
-    description: 'NaturalReader personal plans forbid commercial use and throttle daily usage. FlashTTS gives you 100% monetizable audio.',
-    savings: 'Commercial rights on all plans',
+    headline: 'Commercial Rights on Paid Plans',
+    description: 'NaturalReader personal plans are for personal use. FlashTTS includes commercial rights on every paid plan.',
+    savings: 'Commercial rights from $9/mo',
     keyPoints: [
-      'Full monetization & YouTube/podcast clearance',
-      'No hidden daily usage quotas or throttling',
-      'Advanced voice customization & cloning engine',
+      'Monetize on YouTube and podcasts with any paid plan',
+      'Monthly allowance only, no daily cap',
+      'Voice cloning on every plan',
     ],
   },
   {
@@ -123,36 +124,37 @@ const COMPARISONS: CompetitorCard[] = [
     slug: 'cartesia',
     badge: 'Creator Studio Alternative',
     headline: 'No-Code Creator Studio vs Developer API Metering',
-    description: 'Cartesia Sonic is optimized for 100ms API bots. FlashTTS gives creators 10x more characters with a complete web studio and audiobook mastering.',
-    savings: 'Predictable creator pricing',
+    description: 'Cartesia Sonic is built for low-latency API voice agents. FlashTTS is a web studio with an audiobook editor and fixed monthly allowances.',
+    savings: 'Fixed monthly allowances',
     keyPoints: [
-      '200k chars for $9 vs confusing developer token burn',
-      'Full multi-chapter audiobook studio and 1-click cloning',
-      'Included commercial rights without surprise overage bills',
+      '200,000 chars for $9 vs usage-based developer billing',
+      'Multi-chapter audiobook studio and in-browser cloning',
+      'Cartesia wins on published latency',
     ],
   },
   {
     name: 'Fish Audio',
     slug: 'fish-audio',
     badge: 'Cloud Alternative',
-    headline: 'Zero-GPU Cloud Studio vs Complex Self-Hosting',
-    description: 'Fish.Audio requires expensive GPUs and Python setups. FlashTTS delivers clean, calibrated studio voices in a 100% cloud browser studio.',
-    savings: 'Save $111+/mo on GPU bills',
+    headline: 'Cloud Studio vs Self-Hosting',
+    description: 'Fish Audio offers open weights you can self-host. FlashTTS is a hosted browser studio with no GPU setup.',
+    savings: 'No GPU setup',
     keyPoints: [
       'No GPU drivers, Python environments, or HuggingFace tokens',
-      'Clear commercial licensing on all tiers without open model ambiguity',
-      'Clean 44.1kHz audio without background artifacts or hallucinations',
+      'Commercial rights on all paid plans',
+      'Fish Audio wins if you want open model weights',
     ],
   },
 ];
 
+// Ranges from the comparison data files (competitor values pending verification, see data/comparisons/*).
 const COMPARISON_METRICS = [
-  { feature: 'Entry Plan Price', flash: '$9 / month', others: '$19 - $49 / month' },
-  { feature: 'Included Volume', flash: '200,000 characters', others: '30,000 - 60,000 characters' },
-  { feature: 'Voice Cloning', flash: 'Included on all paid tiers', others: 'Locked behind $25 - $99+ tiers' },
-  { feature: 'Commercial Rights', flash: 'Included on all paid plans', others: 'Personal plans restrict monetization' },
-  { feature: 'Languages Supported', flash: '19+ languages', others: 'Often English only or limited' },
-  { feature: 'Credit Expiration', flash: 'Credits never expire', others: 'Hard monthly resets' },
+  { feature: 'Entry Plan Price', flash: '$9 / month', others: '$6 - $49 / month' },
+  { feature: 'Included Volume', flash: '200,000 characters', others: '30,000 characters to 2 hours of audio' },
+  { feature: 'Voice Cloning', flash: 'Included on every plan', others: 'Varies; often higher tiers' },
+  { feature: 'Commercial Rights', flash: 'Included on all paid plans', others: 'Some personal plans restrict monetization' },
+  { feature: 'Languages Supported', flash: LANGUAGE_COUNT_LABEL, others: 'English-only to 100+' },
+  { feature: 'Unused Allowance', flash: 'Resets each billing cycle', others: 'Usually resets monthly' },
 ];
 
 export default function VsHubClient() {
@@ -188,18 +190,18 @@ export default function VsHubClient() {
               className="text-base sm:text-lg md:text-xl text-slate-600 max-w-[760px] leading-relaxed mb-10"
             >
               Tired of running out of credits or paying exorbitant fees for voice generation?
-              Explore honest, side-by-side breakdowns of how FlashTTS compares to top industry tools.
+              Side-by-side breakdowns of how FlashTTS compares to other tools, with the math shown. Competitor prices checked {COMPETITOR_PRICES_CHECKED}.
             </motion.p>
 
             <motion.div variants={fadeUp} className="flex flex-wrap items-center justify-center gap-4 text-sm font-semibold text-slate-700">
               <span className="flex items-center gap-1.5 bg-white/60 px-3.5 py-1.5 rounded-full border border-black/5">
-                <CheckCircle2 size={16} className="text-[#E8522A]" /> 10x More Credits
+                <CheckCircle2 size={16} className="text-[#E8522A]" /> Lower Cost per Character
               </span>
               <span className="flex items-center gap-1.5 bg-white/60 px-3.5 py-1.5 rounded-full border border-black/5">
-                <CheckCircle2 size={16} className="text-[#E8522A]" /> Half the Price
+                <CheckCircle2 size={16} className="text-[#E8522A]" /> Math Shown
               </span>
               <span className="flex items-center gap-1.5 bg-white/60 px-3.5 py-1.5 rounded-full border border-black/5">
-                <CheckCircle2 size={16} className="text-[#E8522A]" /> Studio Quality
+                <CheckCircle2 size={16} className="text-[#E8522A]" /> Sources Linked
               </span>
             </motion.div>
           </motion.div>
@@ -320,7 +322,7 @@ export default function VsHubClient() {
               Ready to Upgrade Your Voiceovers?
             </h2>
             <p className="text-slate-300 max-w-[620px] text-base sm:text-lg mb-8 leading-relaxed">
-              Join thousands of creators, podcasters, and publishers getting 10x more voice credits at a fraction of the cost.
+              Start with 10,000 free characters a month. No credit card required.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
               <Link

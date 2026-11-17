@@ -109,7 +109,7 @@ export default function SignupPage() {
                             className="w-full px-5 py-4 bg-[#fafaf8] border border-[#e5e0d8] rounded-2xl text-[14px] font-medium focus:border-[#ff4d1c] focus:ring-0 outline-none transition-all"
                             value={name}
                             onChange={e => setName(e.target.value)}
-                            placeholder="Waris Jamil"
+                            placeholder="Your name"
                             required
                         />
                     </div>

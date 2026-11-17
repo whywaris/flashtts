@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <LegalLayout title="Terms of Service" badge="LEGAL" lastUpdated="March 1, 2026">
+    <LegalLayout title="Terms of Service" badge="LEGAL" lastUpdated="November 17, 2026">
       <section>
         <h2>Agreement to Terms</h2>
         <p>
@@ -38,9 +38,10 @@ export default function TermsPage() {
         </ul>
 
         <div className="highlight-box-red">
-          <strong>❌ Prohibited Use</strong>: You MAY NOT use FlashTTS to generate content 
-          that impersonates real people without consent, create deepfakes for deception, 
-          harass others, or violate any laws.
+          <strong>❌ Prohibited Use</strong>: You MAY NOT use FlashTTS to generate content
+          that impersonates real people without consent, create deepfakes for deception,
+          commit fraud or run scams (including voice phishing and impersonation for payment or
+          account access), harass others, or violate any laws.
         </div>
 
         <h2>Intellectual Property</h2>
@@ -72,6 +73,7 @@ export default function TermsPage() {
           platform use.
         </p>
 
+        {/* TODO: Confirm jurisdiction with a lawyer (owner in the UK, developer in Pakistan, MoR Lemon Squeezy). */}
         <h2>Governing Law</h2>
         <p>
           These terms are governed by the laws of the United States.

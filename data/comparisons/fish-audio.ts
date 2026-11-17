@@ -1,86 +1,89 @@
 import { ComparisonData } from './elevenlabs';
+import { LANGUAGE_COUNT_LABEL } from '@/lib/siteStats';
+
+// TODO: verify every Fish Audio value below on https://fish.audio (official pricing page) and set
+// COMPETITOR_PRICES_CHECKED in lib/siteStats.ts. Values carried over from the previous page, not re-checked.
 
 export const fishAudioData: ComparisonData = {
   competitorName: 'Fish Audio',
   slug: 'fish-audio',
   metaTitle: 'Fish Audio vs ElevenLabs vs FlashTTS: 2026 Voice AI Comparison',
-  metaDescription: 'Comparing Fish.Audio vs ElevenLabs? See how open-source voice cloning compares to ElevenLabs and why FlashTTS is the easiest studio alternative for creators.',
+  metaDescription: 'Comparing Fish.Audio vs ElevenLabs? See how open-source voice cloning compares with hosted studios, and where FlashTTS fits for creators who want a no-setup web studio.',
   hero: {
-    badge: 'HONEST COMPARISON 2026',
+    badge: 'COMPARISON 2026',
     title: 'Fish.Audio vs ElevenLabs vs FlashTTS: The Real Breakdown',
-    subheadline: "Fish Audio has gained huge attention for open-source zero-shot voice cloning. But for creators who don't want to manage GPU servers or deal with audio artifacts, FlashTTS offers reliable, cloud-based studio voices at half the cost of ElevenLabs."
+    subheadline: "Fish Audio is known for open-source zero-shot voice cloning. For creators who don't want to manage GPU servers, FlashTTS is a hosted web studio with fixed monthly character allowances."
   },
   verdictCards: [
     {
       icon: 'microphone',
-      title: 'Zero Technical Headaches',
-      text: 'No GPU setup, Python environments, or HuggingFace tokens. 100% cloud studio.',
+      title: 'No Technical Setup',
+      text: 'No GPU setup, Python environments, or HuggingFace tokens. Runs in the browser.',
       badge: 'FlashTTS Wins',
       badgeColor: 'green'
     },
     {
       icon: 'dollar',
-      title: 'Consistent Commercial Rights',
-      text: 'Clear commercial licensing on all paid tiers. Zero copyright gray areas.',
+      title: 'Clear Commercial Rights',
+      text: 'Commercial rights on all paid FlashTTS plans.',
       badge: 'FlashTTS Wins',
       badgeColor: 'green'
     },
     {
       icon: 'waveform',
-      title: 'Noise-Free Studio Master',
-      text: 'Clean 44.1kHz audio without background static or robotic hallucinations.',
-      badge: 'FlashTTS Wins',
-      badgeColor: 'green'
+      title: 'Open Weights',
+      text: 'Fish Audio publishes model weights you can self-host and modify.',
+      badge: 'Fish Audio Wins',
+      badgeColor: 'gray'
     }
   ],
   table: {
     rows: [
-      { feature: 'Core Tech', flashTts: 'Production Neural TTS & Cloning', competitor: 'Fish-Speech (Zero-shot)', win: 'tie' },
-      { feature: 'Ease of Use', flashTts: '100% Web Studio (No code)', competitor: 'Web app + Self-hosted code', win: 'flash' },
-      { feature: 'Audio Consistency', flashTts: 'High (Calibrated studio levels)', competitor: 'Variable (Community models)', win: 'flash' },
-      { feature: 'Starter Price', flashTts: '$9 / 200,000 characters', competitor: 'Credit packs / Free weights', win: 'flash' },
-      { feature: 'Audiobook Support', flashTts: 'Multi-chapter ACX studio', competitor: 'Single-generation clips', win: 'flash' },
-      { feature: 'Commercial Protection', flashTts: '100% Royalty-Free', competitor: 'Open model licensing rules', win: 'flash' },
-      { feature: 'Voice Cloning Speed', flashTts: 'Instant (< 60s sample)', competitor: 'Fast zero-shot cloning', win: 'tie' },
-      { feature: 'Languages Supported', flashTts: '19 Global Languages', competitor: 'Multilingual (English/Chinese focus)', win: 'flash' },
-      { feature: 'Export Formats', flashTts: 'MP3 & 24-bit Lossless WAV', competitor: 'WAV', win: 'tie' }
+      { feature: 'Core Tech', flashTts: 'Hosted neural TTS & cloning', competitor: 'Fish-Speech (Zero-shot)', win: 'tie' },
+      { feature: 'Ease of Use', flashTts: 'Web Studio (No code)', competitor: 'Web app + Self-hosted code', win: 'flash' },
+      { feature: 'Starter Price', flashTts: '$9 / 200,000 characters', competitor: 'Credit packs / Free weights', win: 'tie' },
+      { feature: 'Audiobook Support', flashTts: 'Multi-chapter studio', competitor: 'Single-generation clips', win: 'flash' },
+      { feature: 'Commercial Rights', flashTts: 'All paid plans', competitor: 'Open model licensing rules', win: 'flash' },
+      { feature: 'Languages Supported', flashTts: LANGUAGE_COUNT_LABEL, competitor: 'Multilingual (English/Chinese focus)', win: 'tie' },
+      { feature: 'Export Formats', flashTts: 'MP3 + WAV', competitor: 'WAV', win: 'tie' }
     ]
   },
+  pricing: {
+    sourceUrl: '', // TODO: Fish Audio official pricing URL once verified
+    note: 'Fish Audio sells credit packs or free self-hosted weights, so a per-plan character figure is not on record.',
+    competitorPlans: [
+      { name: 'Credit packs', price: null, chars: null, note: 'Not on record' },
+      { name: 'Self-hosted', price: null, chars: null, note: 'Free weights + your GPU cost' },
+    ],
+  },
   pricingBreakdown: {
-    heading: 'Cloud Convenience vs Self-Hosting GPU Costs',
-    subtext: "While Fish.Audio offers open weights, running your own voice models requires expensive NVIDIA RTX 4090 or A100 cloud instances ($150 - $300/mo). FlashTTS gives you cloud simplicity for $9 - $39/mo.",
+    heading: 'Cloud Studio vs Credits or Self-Hosting',
+    subtext: 'FlashTTS side uses the cheapest plan whose allowance covers the usage. Fish Audio figures are our earlier estimates, not quotes.',
     creators: [
       {
         type: 'Solo YouTuber / Podcaster',
-        needs: '200,000 characters/mo',
-        competitorCost: '$20+ credits or GPU bill',
-        flashTtsCost: '$9 / mo (Starter)',
-        savings: 'Save $11+/mo',
-        savingsYearly: '$132 saved annually'
+        chars: 200000,
+        competitorCost: '$20+ (est.)',
+        competitorMath: 'Credits or GPU bill; estimate - verify on Fish Audio'
       },
       {
         type: 'Active Content Creator (Daily Shorts)',
-        needs: '600,000 characters/mo',
-        competitorCost: '$60+ credit packs',
-        flashTtsCost: '$19 / mo (Creator)',
-        savings: 'Save $41/mo',
-        savingsYearly: '$492 saved annually'
+        chars: 600000,
+        competitorCost: '$60+ (est.)',
+        competitorMath: 'Credit packs; estimate - verify on Fish Audio'
       },
       {
         type: 'Audiobook Publisher / Agency',
-        needs: '2,000,000 characters/mo',
-        competitorCost: '$150+ or cloud GPU cluster',
-        flashTtsCost: '$39 / mo (Pro)',
-        savings: 'Save $111+/mo',
-        savingsYearly: '$1,332 saved annually'
+        chars: 2000000,
+        competitorCost: '$150+ (est.)',
+        competitorMath: 'Credits or GPU cluster; estimate - verify on Fish Audio'
       }
     ]
   },
   whyChoose: {
     flashTts: [
-      'You want instant, professional voiceovers without configuring GPU drivers or Python environments.',
-      'You need guaranteed clean audio without robotic static or random accent slips.',
-      'You publish audiobooks that must pass Audible ACX technical guidelines.',
+      'You want voiceovers without configuring GPU drivers or Python environments.',
+      'You want a multi-chapter audiobook editor in the browser.',
       'You want predictable monthly pricing with up to 3 million characters per month.'
     ],
     competitor: [
@@ -92,16 +95,15 @@ export const fishAudioData: ComparisonData = {
   faqs: [
     {
       q: 'What is the main difference between Fish Audio, ElevenLabs, and FlashTTS?',
-      a: 'Fish Audio is known for its open-source Fish-Speech architecture, great for developers with self-hosted hardware. ElevenLabs is a market leader but comes with high pricing ($99/mo for Pro). FlashTTS provides cloud-hosted, broadcast-ready voices with 10x more character credits, making it the preferred choice for publishers and creators on a budget.'
+      a: 'Fish Audio is known for its open-source Fish-Speech architecture, good for developers with their own hardware. ElevenLabs is a broad hosted voice platform. FlashTTS is a hosted web studio for creators with fixed monthly character allowances and a lower cost per character than ElevenLabs on every plan we compared.'
     },
     {
       q: 'Does FlashTTS require high-end hardware like running Fish Audio locally?',
-      a: 'No! FlashTTS runs 100% in the cloud. You can generate speech from any laptop, MacBook, tablet, or smartphone without installing any software or owning an expensive GPU.'
+      a: 'No. FlashTTS runs in the cloud. You can generate speech from any laptop, tablet or phone browser without installing software or owning a GPU.'
     },
     {
       q: 'Can I monetize YouTube videos made with FlashTTS?',
-      a: 'Yes. All paid subscriptions on FlashTTS include full commercial monetization rights. Your videos will never receive copyright strikes or licensing claims.'
+      a: 'Yes. All paid FlashTTS plans include commercial rights, so you can use the audio in monetized videos. The Free plan is not licensed for commercial use. Follow YouTube\'s disclosure rules for synthetic content where they apply.'
     }
   ]
 };
-

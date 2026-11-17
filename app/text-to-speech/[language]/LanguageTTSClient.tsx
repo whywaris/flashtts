@@ -296,7 +296,7 @@ export default function LanguageTTSClient({ langData }: Props) {
             Start Generating {langData.name} Audio Free
           </h2>
           <p className="text-white/85 text-[16px] max-w-[550px] mx-auto mb-8">
-            Join thousands of creators publishing daily in regional languages. 10,000 characters free, no credit card required.
+            Start with 10,000 free characters a month. No credit card required.
           </p>
           <Link
             href="/signup"

@@ -1,30 +1,23 @@
 # FlashTTS - robots.txt
 # https://www.flashtts.com
 
-# All crawlers
 User-agent: *
 Allow: /
-Allow: /voice-cloning
-Allow: /tools
-Allow: /blog
-Allow: /pricing
-Allow: /about
-Allow: /contact
-Allow: /vs
 
-# Block private pages
+# App, account and API routes
 Disallow: /dashboard/
 Disallow: /admin/
 Disallow: /api/
-Disallow: /signup
-Disallow: /login
-Disallow: /_next/
 Disallow: /auth/
+Disallow: /settings
+Disallow: /billing
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
 
-# Block URL params that create duplicate content
+# URL params that create duplicate content
 Disallow: /*?ref=
 Disallow: /*?plan=
 Disallow: /*?utm_
 
-# Sitemaps
 Sitemap: https://www.flashtts.com/sitemap.xml
